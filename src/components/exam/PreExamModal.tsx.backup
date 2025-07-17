@@ -1,0 +1,106 @@
+"use client";
+
+import React, { useState } from "react";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+
+export interface StudentDetails {
+  name: string;
+  university: string;
+}
+
+interface PreExamModalProps {
+  onStartExam: (details: StudentDetails) => void;
+  examDetails?: {
+    title: string;
+    description: string;
+    questionsCount: number;
+    durationMinutes: number;
+  } | null;
+  loading?: boolean;
+}
+
+export function PreExamModal({
+  onStartExam,
+  examDetails,
+  loading = false,
+}: PreExamModalProps) {
+  const [name, setName] = useState<string>("");
+  const [university, setUniversity] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  const handleStart = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !university.trim()) {
+      setError("Please provide both your full name and university.");
+      return;
+    }
+    setError("");
+    onStartExam({ name, university });
+  };
+
+  const handleClose = () => {
+    setName("");
+    setUniversity("");
+    setError("");
+    onClose();
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={`Begin ${examTitle} Assessment`}
+    >
+      <p className="text-sm text-muted-foreground mb-6">
+        Please enter your details below. This information is required for your
+        final report.
+      </p>
+      <form onSubmit={handleStart} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium text-foreground">
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="e.g., Florence Nightingale"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label
+            htmlFor="university"
+            className="text-sm font-medium text-foreground"
+          >
+            University / Institution
+          </label>
+          <input
+            type="text"
+            id="university"
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
+            className="w-full px-4 py-2 bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="e.g., Scutari College of Nursing"
+            required
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-center text-destructive-foreground bg-destructive/90 p-3 rounded-lg">
+            {error}
+          </p>
+        )}
+
+        <div className="pt-4">
+          <Button type="submit" disabled={!name || !university}>
+            I&apos;m Ready, Start Exam
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

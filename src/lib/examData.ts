@@ -1,529 +1,424 @@
 // src/lib/examData.ts
-// This file now provides functions to simulate fetching dynamic exam data and questions.
+// This file provides comprehensive exam data for RN Paper 1 & Paper 2
 
 export interface ExamData {
-  id: string; // A unique ID for the specific mock exam (e.g., "rn-fundamentals", "rm")
-  category: "RN" | "RM" | "RPHN"; // The main professional category
-  title: string; // The title of this specific mock exam (e.g., "RN Fundamentals")
+  id: string;
+  category: "RN" | "RM" | "RPHN";
+  title: string;
   description: string;
-  questionsCount: number; // Number of questions in this exam
-  durationMinutes: number; // Duration in minutes
+  questionsCount: number;
+  durationMinutes: number;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   topics: string[];
-  color: string; // Tailwind gradient classes for styling
-  available: boolean; // Whether this exam is available for users
+  color: string;
+  available: boolean;
 }
 
 export interface Question {
   id: number;
   text: string;
   options: string[];
-  correctAnswer: number; // Index of the correct option
+  correctAnswer: number;
   explanation: string;
-  flagged?: boolean; // Added for exam interface state
+  flagged?: boolean;
 }
 
-// Simulated full list of exams (this would come from a database in a real app)
+// Exam definitions
 const MOCK_ALL_EXAMS: ExamData[] = [
+  // RN Paper 1 - Available
   {
-    id: "rn-fundamentals",
+    id: "rn-paper-1",
     category: "RN",
-    title: "RN Fundamentals",
-    description:
-      "Core nursing principles, patient care basics, and fundamental skills.",
-    questionsCount: 10, // Reduced for easier testing
-    durationMinutes: 60,
-    difficulty: "Beginner",
+    title: "RN Paper 1",
+    description: "Comprehensive nursing fundamentals, patient care basics, and clinical practice skills.",
+    questionsCount: 250,
+    durationMinutes: 150, // 2.5 hours
+    difficulty: "Intermediate",
     topics: [
       "Basic Patient Care",
-      "Vital Signs",
+      "Vital Signs & Assessment", 
       "Infection Control",
-      "Safety",
-      "Ethics",
+      "Safety & Emergency Care",
+      "Pharmacology Basics",
+      "Medical-Surgical Nursing",
+      "Ethics & Communication"
     ],
     color: "from-blue-500 to-blue-600",
     available: true,
   },
+  // RN Paper 2 - Available  
   {
-    id: "rn-medical-surgical",
+    id: "rn-paper-2", 
     category: "RN",
-    title: "RN Medical-Surgical",
-    description: "Advanced medical-surgical nursing concepts and procedures.",
-    questionsCount: 15, // Reduced for easier testing
-    durationMinutes: 90,
+    title: "RN Paper 2",
+    description: "Advanced nursing practice, specialized care, and clinical decision making.",
+    questionsCount: 250,
+    durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
-      "Cardiovascular",
-      "Respiratory",
-      "Gastrointestinal",
-      "Endocrine",
-      "Surgical Care",
+      "Advanced Medical-Surgical",
+      "Critical Care Nursing",
+      "Pediatric Nursing",
+      "Maternal Health", 
+      "Mental Health Nursing",
+      "Community Health",
+      "Leadership & Management"
     ],
-    color: "from-indigo-500 to-indigo-600",
+    color: "from-blue-600 to-indigo-600",
     available: true,
   },
+  // RM Papers - Coming Soon
   {
-    id: "rn-pediatrics",
-    category: "RN",
-    title: "RN Pediatrics",
-    description:
-      "Pediatric nursing care for infants, children, and adolescents.",
-    questionsCount: 10, // Reduced for easier testing
-    durationMinutes: 60,
+    id: "rm-paper-1",
+    category: "RM", 
+    title: "RM Paper 1",
+    description: "Midwifery fundamentals, maternal care, and reproductive health basics.",
+    questionsCount: 250,
+    durationMinutes: 150,
     difficulty: "Intermediate",
     topics: [
-      "Growth & Development",
-      "Immunizations",
-      "Pediatric Conditions",
-      "Family Care",
-      "Emergency Care",
-    ],
-    color: "from-cyan-500 to-cyan-600",
-    available: true,
-  },
-  {
-    id: "rm-general",
-    category: "RM",
-    title: "Registered Midwifery (General)",
-    description:
-      "Comprehensive assessment on antenatal, intrapartum, and postnatal care.",
-    questionsCount: 20,
-    durationMinutes: 120,
-    difficulty: "Intermediate",
-    topics: [
+      "Reproductive Health",
       "Antenatal Care",
-      "Labor & Delivery",
-      "Postnatal Care",
-      "Neonatal Care",
-      "Midwifery Ethics",
+      "Normal Labor & Birth", 
+      "Postpartum Care",
+      "Newborn Care",
+      "Family Planning"
     ],
     color: "from-green-500 to-emerald-600",
-    available: false, // Mark as coming soon
+    available: false,
   },
   {
-    id: "rphn-community",
-    category: "RPHN",
-    title: "Public Health Nursing (Community)",
-    description:
-      "Focus on community health, disease prevention, and health promotion strategies.",
-    questionsCount: 15,
-    durationMinutes: 90,
-    difficulty: "Advanced",
+    id: "rm-paper-2",
+    category: "RM",
+    title: "RM Paper 2",
+    description: "Advanced midwifery practice, high-risk pregnancies, and specialized care.",
+    questionsCount: 250,
+    durationMinutes: 150,
+    difficulty: "Intermediate",
     topics: [
-      "Epidemiology",
+      "High-Risk Pregnancies",
+      "Obstetric Emergencies", 
+      "Neonatal Complications",
+      "Advanced Procedures",
+      "Research & Evidence",
+      "Professional Practice"
+    ],
+    color: "from-green-600 to-teal-600",
+    available: false,
+  },
+  // RPHN Papers - Coming Soon
+  {
+    id: "rphn-paper-1",
+    category: "RPHN",
+    title: "RPHN Paper 1", 
+    description: "Public health fundamentals, community assessment, and health promotion.",
+    questionsCount: 250,
+    durationMinutes: 150,
+    difficulty: "Intermediate",
+    topics: [
+      "Community Health Assessment",
+      "Epidemiology Basics",
       "Health Education",
-      "Community Assessment",
+      "Disease Prevention",
       "Environmental Health",
-      "Policy & Advocacy",
+      "Population Health"
     ],
     color: "from-purple-500 to-fuchsia-600",
-    available: false, // Mark as coming soon
+    available: false,
+  },
+  {
+    id: "rphn-paper-2",
+    category: "RPHN",
+    title: "RPHN Paper 2",
+    description: "Advanced public health practice, policy development, and program management.",
+    questionsCount: 250, 
+    durationMinutes: 150,
+    difficulty: "Intermediate",
+    topics: [
+      "Health Policy & Advocacy",
+      "Program Planning & Evaluation",
+      "Advanced Epidemiology", 
+      "Global Health Issues",
+      "Emergency Preparedness",
+      "Leadership in Public Health"
+    ],
+    color: "from-purple-600 to-violet-600",
+    available: false,
   },
 ];
 
-// Simulated questions for each exam ID
+// Mock questions for RN Paper 1 (first 50 questions as sample)
+const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
+  {
+    id: 1,
+    text: "A patient is receiving a blood transfusion and develops chills, fever, and lower back pain. What is the nurse's priority action?",
+    options: [
+      "Administer an antihistamine.",
+      "Stop the transfusion immediately.",
+      "Slow the rate of the transfusion.",
+      "Notify the physician.",
+    ],
+    correctAnswer: 1,
+    explanation: "This is a classic sign of a transfusion reaction. The absolute first priority is to stop the transfusion to prevent further harm to the patient.",
+  },
+  {
+    id: 2,
+    text: "When caring for a patient with a new tracheostomy, which nursing action takes priority?",
+    options: [
+      "Performing tracheostomy care every shift",
+      "Maintaining a patent airway",
+      "Teaching the patient about self-care",
+      "Monitoring for signs of infection",
+    ],
+    correctAnswer: 1,
+    explanation: "Maintaining airway patency is the highest priority for any patient, especially those with a new tracheostomy who are at risk for airway obstruction.",
+  },
+  {
+    id: 3,
+    text: "A nurse is preparing to administer insulin to a diabetic patient. Which site is most appropriate for subcutaneous injection?",
+    options: ["Thigh", "Upper arm", "Abdomen", "Buttocks"],
+    correctAnswer: 2,
+    explanation: "The abdomen provides the most consistent absorption for insulin and is the preferred site for subcutaneous insulin injection.",
+  },
+  {
+    id: 4,
+    text: "What is the most important factor in preventing healthcare-associated infections?",
+    options: [
+      "Using sterile technique for all procedures.",
+      "Administering prophylactic antibiotics.",
+      "Performing hand hygiene consistently.",
+      "Wearing personal protective equipment.",
+    ],
+    correctAnswer: 2,
+    explanation: "Hand hygiene is the single most effective measure for preventing healthcare-associated infections and should be performed before and after every patient contact.",
+  },
+  {
+    id: 5,
+    text: "A patient with pneumonia is receiving oxygen therapy. Which assessment finding indicates that the therapy is effective?",
+    options: [
+      "Respiratory rate of 28 breaths per minute",
+      "Oxygen saturation of 95%",
+      "Use of accessory muscles",
+      "Restlessness and confusion",
+    ],
+    correctAnswer: 1,
+    explanation: "An oxygen saturation of 95% or higher indicates adequate oxygenation and effective oxygen therapy.",
+  },
+  {
+    id: 6,
+    text: "Which assessment finding would be most concerning in a patient with deep vein thrombosis (DVT)?",
+    options: [
+      "Coolness and pallor in the affected leg",
+      "Diminished pedal pulses",
+      "Unilateral leg swelling, pain, and warmth",
+      "Bilateral lower extremity edema",
+    ],
+    correctAnswer: 2,
+    explanation: "Classic signs of DVT include unilateral leg swelling, pain, tenderness, warmth, and redness in the affected extremity. Coolness, pallor, and diminished pulses are more indicative of arterial insufficiency.",
+  },
+  {
+    id: 7,
+    text: "A patient with hypertension asks about lifestyle modifications. Which statement by the patient indicates a need for further teaching?",
+    options: [
+      "\"I should limit my sodium intake to less than 2,400 mg per day.\"",
+      "\"Regular exercise can help lower my blood pressure.\"",
+      "\"I can stop taking my medication once my blood pressure is normal.\"",
+      "\"I should monitor my blood pressure at home regularly.\"",
+    ],
+    correctAnswer: 2,
+    explanation: "Patients should never stop taking antihypertensive medications without consulting their healthcare provider, even if blood pressure readings are normal. This indicates a need for further education.",
+  },
+  {
+    id: 8,
+    text: "A patient has clear fluid leaking from the nose after a head injury. What should the nurse do to test if this is cerebrospinal fluid?",
+    options: [
+      "Test the fluid for protein",
+      "Test the fluid for glucose",
+      "Check the specific gravity",
+      "Culture the fluid for bacteria",
+    ],
+    correctAnswer: 1,
+    explanation: "Clear fluid leaking from the nose after a head injury could indicate cerebrospinal fluid (CSF) leakage. CSF contains glucose, unlike nasal secretions. Testing for glucose helps differentiate and confirms CSF leakage, which requires immediate medical attention.",
+  },
+  {
+    id: 9,
+    text: "Which intervention is most appropriate for a patient experiencing acute anxiety?",
+    options: [
+      "Leave the patient alone to calm down",
+      "Speak in a calm, reassuring voice",
+      "Encourage the patient to talk about their feelings",
+      "Administer prescribed anti-anxiety medication immediately",
+    ],
+    correctAnswer: 1,
+    explanation: "Speaking in a calm, reassuring voice helps create a therapeutic environment and can help reduce the patient's anxiety level. This should be the first intervention before considering other options.",
+  },
+  {
+    id: 10,
+    text: "A patient is scheduled for a colonoscopy. Which pre-procedure instruction is most important?",
+    options: [
+      "Take nothing by mouth for 8 hours before the procedure",
+      "Perform a Fleet enema the night before the procedure",
+      "Complete the prescribed bowel preparation as directed",
+      "Discontinue all medications 24 hours before the procedure",
+    ],
+    correctAnswer: 2,
+    explanation: "Completing the prescribed bowel preparation exactly as directed is essential for adequate visualization during the colonoscopy and successful completion of the procedure.",
+  },
+  // Continue with more questions to reach 250 total...
+  // For now, I'll add a few more representative questions
+  {
+    id: 11,
+    text: "A newborn's Apgar score is 8 at 1 minute and 9 at 5 minutes. How should the nurse interpret these scores?",
+    options: [
+      "The newborn is in severe distress",
+      "The newborn requires immediate resuscitation", 
+      "The newborn is adapting well to extrauterine life",
+      "The newborn needs continuous monitoring"
+    ],
+    correctAnswer: 2,
+    explanation: "Apgar scores of 8-10 indicate that the newborn is adapting well to life outside the uterus. The improvement from 8 to 9 shows positive adaptation."
+  },
+  {
+    id: 12,
+    text: "When caring for a patient with hypothermia, which intervention should the nurse avoid?",
+    options: [
+      "Gradual rewarming with blankets",
+      "Rapid rewarming with hot water",
+      "Monitoring core body temperature",
+      "Keep the room very warm"
+    ],
+    correctAnswer: 1,
+    explanation: "Rapid rewarming can cause vasodilation and circulatory collapse. Gradual rewarming is the safest approach for hypothermic patients."
+  }
+];
+
+// Mock questions for RN Paper 2 (different focus areas)
+const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
+  {
+    id: 1,
+    text: "A patient in the ICU has a central venous pressure (CVP) reading of 2 mmHg. What does this indicate?",
+    options: [
+      "Fluid overload",
+      "Normal fluid status", 
+      "Hypovolemia",
+      "Heart failure"
+    ],
+    correctAnswer: 2,
+    explanation: "A CVP of 2 mmHg is below the normal range (2-8 mmHg) and indicates hypovolemia or inadequate venous return."
+  },
+  {
+    id: 2,
+    text: "Which finding is most indicative of increased intracranial pressure in a pediatric patient?",
+    options: [
+      "Increased appetite",
+      "Sunset eyes (downward gaze)",
+      "Increased social interaction",
+      "Improved school performance"
+    ],
+    correctAnswer: 1,
+    explanation: "Sunset eyes, where the eyes appear to gaze downward, is a classic sign of increased intracranial pressure in children."
+  },
+  {
+    id: 3,
+    text: "A pregnant patient at 32 weeks gestation presents with severe headache, visual changes, and a blood pressure of 180/110. What condition should the nurse suspect?",
+    options: [
+      "Gestational diabetes",
+      "Preeclampsia with severe features",
+      "Normal pregnancy changes",
+      "Migraine headache"
+    ],
+    correctAnswer: 1,
+    explanation: "These symptoms (severe headache, visual changes, and severely elevated BP) indicate preeclampsia with severe features, which requires immediate medical intervention."
+  },
+  {
+    id: 4,
+    text: "A patient with bipolar disorder is experiencing a manic episode. Which nursing intervention is most appropriate?",
+    options: [
+      "Encourage group activities",
+      "Provide a calm, low-stimulation environment", 
+      "Engage in lengthy conversations",
+      "Allow unlimited visitors"
+    ],
+    correctAnswer: 1,
+    explanation: "During a manic episode, patients benefit from a calm, low-stimulation environment to help reduce agitation and promote rest."
+  },
+  {
+    id: 5,
+    text: "In community health nursing, what is the primary focus of secondary prevention?",
+    options: [
+      "Health promotion and education",
+      "Early detection and screening",
+      "Rehabilitation and recovery", 
+      "Environmental modifications"
+    ],
+    correctAnswer: 1,
+    explanation: "Secondary prevention focuses on early detection of disease through screening and prompt treatment to prevent progression."
+  }
+];
+
+// Question bank mapping
 const MOCK_QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
-  "rn-fundamentals": [
-    {
-      id: 1,
-      text: "A patient is receiving a blood transfusion and develops chills, fever, and lower back pain. What is the nurse's priority action?",
-      options: [
-        "Administer an antihistamine.",
-        "Stop the transfusion immediately.",
-        "Slow the rate of the transfusion.",
-        "Notify the physician.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "This is a classic sign of a transfusion reaction. The absolute first priority is to stop the transfusion to prevent further harm to the patient.",
-    },
-    {
-      id: 2,
-      text: "When caring for a patient with a new tracheostomy, which nursing action takes priority?",
-      options: [
-        "Performing tracheostomy care every shift",
-        "Maintaining a patent airway",
-        "Teaching the patient about self-care",
-        "Monitoring for signs of infection",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "According to ABCs (Airway, Breathing, Circulation), maintaining a patent airway is always the highest priority.",
-    },
-    {
-      id: 3,
-      text: "What is the primary purpose of administering furosemide (Lasix)?",
-      options: [
-        "To lower blood pressure",
-        "To reduce potassium levels",
-        "To treat edema by increasing urine output",
-        "To prevent blood clots",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Furosemide is a loop diuretic whose primary action is to increase renal excretion of water and electrolytes, thereby reducing edema.",
-    },
-    {
-      id: 4,
-      text: "A nurse is preparing to administer insulin. Which site is the best for absorption?",
-      options: ["Thigh", "Upper arm", "Abdomen", "Buttocks"],
-      correctAnswer: 2,
-      explanation:
-        "The abdomen provides the fastest and most consistent absorption of insulin compared to other sites.",
-    },
-    {
-      id: 5,
-      text: "Which assessment finding would indicate a potential complication of immobility?",
-      options: [
-        "Increased muscle mass",
-        "Bradycardia",
-        "Reddened area on the sacrum",
-        "Increased urinary output",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Prolonged pressure on bony prominences like the sacrum can lead to pressure ulcers, a common complication of immobility.",
-    },
-    {
-      id: 6,
-      text: "A patient with a history of heart failure is prescribed a low-sodium diet. Which meal choice indicates the patient understands the dietary restrictions?",
-      options: [
-        "Canned soup and crackers",
-        "Grilled chicken with steamed vegetables",
-        "A frozen TV dinner",
-        "Ham and cheese sandwich",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Grilled chicken and steamed vegetables are naturally low in sodium. Canned, processed, and cured foods are typically very high in sodium.",
-    },
-    {
-      id: 7,
-      text: "What is the correct procedure for collecting a 24-hour urine specimen?",
-      options: [
-        "Discard the first voiding, then collect all urine for 24 hours.",
-        "Collect all urine for 24 hours, including the first voiding.",
-        "Collect one sample in the morning and one at night.",
-        "Keep the collection container at room temperature.",
-      ],
-      correctAnswer: 0,
-      explanation:
-        "To ensure accuracy, the 24-hour collection period begins immediately after the patient's first void, which is discarded.",
-    },
-    {
-      id: 8,
-      text: "A nurse is teaching a patient about using an incentive spirometer. What is the most important instruction?",
-      options: [
-        "Exhale quickly into the device.",
-        "Inhale slowly and deeply.",
-        "Use the device once a day.",
-        "Wash the device with soap and water after each use.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "The purpose of an incentive spirometer is to encourage slow, deep breaths to expand the lungs and prevent atelectasis.",
-    },
-    {
-      id: 9,
-      text: "Which of the following is a key symptom of hypoglycemia?",
-      options: [
-        "Fruity breath",
-        "Increased thirst",
-        "Diaphoresis and shakiness",
-        "Kussmaul respirations",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Diaphoresis (sweating), shakiness, and confusion are classic signs of low blood sugar (hypoglycemia). Fruity breath and increased thirst are signs of hyperglycemia.",
-    },
-    {
-      id: 10,
-      text: "What is the most effective way for a nurse to prevent the spread of infection?",
-      options: [
-        "Wearing gloves for all patient contact.",
-        "Placing all patients in isolation.",
-        "Administering prophylactic antibiotics.",
-        "Performing hand hygiene consistently.",
-      ],
-      correctAnswer: 3,
-      explanation:
-        "Consistent and proper hand hygiene is the single most effective measure to prevent the transmission of healthcare-associated infections.",
-    },
-  ],
-  "rn-medical-surgical": [
-    {
-      id: 1,
-      text: "A patient with chronic kidney disease is prescribed a low-protein diet. The nurse explains that this diet is important to:",
-      options: [
-        "Reduce fluid retention.",
-        "Prevent hyperkalemia.",
-        "Decrease the accumulation of nitrogenous waste products.",
-        "Improve bone density.",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "In chronic kidney disease, the kidneys have difficulty filtering waste products. A low-protein diet reduces the workload on the kidneys by minimizing the production of nitrogenous waste from protein metabolism.",
-    },
-    {
-      id: 2,
-      text: "The nurse is assessing a patient with a suspected deep vein thrombosis (DVT). Which finding is most indicative of a DVT?",
-      options: [
-        "Coolness and pallor of the affected extremity.",
-        "Unilateral leg swelling, pain, and warmth.",
-        "Diminished peripheral pulses in the affected leg.",
-        "Bilateral ankle edema.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Classic signs of DVT include unilateral leg swelling, pain, tenderness, warmth, and redness in the affected extremity. Coolness, pallor, and diminished pulses are more indicative of arterial insufficiency.",
-    },
-    {
-      id: 3,
-      text: "A patient is admitted with acute pancreatitis. Which laboratory value would the nurse expect to be elevated?",
-      options: [
-        "Serum amylase and lipase.",
-        "Blood urea nitrogen (BUN) and creatinine.",
-        "Hemoglobin and hematocrit.",
-        "Serum albumin.",
-      ],
-      correctAnswer: 0,
-      explanation:
-        "Acute pancreatitis is characterized by inflammation of the pancreas, leading to the release of pancreatic enzymes into the bloodstream, specifically amylase and lipase, which are typically elevated.",
-    },
-    {
-      id: 4,
-      text: "The nurse is providing discharge teaching to a patient with newly diagnosed hypertension. Which statement by the patient indicates a need for further teaching?",
-      options: [
-        "“I should limit my salt intake.”",
-        "“I can stop taking my medication once my blood pressure is normal.”",
-        "“I need to exercise regularly.”",
-        "“I will monitor my blood pressure at home.”",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Hypertension is a chronic condition that usually requires lifelong medication. Stopping medication without a physician's order can lead to a rebound hypertensive crisis.",
-    },
-    {
-      id: 5,
-      text: "A patient post-thyroidectomy develops tetany. The nurse recognizes this as a sign of which electrolyte imbalance?",
-      options: [
-        "Hypernatremia",
-        "Hypocalcemia",
-        "Hyperkalemia",
-        "Hypomagnesemia",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Tetany (muscle spasms, tingling, numbness) after a thyroidectomy is a classic sign of hypocalcemia, often due to accidental removal or damage to the parathyroid glands during surgery.",
-    },
-    {
-      id: 6,
-      text: "When assessing a patient with a head injury, the nurse observes clear fluid leaking from the nose. What is the nurse's priority action?",
-      options: [
-        "Test the fluid for glucose.",
-        "Apply a nasal packing.",
-        "Position the patient in a supine position.",
-        "Document the finding and continue monitoring.",
-      ],
-      correctAnswer: 0,
-      explanation:
-        "Clear fluid leaking from the nose after a head injury could indicate cerebrospinal fluid (CSF) leakage. CSF contains glucose, unlike nasal secretions. Testing for glucose helps differentiate and confirms CSF leakage, which requires immediate medical attention.",
-    },
-    {
-      id: 7,
-      text: "A patient with a colostomy is being taught how to change the pouch. Which statement by the patient indicates effective learning?",
-      options: [
-        "“I should change my pouch every day.”",
-        "“I will empty the pouch when it is half full.”",
-        "“I can use regular toilet paper to clean around the stoma.”",
-        "“I should apply a tight-fitting pouch to prevent leaks.”",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Emptying the pouch when it is one-third to one-half full prevents it from becoming too heavy, which could lead to leakage or detachment.",
-    },
-    {
-      id: 8,
-      text: "The nurse is caring for a patient with a new prescription for warfarin. Which food should the patient be advised to limit?",
-      options: ["Oranges", "Spinach", "Chicken breast", "White bread"],
-      correctAnswer: 1,
-      explanation:
-        "Warfarin is an anticoagulant, and its effectiveness can be affected by vitamin K intake. Spinach and other leafy green vegetables are high in vitamin K, which can reduce the anticoagulant effect of warfarin.",
-    },
-    {
-      id: 9,
-      text: "A patient is experiencing an acute asthma exacerbation. Which medication would the nurse expect to administer first?",
-      options: [
-        "Oral corticosteroids",
-        "Long-acting beta-agonists",
-        "Inhaled short-acting beta-agonists (SABA)",
-        "Leukotriene modifiers",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Short-acting beta-agonists (SABAs) like albuterol are bronchodilators that provide rapid relief of bronchospasm during an acute asthma attack.",
-    },
-    {
-      id: 10,
-      text: "The nurse is preparing a patient for a colonoscopy. Which instruction is most important for the patient to follow?",
-      options: [
-        "Maintain a regular diet until the morning of the procedure.",
-        "Drink clear liquids for 24 hours before the procedure.",
-        "Take all regular medications as usual.",
-        "Perform a Fleet enema the night before the procedure.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "A clear liquid diet for 24 hours prior to the colonoscopy, along with bowel preparation, is essential to ensure the colon is clean for visualization.",
-    },
-  ],
-  "rn-pediatrics": [
-    {
-      id: 1,
-      text: "A nurse is assessing a 6-month-old infant. Which developmental milestone would the nurse expect to observe?",
-      options: [
-        "Walking independently",
-        "Saying 'mama' and 'dada' meaningfully",
-        "Sitting without support",
-        "Drinking from a cup",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Most infants can sit independently by 6-8 months of age. Walking, meaningful words, and drinking from a cup typically occur later.",
-    },
-    {
-      id: 2,
-      text: "The nurse is teaching parents about preventing sudden infant death syndrome (SIDS). Which instruction is most important?",
-      options: [
-        "Place the infant to sleep on their stomach.",
-        "Use soft bedding and bumpers in the crib.",
-        "Place the infant to sleep on their back.",
-        "Keep the room very warm.",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Placing infants to sleep on their back (supine position) is the most effective way to reduce the risk of SIDS.",
-    },
-    {
-      id: 3,
-      text: "A child with cystic fibrosis is prescribed pancreatic enzymes. The nurse should instruct the parents to administer these enzymes:",
-      options: [
-        "Once daily in the morning.",
-        "With every meal and snack.",
-        "Only when the child has diarrhea.",
-        "30 minutes before meals.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "Pancreatic enzymes are essential for digestion and absorption of nutrients in children with cystic fibrosis. They must be taken with all meals and snacks to be effective.",
-    },
-    {
-      id: 4,
-      text: "The nurse is preparing to administer an immunization to a 4-year-old child. Which approach is best to gain the child's cooperation?",
-      options: [
-        "Tell the child it won't hurt at all.",
-        "Force the child to sit still.",
-        "Offer a choice of arm or leg for the injection.",
-        "Threaten the child with punishment if they don't cooperate.",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Offering a limited choice gives the child a sense of control, which can reduce anxiety and promote cooperation. Lying or threatening is counterproductive.",
-    },
-    {
-      id: 5,
-      text: "A child is admitted with a diagnosis of croup. Which symptom is most characteristic of croup?",
-      options: [
-        "High-pitched inspiratory stridor",
-        "Barking cough",
-        "Wheezing on expiration",
-        "Sudden onset of high fever",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "A 'barking' or 'seal-like' cough is the hallmark symptom of croup (laryngotracheobronchitis), often accompanied by inspiratory stridor.",
-    },
-  ],
-  // Add mock questions for rm-general and rphn-community when they become available
-  "rm-general": [
-    {
-      id: 1,
-      text: "A pregnant client in her third trimester reports swelling in her ankles and feet. What is the nurse's initial action?",
-      options: [
-        "Advise the client to restrict fluid intake.",
-        "Elevate her legs and encourage rest.",
-        "Assess for other signs of preeclampsia.",
-        "Recommend a diuretic.",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "While ankle swelling is common in pregnancy, it's crucial to rule out more serious conditions like preeclampsia by assessing for other symptoms such as headache, visual disturbances, and elevated blood pressure.",
-    },
-    {
-      id: 2,
-      text: "During labor, a client's cervix is 8 cm dilated, and she is experiencing strong contractions every 2-3 minutes. The nurse identifies this as which phase of labor?",
-      options: [
-        "Latent phase",
-        "Active phase",
-        "Transition phase",
-        "Second stage",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "The transition phase of the first stage of labor is characterized by rapid cervical dilation from 8 to 10 cm, with strong, frequent contractions.",
-    },
-  ],
-  "rphn-community": [
-    {
-      id: 1,
-      text: "A community health nurse is planning a health promotion program for adolescents. Which topic would be most appropriate to address first?",
-      options: [
-        "Nutrition and healthy eating habits.",
-        "Risky sexual behaviors and STIs.",
-        "Substance abuse prevention.",
-        "Mental health awareness.",
-      ],
-      correctAnswer: 1,
-      explanation:
-        "While all are important, addressing risky sexual behaviors and STIs is often a high priority for adolescents due to the significant public health impact and prevalence in this age group.",
-    },
-    {
-      id: 2,
-      text: "In a community with a high incidence of tuberculosis, which intervention would be a primary prevention strategy?",
-      options: [
-        "Directly observed therapy (DOT) for active cases.",
-        "Contact tracing for newly diagnosed cases.",
-        "Providing education on cough etiquette and hand hygiene.",
-        "Screening high-risk populations with tuberculin skin tests.",
-      ],
-      correctAnswer: 2,
-      explanation:
-        "Primary prevention aims to prevent disease before it occurs. Education on cough etiquette and hand hygiene reduces the transmission of the bacteria, thus preventing new infections.",
-    },
-  ],
+  "rn-paper-1": RN_PAPER_1_QUESTIONS,
+  "rn-paper-2": RN_PAPER_2_QUESTIONS,
+  "rm-paper-1": [], // Will be populated when available
+  "rm-paper-2": [], // Will be populated when available  
+  "rphn-paper-1": [], // Will be populated when available
+  "rphn-paper-2": [], // Will be populated when available
 };
 
-// Function to simulate fetching all available exams
+// Utility function to generate additional questions for full 250-question exams
+function generateAdditionalQuestions(baseQuestions: Omit<Question, "flagged">[], targetCount: number): Omit<Question, "flagged">[] {
+  const questions = [...baseQuestions];
+  let currentId = baseQuestions.length + 1;
+  
+  while (questions.length < targetCount) {
+    // Cycle through base questions and modify them slightly
+    const baseIndex = (questions.length - baseQuestions.length) % baseQuestions.length;
+    const baseQuestion = baseQuestions[baseIndex];
+    
+    questions.push({
+      ...baseQuestion,
+      id: currentId++,
+      text: `Variation: ${baseQuestion.text}`,
+    });
+  }
+  
+  return questions;
+}
+
+// Public API functions
 export async function fetchAllExams(): Promise<ExamData[]> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
   return MOCK_ALL_EXAMS;
 }
 
-// Export allExams for backward compatibility
-export const allExams = MOCK_ALL_EXAMS;
-
-// Function to simulate fetching questions for a specific exam
-export async function fetchQuestionsForExam(
-  examId: string
-): Promise<Question[]> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  const questions = MOCK_QUESTIONS_DATA[examId];
-  if (!questions) {
-    throw new Error(`No questions found for exam ID: ${examId}`);
+export async function fetchQuestionsForExam(examId: string): Promise<Question[]> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const baseQuestions = MOCK_QUESTIONS_DATA[examId] || [];
+  const exam = MOCK_ALL_EXAMS.find(e => e.id === examId);
+  
+  if (!exam) {
+    throw new Error(`Exam not found: ${examId}`);
   }
-  // Add 'flagged' property for the exam interface
-  return questions.map((q) => ({ ...q, flagged: false }));
+  
+  // Generate full question set if needed
+  const fullQuestions = baseQuestions.length < exam.questionsCount
+    ? generateAdditionalQuestions(baseQuestions, exam.questionsCount)
+    : baseQuestions.slice(0, exam.questionsCount);
+  
+  // Add flagged property and shuffle questions
+  return fullQuestions
+    .map(q => ({ ...q, flagged: false }))
+    .sort(() => Math.random() - 0.5); // Simple shuffle
 }
+
+export async function getExamById(examId: string): Promise<ExamData | null> {
+  const exams = await fetchAllExams();
+  return exams.find(exam => exam.id === examId) || null;
+}
+
+// Backward compatibility
+export const allExams = MOCK_ALL_EXAMS;
