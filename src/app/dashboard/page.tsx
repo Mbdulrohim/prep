@@ -297,8 +297,7 @@ export default function DashboardPage() {
               ) : recentActivity && recentActivity.length > 0 ? (
                 <div className="space-y-4">
                   {recentActivity.map((activity) => {
-                    const score =
-                      (activity.correctAnswers / activity.totalQuestions) * 100;
+                    const score = activity.score || 0;
                     const passed = score >= 50;
                     return (
                       <div
@@ -318,11 +317,10 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium text-slate-800">
-                            {activity.examType.toUpperCase().replace("-", " ")}{" "}
-                            Exam
+                            {activity.examName || activity.description}
                           </h3>
                           <p className="text-sm text-slate-500">
-                            {formatTimeAgo(activity.completedAt)}
+                            {formatTimeAgo(activity.timestamp)}
                           </p>
                         </div>
                         <div

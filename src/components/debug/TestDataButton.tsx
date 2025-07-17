@@ -15,7 +15,7 @@ export function TestDataButton() {
     const sampleResults = [
       {
         uid: user.uid,
-        examType: "rn" as const,
+        examType: "rn-paper-1" as const,
         score: 85,
         totalQuestions: 100,
         correctAnswers: 85,

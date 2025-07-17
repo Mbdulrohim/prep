@@ -67,26 +67,17 @@ export default function CategoryPage() {
                       {exam.description}
                     </p>
                     <div className="flex items-center gap-4 mt-4">
-                      <ProgressBar progress={exam.progress} />
+                      <ProgressBar progress={0} />
                       <span className="text-sm font-semibold text-slate-600">
-                        {exam.progress}%
+                        0%
                       </span>
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    {exam.progress === 100 ? (
-                      <div className="text-center">
-                        <p className="font-bold text-green-600 text-2xl">
-                          {exam.score}%
-                        </p>
-                        <p className="text-xs text-slate-500">Completed</p>
-                      </div>
-                    ) : (
-                      <Button className="!w-auto gap-2">
-                        {exam.progress > 0 ? "Continue" : "Start Exam"}
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button className="!w-auto gap-2">
+                      Start Exam
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>

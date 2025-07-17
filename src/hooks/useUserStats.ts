@@ -37,11 +37,20 @@ interface ExamProgress {
   lastAttempt: Date | null;
 }
 
+export interface RecentActivity {
+  id: string;
+  type: 'exam' | 'purchase' | 'achievement';
+  description: string;
+  timestamp: Date;
+  score?: number;
+  examName?: string;
+}
+
 export function useUserStats() {
   const { user } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [examProgress, setExamProgress] = useState<ExamProgress[] | null>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
@@ -98,7 +107,7 @@ export function useUserStats() {
       }
 
       // --- Calculate Progress Per Exam Type ---
-      const progressMap = new Map<string, any>();
+      const progressMap = new Map<string, ExamProgress>();
       // Define your exams here
       const examTypes = [
         { id: "rn-paper-1", name: "RN Paper 1" },
@@ -133,10 +142,18 @@ export function useUserStats() {
       setExamProgress(Array.from(progressMap.values()));
 
       // --- Set Recent Activity ---
+      // Set the recent activity data
       setRecentActivity(
         completedAttempts
           .slice(0, 5)
-          .map((a) => ({ ...a, completedAt: a.completedAt.toDate() }))
+          .map((a) => ({
+            id: a.id,
+            type: 'exam' as const,
+            description: `Completed ${a.examType} exam`,
+            timestamp: a.completedAt.toDate(),
+            score: a.score,
+            examName: a.examType
+          }))
       );
     } catch (e) {
       console.error("Error fetching user stats:", e);

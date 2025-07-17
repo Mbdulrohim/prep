@@ -94,7 +94,7 @@ export function PreExamModal({
 
         <div className="pt-4">
           <Button type="submit" disabled={!name || !university}>
-            I'm Ready, Start Exam
+            I&apos;m Ready, Start Exam
           </Button>
         </div>
       </form>
