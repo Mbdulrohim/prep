@@ -34,15 +34,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-800 mb-6">
-            Master Your <span className="text-blue-600">Professional</span> Exams
+            Master Your <span className="text-blue-600">Professional</span>{" "}
+            Exams
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            The premier platform for nursing and midwifery exam preparation. 
+            The premier platform for nursing and midwifery exam preparation.
             Practice with real-world questions and track your progress.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -75,7 +76,8 @@ export default function HomePage() {
                 Comprehensive Practice
               </h3>
               <p className="text-slate-600">
-                Access hundreds of practice questions across RN, RM, and RPHN categories
+                Access hundreds of practice questions across RN, RM, and RPHN
+                categories
               </p>
             </div>
             <div className="text-center p-6">
@@ -161,10 +163,14 @@ export default function HomePage() {
             Ready to Excel in Your Professional Exams?
           </h2>
           <p className="text-slate-300 text-lg mb-8">
-            Join thousands of healthcare professionals who trust PREP for their exam preparation
+            Join thousands of healthcare professionals who trust PREP for their
+            exam preparation
           </p>
           <Link href="/dashboard">
-            <Button size="lg" className="px-8 py-3 text-lg bg-blue-600 hover:bg-blue-700">
+            <Button
+              size="lg"
+              className="px-8 py-3 text-lg bg-blue-600 hover:bg-blue-700"
+            >
               Start Practicing Now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>

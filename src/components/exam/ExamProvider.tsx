@@ -1,17 +1,9 @@
 // src/components/exam/ExamProvider.tsx
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { useParams } from "next/navigation";
-import {
-  fetchQuestionsForExam,
-  fetchAllExams,
-  ExamData,
-} from "@/lib/examData";
+import { fetchQuestionsForExam, fetchAllExams, ExamData } from "@/lib/examData";
 import { ExamContext, Question, ExamContextType } from "@/context/ExamContext";
 
 export function ExamProvider({ children }: { children: ReactNode }) {

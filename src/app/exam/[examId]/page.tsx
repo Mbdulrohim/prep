@@ -7,12 +7,12 @@ import { useExam } from "@/context/ExamContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { PreExamModal, StudentDetails } from "@/components/exam/PreExamModal";
-import { 
-  Clock, 
-  Flag, 
-  ChevronLeft, 
-  ChevronRight, 
-  ArrowLeft 
+import {
+  Clock,
+  Flag,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 
 export default function ExamPage() {
@@ -32,14 +32,16 @@ export default function ExamPage() {
 
   const [examStarted, setExamStarted] = useState(false);
   const [showPreModal, setShowPreModal] = useState(false);
-  const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(null);
+  const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(
+    null
+  );
 
   useEffect(() => {
     if (!user) {
       router.push("/");
       return;
     }
-    
+
     if (!loadingQuestions && questions.length > 0 && !examStarted) {
       setShowPreModal(true);
     }
@@ -132,7 +134,7 @@ export default function ExamPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
       <Header />
-      
+
       {/* Exam Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -149,7 +151,7 @@ export default function ExamPage() {
               {examDetails?.title}
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-slate-600">
               <Clock className="h-4 w-4" />
@@ -160,7 +162,7 @@ export default function ExamPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="max-w-4xl mx-auto mt-4">
           <div className="w-full bg-slate-200 rounded-full h-2">
@@ -230,9 +232,7 @@ export default function ExamPage() {
               </div>
 
               {currentQuestionIndex === questions.length - 1 ? (
-                <Button onClick={handleSubmitExam}>
-                  Submit Exam
-                </Button>
+                <Button onClick={handleSubmitExam}>Submit Exam</Button>
               ) : (
                 <Button onClick={handleNextQuestion}>
                   Next

@@ -39,7 +39,7 @@ interface ExamProgress {
 
 export interface RecentActivity {
   id: string;
-  type: 'exam' | 'purchase' | 'achievement';
+  type: "exam" | "purchase" | "achievement";
   description: string;
   timestamp: Date;
   score?: number;
@@ -144,16 +144,14 @@ export function useUserStats() {
       // --- Set Recent Activity ---
       // Set the recent activity data
       setRecentActivity(
-        completedAttempts
-          .slice(0, 5)
-          .map((a) => ({
-            id: a.id,
-            type: 'exam' as const,
-            description: `Completed ${a.examType} exam`,
-            timestamp: a.completedAt.toDate(),
-            score: a.score,
-            examName: a.examType
-          }))
+        completedAttempts.slice(0, 5).map((a) => ({
+          id: a.id,
+          type: "exam" as const,
+          description: `Completed ${a.examType} exam`,
+          timestamp: a.completedAt.toDate(),
+          score: a.score,
+          examName: a.examType,
+        }))
       );
     } catch (e) {
       console.error("Error fetching user stats:", e);

@@ -40,8 +40,8 @@ export function UserProfileSetup({
           Complete Your Profile
         </h2>
         <p className="mt-2 text-slate-600">
-          Welcome to PREP! Let&apos;s get your profile set up so we can personalize
-          your experience.
+          Welcome to PREP! Let&apos;s get your profile set up so we can
+          personalize your experience.
         </p>
       </div>
 

@@ -2,10 +2,7 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import {
-  Question as BaseQuestion,
-  ExamData,
-} from "@/lib/examData";
+import { Question as BaseQuestion, ExamData } from "@/lib/examData";
 
 // Extend the base Question type to include the 'flagged' property
 export type Question = BaseQuestion & { flagged: boolean };
