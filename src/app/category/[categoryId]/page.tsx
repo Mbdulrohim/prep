@@ -25,16 +25,83 @@ export default function CategoryPage() {
   // Get the category ID from the URL (e.g., 'rn')
   const categoryId = params.categoryId;
 
-  // Filter the exams to show only those matching the current category
-  const examsForCategory = allExams.filter(
-    (exam) => exam.category.toLowerCase() === categoryId
-  );
+  // Define the exam papers for each category
+  const examsByCategory = {
+    rn: [
+      {
+        id: "rn-paper-1",
+        title: "RN Paper 1",
+        description: "Comprehensive nursing fundamentals and clinical practice",
+        questions: 250,
+        duration: "2.5 hours",
+        available: true,
+        difficulty: "Intermediate" as const
+      },
+      {
+        id: "rn-paper-2", 
+        title: "RN Paper 2",
+        description: "Advanced nursing practice and specialized care",
+        questions: 250,
+        duration: "2.5 hours",
+        available: true,
+        difficulty: "Intermediate" as const
+      }
+    ],
+    rm: [
+      {
+        id: "rm-paper-1",
+        title: "RM Paper 1", 
+        description: "Midwifery fundamentals and maternal care",
+        questions: 250,
+        duration: "2.5 hours",
+        available: false,
+        difficulty: "Intermediate" as const
+      },
+      {
+        id: "rm-paper-2",
+        title: "RM Paper 2",
+        description: "Advanced midwifery practice and neonatal care", 
+        questions: 250,
+        duration: "2.5 hours",
+        available: false,
+        difficulty: "Intermediate" as const
+      }
+    ],
+    rphn: [
+      {
+        id: "rphn-paper-1",
+        title: "RPHN Paper 1",
+        description: "Public health fundamentals and community care",
+        questions: 250,
+        duration: "2.5 hours", 
+        available: false,
+        difficulty: "Intermediate" as const
+      },
+      {
+        id: "rphn-paper-2",
+        title: "RPHN Paper 2",
+        description: "Advanced public health practice and epidemiology",
+        questions: 250,
+        duration: "2.5 hours",
+        available: false,
+        difficulty: "Intermediate" as const
+      }
+    ]
+  };
 
-  const categoryTitle = categoryId === "rn" ? "Registered Nursing" : "Exams";
+  const examsForCategory = examsByCategory[categoryId as keyof typeof examsByCategory] || [];
+  
+  const categoryTitles = {
+    rn: "Registered Nursing",
+    rm: "Registered Midwifery", 
+    rphn: "Public Health Nursing"
+  };
 
-  const handleExamClick = (exam: ExamData) => {
+  const categoryTitle = categoryTitles[categoryId as keyof typeof categoryTitles] || "Exams";
+
+  const handleExamClick = (exam: typeof examsForCategory[0]) => {
     if (exam.available) {
-      // Navigate to the specific exam, e.g., /exam/rn-mock-1
+      // Navigate to the specific exam, e.g., /exam/rn-paper-1
       router.push(`/exam/${exam.id}`);
     }
   };
@@ -55,29 +122,67 @@ export default function CategoryPage() {
             {examsForCategory.map((exam) => (
               <div
                 key={exam.id}
-                className="bg-card border border-border rounded-2xl p-6 transition-all hover:border-primary hover:shadow-lg cursor-pointer"
+                className={`bg-white border rounded-2xl p-6 transition-all ${
+                  exam.available 
+                    ? 'border-slate-200 hover:border-blue-300 hover:shadow-lg cursor-pointer' 
+                    : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                }`}
                 onClick={() => handleExamClick(exam)}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-grow">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {exam.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className={`text-xl font-semibold ${exam.available ? 'text-slate-800' : 'text-gray-600'}`}>
+                        {exam.title}
+                      </h2>
+                      {!exam.available && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-sm mb-3 ${exam.available ? 'text-slate-600' : 'text-gray-500'}`}>
                       {exam.description}
                     </p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <ProgressBar progress={0} />
-                      <span className="text-sm font-semibold text-slate-600">
-                        0%
-                      </span>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${exam.available ? 'text-slate-700' : 'text-gray-500'}`}>
+                          📝 {exam.questions} Questions
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${exam.available ? 'text-slate-700' : 'text-gray-500'}`}>
+                          ⏱️ {exam.duration}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${exam.available ? 'text-blue-600' : 'text-gray-500'}`}>
+                          📊 {exam.difficulty}
+                        </span>
+                      </div>
                     </div>
+                    {exam.available && (
+                      <div className="flex items-center gap-4 mt-4">
+                        <div className="flex-grow bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-600">
+                          0% Complete
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-shrink-0">
-                    <Button className="!w-auto gap-2">
-                      Start Exam
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    {exam.available ? (
+                      <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+                        Start Exam
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button disabled className="gap-2 bg-gray-300 cursor-not-allowed">
+                        Coming Soon
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

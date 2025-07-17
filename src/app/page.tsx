@@ -113,6 +113,7 @@ export default function HomePage() {
             Exam Categories
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
+            {/* RN Category - Available */}
             <Link href="/category/rn" className="block group">
               <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow border group-hover:border-blue-300">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -121,37 +122,71 @@ export default function HomePage() {
                 <h3 className="text-xl font-semibold text-slate-800 mb-2">
                   Registered Nurse (RN)
                 </h3>
-                <p className="text-slate-600 text-sm">
-                  Comprehensive nursing practice exams and fundamentals
+                <p className="text-slate-600 text-sm mb-3">
+                  Comprehensive nursing practice exams
                 </p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-blue-600 font-medium">Paper 1 & Paper 2</span>
+                    <span className="text-slate-500">Available</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>250 questions each</span>
+                    <span>2.5 hours</span>
+                  </div>
+                </div>
               </div>
             </Link>
-            <Link href="/category/rm" className="block group">
-              <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow border group-hover:border-green-300">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+
+            {/* RM Category - Locked */}
+            <div className="block group opacity-60 cursor-not-allowed">
+              <div className="bg-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
                   Registered Midwife (RM)
                 </h3>
-                <p className="text-slate-600 text-sm">
-                  Specialized midwifery practice and care protocols
+                <p className="text-gray-500 text-sm mb-3">
+                  Specialized midwifery practice exams
                 </p>
-              </div>
-            </Link>
-            <Link href="/category/rphn" className="block group">
-              <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow border group-hover:border-purple-300">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-purple-600" />
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500 font-medium">Paper 1 & Paper 2</span>
+                    <span className="text-red-500">Coming Soon</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>250 questions each</span>
+                    <span>2.5 hours</span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              </div>
+            </div>
+
+            {/* RPHN Category - Locked */}
+            <div className="block group opacity-60 cursor-not-allowed">
+              <div className="bg-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
                   Public Health Nurse (RPHN)
                 </h3>
-                <p className="text-slate-600 text-sm">
+                <p className="text-gray-500 text-sm mb-3">
                   Community health and public health nursing practice
                 </p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500 font-medium">Paper 1 & Paper 2</span>
+                    <span className="text-red-500">Coming Soon</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>250 questions each</span>
+                    <span>2.5 hours</span>
+                  </div>
+                </div>
               </div>
-            </Link>
+            </div>
           </div>
         </div>
       </section>
