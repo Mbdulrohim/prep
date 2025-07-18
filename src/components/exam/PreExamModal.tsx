@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { UniversitySelector } from "@/components/ui/UniversitySelector";
 import { Clock, FileText, AlertCircle, CheckCircle } from "lucide-react";
 
 export interface StudentDetails {
@@ -129,13 +130,10 @@ export function PreExamModal({
             <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-2">
               University/Institution *
             </label>
-            <input
-              id="university"
-              type="text"
+            <UniversitySelector
               value={university}
-              onChange={(e) => setUniversity(e.target.value)}
-              placeholder="Enter your university or institution"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              onChange={setUniversity}
+              placeholder="Select or search for your university..."
               required
             />
           </div>

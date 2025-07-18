@@ -3,13 +3,13 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
-import { ArrowRight, BookOpen, Users, Award, CheckCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Users, Award, CheckCircle, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, signInWithGoogle, loading } = useAuth();
   const router = useRouter();
 
   // Redirect authenticated users to dashboard
@@ -48,6 +48,28 @@ export default function HomePage() {
               The premier platform for nursing and midwifery exam preparation.
               Practice with real-world questions and track your progress.
             </p>
+            
+            {/* Sign In Button */}
+            <div className="mb-12">
+              <Button
+                onClick={signInWithGoogle}
+                size="lg"
+                className="px-8 py-4 text-lg bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg transition-all transform hover:scale-105"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign In with Google to Start
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Exam Categories - Prominently Displayed */}
@@ -206,14 +228,24 @@ export default function HomePage() {
             Join thousands of healthcare professionals who trust PREP for their
             exam preparation
           </p>
-          <Link href="/dashboard">
-            <Button
-              size="lg"
-              className="px-8 py-3 text-lg bg-blue-600 hover:bg-blue-700"
-            >
-              Start Practicing Now <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <Button
+            onClick={signInWithGoogle}
+            size="lg"
+            className="px-8 py-3 text-lg bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                Loading...
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-5 w-5" />
+                Start Practicing Now
+              </>
+            )}
+          </Button>
         </div>
       </section>
     </div>
