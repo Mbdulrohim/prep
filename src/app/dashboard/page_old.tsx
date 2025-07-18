@@ -7,7 +7,6 @@ import { PaystackPurchase } from "@/components/dashboard/PaystackPurchase";
 import { AlternativePayment } from "@/components/dashboard/AlternativePayment";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
-import { TestDataButton } from "@/components/debug/TestDataButton";
 import {
   CreditCard,
   Key,
@@ -173,7 +172,7 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 mr-2" />
               <span>{showLeaderboard ? "Hide" : "View"} Leaderboard</span>
             </button>
-            <TestDataButton />
+            {/* TestDataButton removed for production */}
           </div>
         </div>
 

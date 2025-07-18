@@ -24,7 +24,7 @@ export interface Question {
 }
 
 // Exam definitions
-const MOCK_ALL_EXAMS: ExamData[] = [
+const ALL_EXAMS: ExamData[] = [
   // RN Paper 1 - Available
   {
     id: "rn-paper-1",
@@ -380,7 +380,7 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
 ];
 
 // Question bank mapping
-const MOCK_QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
+const QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
   "rn-paper-1": RN_PAPER_1_QUESTIONS,
   "rn-paper-2": RN_PAPER_2_QUESTIONS,
   "rm-paper-1": [], // Will be populated when available
@@ -417,7 +417,7 @@ function generateAdditionalQuestions(
 export async function fetchAllExams(): Promise<ExamData[]> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
-  return MOCK_ALL_EXAMS;
+  return ALL_EXAMS;
 }
 
 export async function fetchQuestionsForExam(
@@ -426,8 +426,8 @@ export async function fetchQuestionsForExam(
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const baseQuestions = MOCK_QUESTIONS_DATA[examId] || [];
-  const exam = MOCK_ALL_EXAMS.find((e) => e.id === examId);
+  const baseQuestions = QUESTIONS_DATA[examId] || [];
+  const exam = ALL_EXAMS.find((e) => e.id === examId);
 
   if (!exam) {
     throw new Error(`Exam not found: ${examId}`);
@@ -451,4 +451,4 @@ export async function getExamById(examId: string): Promise<ExamData | null> {
 }
 
 // Backward compatibility
-export const allExams = MOCK_ALL_EXAMS;
+export const allExams = ALL_EXAMS;

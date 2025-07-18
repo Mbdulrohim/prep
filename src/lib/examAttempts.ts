@@ -106,10 +106,27 @@ class ExamAttemptManager {
     existingAttempt?: ExamAttempt;
   }> {
     try {
+      // First check if this is an admin user
+      const ADMIN_EMAILS = [
+        "doyextech@gmail.com",
+        "ibrahimadekunle3030@gmail.com", 
+        "adekunleibrahim6060@gmail.com",
+      ];
+      
+      // Get user's email to check admin status
+      const userDoc = await getDoc(doc(db, "users", userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.email && ADMIN_EMAILS.includes(userData.email)) {
+          // Admin users have unlimited access
+          return { canStart: true };
+        }
+      }
+
       // Check user access
       const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
       if (!userAccessDoc.exists()) {
-        return { canStart: false, reason: "No access permissions found" };
+        return { canStart: false, reason: "No access permissions found. Please purchase exam access or redeem an access code." };
       }
 
       const userAccess = userAccessDoc.data() as UserAccess;
@@ -131,10 +148,15 @@ class ExamAttemptManager {
 
       // Check expiry
       const now = new Date();
-      const expiryDate =
-        userAccess.expiryDate instanceof Date
-          ? userAccess.expiryDate
-          : new Date(userAccess.expiryDate);
+      let expiryDate: Date;
+      if (userAccess.expiryDate instanceof Date) {
+        expiryDate = userAccess.expiryDate;
+      } else if (userAccess.expiryDate && (userAccess.expiryDate as any).toDate) {
+        expiryDate = (userAccess.expiryDate as any).toDate();
+      } else {
+        expiryDate = new Date(userAccess.expiryDate);
+      }
+      
       if (now > expiryDate) {
         return { canStart: false, reason: "Access has expired" };
       }

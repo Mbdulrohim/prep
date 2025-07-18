@@ -76,13 +76,24 @@ export async function POST(request: NextRequest) {
     // Grant user access
     const userAccess = {
       userId,
+      userEmail: userAccessData.userEmail || "",
+      userName: userAccessData.userName || "",
+      userUniversity: userAccessData.userUniversity || "",
       examCategory: accessCodeData.examCategory,
       papers: accessCodeData.papers,
       expiryDate: accessCodeData.expiryDate,
       accessGrantedAt: new Date(),
       accessCode: cleanCode,
+      hasAccess: true,
+      isActive: true,
+      isRestricted: false,
       redeemedCodes: [...(userAccessData.redeemedCodes || []), cleanCode],
       examAttempts: userAccessData.examAttempts || {},
+      attemptsMade: userAccessData.attemptsMade || {},
+      maxAttempts: 10,
+      remainingAttempts: 10,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     await setDoc(doc(db, "userAccess", userId), userAccess);

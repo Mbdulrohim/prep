@@ -7,7 +7,6 @@ import { AlternativePayment } from "@/components/dashboard/AlternativePayment";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
-import { TestDataButton } from "@/components/debug/TestDataButton";
 import {
   CreditCard,
   BarChart,
@@ -459,12 +458,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Development Tools */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-8">
-            <TestDataButton />
-          </div>
-        )}
+        {/* Development Tools - Removed for production */}
       </div>
 
       {/* Modals */}

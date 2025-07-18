@@ -20,6 +20,8 @@ import {
   doc,
   writeBatch,
   addDoc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import {
   Settings,
@@ -500,13 +502,30 @@ export default function AdminDashboard() {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + daysValid);
 
-      await updateDoc(doc(db, "userAccess", userId), {
+      // Get user data for userAccess record
+      const userDoc = await getDoc(doc(db, "users", userId));
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      await setDoc(doc(db, "userAccess", userId), {
+        userId: userId,
+        userEmail: userData.email || "",
+        userName: userData.displayName || "",
+        userUniversity: userData.university || "",
+        examCategory: "ALL",
+        papers: ["paper-1", "paper-2"],
         hasAccess: true,
+        isActive: true,
+        isRestricted: false,
         planType: planType,
         accessGrantedAt: new Date(),
         expiryDate: expiryDate,
         grantedBy: user?.uid,
         updatedAt: new Date(),
+        createdAt: new Date(),
+        attemptsMade: {},
+        maxAttempts: 10,
+        remainingAttempts: 10,
+        accessCode: "ADMIN_GRANTED",
       });
 
       // Update local state
