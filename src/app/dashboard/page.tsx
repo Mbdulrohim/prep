@@ -7,7 +7,6 @@ import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
-import { TestDataButton } from "@/components/debug/TestDataButton";
 import {
   CreditCard,
   BarChart,
@@ -34,6 +33,9 @@ import { useState, useEffect } from "react";
 import { useUserStats } from "@/hooks/useUserStats";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { fetchAllExams, ExamData } from "@/lib/examData";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Admin access control
 const ADMIN_EMAILS = [
@@ -55,21 +57,74 @@ export default function DashboardPage() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    "paystack"
-  >("paystack");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<"paystack">("paystack");
+  const [rnExams, setRnExams] = useState<ExamData[]>([]);
+  const [examsLoading, setExamsLoading] = useState(true);
+  const [userAccess, setUserAccess] = useState<any>(null);
+  const [accessLoading, setAccessLoading] = useState(true);
 
   useEffect(() => {
     if (user && userProfile) {
       refreshData();
+      checkUserAccess();
     }
   }, [user, userProfile, refreshData]);
+
+  // Check user access to exams
+  const checkUserAccess = async () => {
+    if (!user) return;
+    
+    setAccessLoading(true);
+    try {
+      const userAccessDoc = await getDoc(doc(db, "userAccess", user.uid));
+      if (userAccessDoc.exists()) {
+        const accessData = userAccessDoc.data();
+        
+        // Check if access is still valid
+        const now = new Date();
+        const expiryDate = accessData.expiryDate?.toDate() || new Date(0);
+        const isActive = accessData.isActive && now < expiryDate && !accessData.isRestricted;
+        
+        setUserAccess(isActive ? accessData : null);
+      } else {
+        setUserAccess(null);
+      }
+    } catch (error) {
+      console.error("Error checking user access:", error);
+      setUserAccess(null);
+    } finally {
+      setAccessLoading(false);
+    }
+  };
+
+  // Load RN exams
+  useEffect(() => {
+    const loadRnExams = async () => {
+      try {
+        setExamsLoading(true);
+        const allExams = await fetchAllExams();
+        // Filter for RN exams only and ensure they're available
+        const filteredExams = allExams.filter(
+          (exam) => exam.category === "RN" && exam.available
+        );
+        setRnExams(filteredExams);
+      } catch (error) {
+        console.error("Failed to load RN exams:", error);
+      } finally {
+        setExamsLoading(false);
+      }
+    };
+
+    loadRnExams();
+  }, []);
 
   const handleProfileSave = async (name: string, university: string) => {
     setProfileLoading(true);
     try {
       await updateUserProfile(name, university);
       refreshData();
+      checkUserAccess();
     } catch (error) {
       console.error("Failed to update profile:", error);
     } finally {
@@ -207,7 +262,7 @@ export default function DashboardPage() {
   }
 
   // Loading state
-  if (statsLoading) {
+  if (statsLoading || accessLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <Header />
@@ -223,7 +278,7 @@ export default function DashboardPage() {
 
   // Check if user has access to any exams - Admin gets unlimited access
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
-  const hasExamAccess = isAdmin || (stats && stats.totalExamsCompleted > 0);
+  const hasExamAccess = isAdmin || userAccess;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -298,18 +353,23 @@ export default function DashboardPage() {
                 {/* Payment Component */}
                 <div className="p-6 space-y-6">
                   {/* Access Code Redemption */}
-                  <CodeRedemptionForm onSuccess={refreshData} />
-                  
+                  <CodeRedemptionForm onSuccess={() => {
+                    refreshData();
+                    checkUserAccess();
+                  }} />
+
                   {/* OR Divider */}
                   <div className="flex items-center">
                     <div className="flex-1 border-t border-gray-300"></div>
-                    <span className="px-4 text-sm text-gray-500 bg-white">OR</span>
+                    <span className="px-4 text-sm text-gray-500 bg-white">
+                      OR
+                    </span>
                     <div className="flex-1 border-t border-gray-300"></div>
                   </div>
-                  
+
                   {/* Paystack Payment */}
                   <PaystackPurchase />
-                  
+
                   <div className="mt-8 space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Alternative Payment Methods
@@ -469,71 +529,70 @@ export default function DashboardPage() {
             <div className="lg:col-span-3">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  Available Exams
+                  RN Exam Schedule
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      id: "medical-surgical",
-                      name: "Medical-Surgical Nursing",
-                      questions: 2500,
-                      icon: FileText,
-                    },
-                    {
-                      id: "pediatric",
-                      name: "Pediatric Nursing",
-                      questions: 1800,
-                      icon: Users,
-                    },
-                    {
-                      id: "obstetric",
-                      name: "Obstetric & Gynecologic Nursing",
-                      questions: 1500,
-                      icon: Award,
-                    },
-                    {
-                      id: "psychiatric",
-                      name: "Psychiatric Nursing",
-                      questions: 1200,
-                      icon: Building,
-                    },
-                    {
-                      id: "community",
-                      name: "Community Health Nursing",
-                      questions: 1000,
-                      icon: BarChart,
-                    },
-                    {
-                      id: "fundamentals",
-                      name: "Fundamentals of Nursing",
-                      questions: 2000,
-                      icon: Zap,
-                    },
-                  ].map((exam) => (
-                    <Link
-                      key={exam.id}
-                      href={`/exam/${exam.id}`}
-                      className="group p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                            <exam.icon className="h-5 w-5 text-blue-600" />
+                {examsLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Add schedule info */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-blue-900 mb-2">
+                        📅 Exam Schedule
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        <strong>Paper 1:</strong> Day 1 - Must be completed
+                        before Paper 2<br />
+                        <strong>Paper 2:</strong> Day 2 - Available after Paper
+                        1 completion
+                      </p>
+                      <p className="text-xs text-blue-600 mt-2">
+                        ⚠️ Both papers must be taken on consecutive days as per
+                        exam regulations
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {rnExams.map((exam, index) => (
+                        <Link
+                          key={exam.id}
+                          href={`/exam/${exam.id}`}
+                          className="group p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900">
+                                  {exam.title}
+                                </h4>
+                                <p className="text-sm text-gray-500">
+                                  {exam.questionsCount} questions •{" "}
+                                  {exam.durationMinutes} mins
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                  Day {index + 1} - {exam.difficulty}
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
                           </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900">
-                              {exam.name}
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              {exam.questions} questions
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        </Link>
+                      ))}
+                    </div>
+
+                    {rnExams.length === 0 && (
+                      <div className="text-center py-8">
+                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No RN exams available</p>
                       </div>
-                    </Link>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -593,12 +652,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Development Tools */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-8">
-            <TestDataButton />
-          </div>
-        )}
+        {/* Development Tools - Removed for production */}
       </div>
 
       {/* Modals */}

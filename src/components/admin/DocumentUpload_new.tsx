@@ -134,9 +134,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   };
 
-  const downloadSampleDocument = () => {
-    // Create a sample document content
-    const sampleContent = `Sample Question Format for Exam Upload
+  const downloadTemplateDocument = () => {
+    // Create a template document content
+    const templateContent = `Question Format Template for Exam Upload
 
 IMPORTANT: Follow this exact format for successful parsing:
 
@@ -175,9 +175,9 @@ IMPORTANT NOTES:
 
     // Create and download the file
     const element = document.createElement("a");
-    const file = new Blob([sampleContent], { type: "text/plain" });
+    const file = new Blob([templateContent], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    element.download = "Sample_Question_Format.txt";
+    element.download = "Question_Format_Template.txt";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -251,12 +251,12 @@ IMPORTANT NOTES:
 
             <div className="mt-4">
               <Button
+                onClick={downloadTemplateDocument}
                 variant="outline"
-                onClick={downloadSampleDocument}
-                className="bg-white hover:bg-blue-50 border-blue-300 text-blue-700"
+                size="sm"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download Sample Format
+                Download Template Format
               </Button>
             </div>
           </div>

@@ -391,25 +391,6 @@ export class DocumentParser {
 
     return { valid, invalid };
   }
-
-  /**
-   * Generate sample question for testing
-   */
-  static generateSampleQuestion(examCategory: string): ParsedQuestion {
-    return {
-      id: `${examCategory}-sample-${Date.now()}`,
-      text: `Sample nursing question for ${examCategory}. What is the most appropriate intervention for a patient experiencing acute pain?`,
-      options: [
-        "Administer prescribed analgesics immediately",
-        "Wait for physician orders before any intervention",
-        "Apply ice to the affected area without assessment",
-        "Encourage patient to tolerate the pain",
-      ],
-      correctAnswer: 0,
-      explanation:
-        "Administering prescribed analgesics is the most appropriate intervention as it provides immediate relief while following established protocols.",
-      category: examCategory,
-      difficulty: "Intermediate",
-    };
-  }
 }
+
+export default DocumentParser;

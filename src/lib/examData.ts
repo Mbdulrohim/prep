@@ -24,7 +24,7 @@ export interface Question {
 }
 
 // Exam definitions
-const MOCK_ALL_EXAMS: ExamData[] = [
+const ALL_EXAMS: ExamData[] = [
   // RN Paper 1 - Available
   {
     id: "rn-paper-1",
@@ -147,7 +147,7 @@ const MOCK_ALL_EXAMS: ExamData[] = [
   },
 ];
 
-// Mock questions for RN Paper 1 (first 50 questions as sample)
+// Questions for RN Paper 1 
 const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
   {
     id: 1,
@@ -292,7 +292,7 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
   }
 ];
 
-// Mock questions for RN Paper 2 (different focus areas)
+// Questions for RN Paper 2
 const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
   {
     id: 1,
@@ -357,7 +357,7 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
 ];
 
 // Question bank mapping
-const MOCK_QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
+const QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
   "rn-paper-1": RN_PAPER_1_QUESTIONS,
   "rn-paper-2": RN_PAPER_2_QUESTIONS,
   "rm-paper-1": [], // Will be populated when available
@@ -390,15 +390,15 @@ function generateAdditionalQuestions(baseQuestions: Omit<Question, "flagged">[],
 export async function fetchAllExams(): Promise<ExamData[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 100));
-  return MOCK_ALL_EXAMS;
+  return ALL_EXAMS;
 }
 
 export async function fetchQuestionsForExam(examId: string): Promise<Question[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 200));
   
-  const baseQuestions = MOCK_QUESTIONS_DATA[examId] || [];
-  const exam = MOCK_ALL_EXAMS.find(e => e.id === examId);
+  const baseQuestions = QUESTIONS_DATA[examId] || [];
+  const exam = ALL_EXAMS.find((e: ExamData) => e.id === examId);
   
   if (!exam) {
     throw new Error(`Exam not found: ${examId}`);
@@ -411,7 +411,7 @@ export async function fetchQuestionsForExam(examId: string): Promise<Question[]>
   
   // Add flagged property and shuffle questions
   return fullQuestions
-    .map(q => ({ ...q, flagged: false }))
+    .map((q: Omit<Question, "flagged">) => ({ ...q, flagged: false }))
     .sort(() => Math.random() - 0.5); // Simple shuffle
 }
 
@@ -421,4 +421,4 @@ export async function getExamById(examId: string): Promise<ExamData | null> {
 }
 
 // Backward compatibility
-export const allExams = MOCK_ALL_EXAMS;
+export const allExams = ALL_EXAMS;
