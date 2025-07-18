@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
+import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
 import { ParsedQuestion } from "@/lib/documentParser";
 import { examAttemptManager } from "@/lib/examAttempts";
 import { db } from "@/lib/firebase";
@@ -43,6 +44,7 @@ import {
   Building2,
   Calendar,
   Filter,
+  Key,
 } from "lucide-react";
 
 // Admin access control
@@ -105,6 +107,7 @@ export default function AdminDashboard() {
     | "rankings"
     | "feedback"
     | "universities"
+    | "access-codes"
   >("overview");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -588,6 +591,7 @@ export default function AdminDashboard() {
     { id: "upload", label: "Upload Documents", icon: Upload },
     { id: "questions", label: "Manage Questions", icon: Database },
     { id: "users", label: "User Management", icon: Users },
+    { id: "access-codes", label: "Access Codes", icon: Key },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -1443,6 +1447,13 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Access Codes Tab */}
+          {activeTab === "access-codes" && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <AccessCodeManager createdBy={user?.email || 'admin'} />
             </div>
           )}
         </div>

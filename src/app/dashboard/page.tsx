@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { PaystackPurchase } from "@/components/dashboard/PaystackPurchase";
-import { AlternativePayment } from "@/components/dashboard/AlternativePayment";
+import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
@@ -47,10 +47,9 @@ export default function DashboardPage() {
   } = useUserStats();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [showAlternativePayment, setShowAlternativePayment] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    "paystack" | "alternative"
+    "paystack"
   >("paystack");
 
   useEffect(() => {
@@ -274,110 +273,74 @@ export default function DashboardPage() {
 
                 {/* Payment Method Selector */}
                 <div className="p-6 border-b border-gray-200">
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={() => setSelectedPaymentMethod("paystack")}
-                      className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                        selectedPaymentMethod === "paystack"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <CreditCard className="h-5 w-5 mr-3 text-blue-600" />
-                        <div className="text-left">
-                          <div className="font-semibold">Card Payment</div>
-                          <div className="text-sm text-gray-500">
-                            Instant access
-                          </div>
+                  <div className="p-4 rounded-lg border-2 border-blue-500 bg-blue-50">
+                    <div className="flex items-center">
+                      <CreditCard className="h-5 w-5 mr-3 text-blue-600" />
+                      <div className="text-left">
+                        <div className="font-semibold">Card Payment</div>
+                        <div className="text-sm text-gray-500">
+                          Pay securely with Paystack - Instant access
                         </div>
                       </div>
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedPaymentMethod("alternative")}
-                      className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                        selectedPaymentMethod === "alternative"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <Building className="h-5 w-5 mr-3 text-green-600" />
-                        <div className="text-left">
-                          <div className="font-semibold">Bank Transfer</div>
-                          <div className="text-sm text-gray-500">
-                            Multiple options
-                          </div>
-                        </div>
-                      </div>
-                    </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Payment Component */}
-                <div className="p-6">
-                  {selectedPaymentMethod === "paystack" ? (
-                    <PaystackPurchase />
-                  ) : (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Alternative Payment Methods
-                      </h3>
-                      <p className="text-gray-600">
-                        Choose from multiple payment options that suit you:
-                      </p>
+                <div className="p-6 space-y-6">
+                  {/* Access Code Redemption */}
+                  <CodeRedemptionForm onSuccess={refreshData} />
+                  
+                  {/* OR Divider */}
+                  <div className="flex items-center">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-4 text-sm text-gray-500 bg-white">OR</span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
+                  
+                  {/* Paystack Payment */}
+                  <PaystackPurchase />
+                  
+                  <div className="mt-8 space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Alternative Payment Methods
+                    </h3>
+                    <p className="text-gray-600">
+                      Choose from multiple payment options that suit you:
+                    </p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center mb-2">
-                            <Building className="h-5 w-5 text-green-600 mr-2" />
-                            <span className="font-medium">Bank Transfer</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            Direct bank transfer with account details
-                          </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
+                          <span className="font-medium">Mobile Money</span>
                         </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center mb-2">
-                            <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
-                            <span className="font-medium">Mobile Money</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            MTN, Airtel, 9mobile, Glo
-                          </p>
-                        </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center mb-2">
-                            <QrCode className="h-5 w-5 text-purple-600 mr-2" />
-                            <span className="font-medium">USSD Codes</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            Quick USSD payment codes
-                          </p>
-                        </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center mb-2">
-                            <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
-                            <span className="font-medium">POS Payment</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            Visit any POS terminal
-                          </p>
-                        </div>
+                        <p className="text-sm text-gray-600">
+                          MTN, Airtel, 9mobile, Glo
+                        </p>
                       </div>
 
-                      <Button
-                        onClick={() => setShowAlternativePayment(true)}
-                        className="w-full"
-                      >
-                        Choose Alternative Payment
-                      </Button>
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <QrCode className="h-5 w-5 text-purple-600 mr-2" />
+                          <span className="font-medium">USSD Codes</span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Quick USSD payment codes
+                        </p>
+                      </div>
+
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
+                          <span className="font-medium">POS Payment</span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Visit any POS terminal
+                        </p>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -656,22 +619,6 @@ export default function DashboardPage() {
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
       />
-
-      {showAlternativePayment && (
-        <AlternativePayment
-          isOpen={showAlternativePayment}
-          onClose={() => setShowAlternativePayment(false)}
-          examCategory="all-exams"
-          papers={[
-            "Medical-Surgical",
-            "Pediatric",
-            "Obstetric",
-            "Psychiatric",
-            "Community Health",
-            "Fundamentals",
-          ]}
-        />
-      )}
     </div>
   );
 }

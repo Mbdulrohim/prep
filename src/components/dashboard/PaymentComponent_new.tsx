@@ -96,7 +96,7 @@ export function PaymentComponent({ onAccessGranted }: PaymentComponentProps) {
                 Have an access code? Enter it below to unlock your exam access
               </p>
             </div>
-            <CodeRedemptionForm onAccessGranted={onAccessGranted} />
+            <CodeRedemptionForm onSuccess={() => onAccessGranted({})} />
           </div>
         )}
       </div>
