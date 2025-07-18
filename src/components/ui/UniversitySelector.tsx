@@ -1,10 +1,10 @@
 // src/components/ui/UniversitySelector.tsx
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { universityManager, University } from '@/lib/universities';
-import { useAuth } from '@/context/AuthContext';
-import { ChevronDown, Plus, Search, MapPin, Users } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { universityManager, University } from "@/lib/universities";
+import { useAuth } from "@/context/AuthContext";
+import { ChevronDown, Plus, Search, MapPin, Users } from "lucide-react";
 
 interface UniversitySelectorProps {
   value?: string;
@@ -14,12 +14,12 @@ interface UniversitySelectorProps {
   className?: string;
 }
 
-export function UniversitySelector({ 
-  value = '', 
-  onChange, 
+export function UniversitySelector({
+  value = "",
+  onChange,
   placeholder = "Select your university...",
   required = false,
-  className = ''
+  className = "",
 }: UniversitySelectorProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +27,7 @@ export function UniversitySelector({
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddNew, setShowAddNew] = useState(false);
-  const [newUniversityName, setNewUniversityName] = useState('');
+  const [newUniversityName, setNewUniversityName] = useState("");
   const [addingNew, setAddingNew] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,14 +39,17 @@ export function UniversitySelector({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setShowAddNew(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export function UniversitySelector({
       setUniversities(results);
       setShowAddNew(results.length === 0 && term.length >= 3);
     } catch (error) {
-      console.error('Error searching universities:', error);
+      console.error("Error searching universities:", error);
     } finally {
       setLoading(false);
     }
@@ -81,36 +84,39 @@ export function UniversitySelector({
     onChange(university.name);
     setIsOpen(false);
     setShowAddNew(false);
-    
+
     // Update student count
     universityManager.updateUniversityStudentCount(university.name);
   };
 
   const handleAddNewUniversity = async () => {
     if (!newUniversityName.trim() || !user?.uid) return;
-    
+
     setAddingNew(true);
     try {
-      const newUni = await universityManager.addNewUniversity(newUniversityName.trim(), user.uid);
+      const newUni = await universityManager.addNewUniversity(
+        newUniversityName.trim(),
+        user.uid
+      );
       if (newUni) {
         setSearchTerm(newUni.name);
         onChange(newUni.name);
         setIsOpen(false);
         setShowAddNew(false);
-        setNewUniversityName('');
+        setNewUniversityName("");
       }
     } catch (error) {
-      console.error('Error adding university:', error);
+      console.error("Error adding university:", error);
     } finally {
       setAddingNew(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && universities.length > 0) {
+    if (e.key === "Enter" && universities.length > 0) {
       e.preventDefault();
       handleUniversitySelect(universities[0]);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setIsOpen(false);
       setShowAddNew(false);
     }
@@ -134,7 +140,11 @@ export function UniversitySelector({
           {loading ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           ) : (
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              className={`h-4 w-4 text-gray-400 transition-transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
           )}
         </div>
       </div>
@@ -154,7 +164,9 @@ export function UniversitySelector({
                       <div className="font-medium text-gray-900">
                         {university.name}
                         {university.shortName && (
-                          <span className="ml-2 text-sm text-gray-500">({university.shortName})</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            ({university.shortName})
+                          </span>
                         )}
                       </div>
                       {university.location && (

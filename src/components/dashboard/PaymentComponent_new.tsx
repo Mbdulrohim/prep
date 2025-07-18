@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { PaystackPurchase } from "./PaystackPurchase";
 import { CodeRedemptionForm } from "./CodeRedemptionForm";
-import { CreditCard, Gift, CheckCircle, AlertCircle, Zap } from "lucide-react";
+import { CreditCard, Gift, CheckCircle, AlertCircle } from "lucide-react";
 
 interface PaymentComponentProps {
   onAccessGranted: (accessDetails: any) => void;
@@ -46,8 +46,8 @@ export function PaymentComponent({ onAccessGranted }: PaymentComponentProps) {
             `}
           >
             <div className="flex items-center justify-center gap-2">
-              <Zap className="w-5 h-5" />
-              <span>Pay with Paystack</span>
+              <CreditCard className="w-5 h-5" />
+              <span>Purchase Access</span>
             </div>
           </button>
           <button
@@ -75,11 +75,11 @@ export function PaymentComponent({ onAccessGranted }: PaymentComponentProps) {
           <div>
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Pay ₦1,000 with Paystack
+                Get Full Exam Access
               </h3>
               <p className="text-gray-600">
-                Secure payment via Paystack - covers both Paper 1 & Paper 2 for
-                any exam category
+                Pay securely with Paystack and get instant access to all exam
+                categories
               </p>
             </div>
             <PaystackPurchase />

@@ -235,7 +235,11 @@ export default function ExamPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <PreExamModal onStartExam={handleStartExam} />
+        <PreExamModal
+          examId={examId}
+          onStartExam={handleStartExam}
+          onCancel={() => router.push("/dashboard")}
+        />
       </div>
     );
   }

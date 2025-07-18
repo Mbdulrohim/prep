@@ -36,7 +36,9 @@ export function ExamFlow({ examId }: ExamFlowProps) {
   } = useExam();
 
   const [showWarning, setShowWarning] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "error">("saved");
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "saved" | "saving" | "error"
+  >("saved");
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -52,10 +54,28 @@ export function ExamFlow({ examId }: ExamFlowProps) {
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Auto-submit when time runs out
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      // Force submission when time is up
+      handleForceSubmit();
+    } else if (timeLeft <= 300) {
+      // 5 minutes warning
+      setShowWarning(true);
+    }
+  }, [timeLeft]);
+
+  // Handle forced submission when time runs out
+  const handleForceSubmit = () => {
+    console.log("Time's up! Auto-submitting exam...");
+    // Calculate results and navigate to results page
+    router.push(`/exam/${examId}/results`);
+  };
+
   // Auto-save functionality
   useEffect(() => {
     const autoSaveTimer = setInterval(() => {
-      if (userAnswers.some(answer => answer !== null)) {
+      if (userAnswers.some((answer) => answer !== null)) {
         setAutoSaveStatus("saving");
         // Simulate save to backend
         setTimeout(() => {
@@ -84,7 +104,8 @@ export function ExamFlow({ examId }: ExamFlowProps) {
   // Handle flag/unflag question
   const toggleFlag = () => {
     const updatedQuestions = [...questions];
-    updatedQuestions[currentQuestionIndex].flagged = !updatedQuestions[currentQuestionIndex].flagged;
+    updatedQuestions[currentQuestionIndex].flagged =
+      !updatedQuestions[currentQuestionIndex].flagged;
     // Note: In a real app, you'd want to update this in the context
   };
 
@@ -99,9 +120,9 @@ export function ExamFlow({ examId }: ExamFlowProps) {
   };
 
   // Get answered questions count
-  const answeredCount = userAnswers.filter(answer => answer !== null).length;
+  const answeredCount = userAnswers.filter((answer) => answer !== null).length;
   const unansweredCount = totalQuestions - answeredCount;
-  const flaggedCount = questions.filter(q => q.flagged).length;
+  const flaggedCount = questions.filter((q) => q.flagged).length;
 
   if (loadingQuestions) {
     return (
@@ -119,7 +140,9 @@ export function ExamFlow({ examId }: ExamFlowProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <p className="text-lg text-slate-700">No questions available for this exam.</p>
+          <p className="text-lg text-slate-700">
+            No questions available for this exam.
+          </p>
           <Button onClick={() => router.push("/dashboard")} className="mt-4">
             Return to Dashboard
           </Button>
@@ -139,38 +162,65 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                 {examDetails?.title}
               </h1>
               <div className="flex items-center space-x-2">
-                <Save className={`h-4 w-4 ${
-                  autoSaveStatus === "saved" ? "text-green-500" : 
-                  autoSaveStatus === "saving" ? "text-yellow-500" : "text-red-500"
-                }`} />
+                <Save
+                  className={`h-4 w-4 ${
+                    autoSaveStatus === "saved"
+                      ? "text-green-500"
+                      : autoSaveStatus === "saving"
+                      ? "text-yellow-500"
+                      : "text-red-500"
+                  }`}
+                />
                 <span className="text-sm text-gray-600">
-                  {autoSaveStatus === "saved" ? "Saved" : 
-                   autoSaveStatus === "saving" ? "Saving..." : "Save Error"}
+                  {autoSaveStatus === "saved"
+                    ? "Saved"
+                    : autoSaveStatus === "saving"
+                    ? "Saving..."
+                    : "Save Error"}
                 </span>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-gray-600" />
-                <span className={`text-lg font-mono ${
-                  timeLeft < 600 ? "text-red-600" : "text-gray-900"
-                }`}>
+                <Clock
+                  className={`h-5 w-5 ${
+                    timeLeft < 600 ? "text-red-600" : "text-gray-600"
+                  }`}
+                />
+                <span
+                  className={`text-lg font-mono font-bold ${
+                    timeLeft < 300
+                      ? "text-red-600 animate-pulse"
+                      : timeLeft < 600
+                      ? "text-orange-600"
+                      : "text-gray-900"
+                  }`}
+                >
                   {formatTime(timeLeft)}
                 </span>
+                {timeLeft < 600 && (
+                  <span className="text-xs text-red-600 font-medium">
+                    {timeLeft < 300 ? "⚠️ FINAL WARNING" : "⚠️ Low Time"}
+                  </span>
+                )}
               </div>
-              
+
               <Button onClick={handleSubmitExam} variant="outline">
                 Submit Exam
               </Button>
             </div>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="pb-4">
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              <span>Question {currentQuestionIndex + 1} of {totalQuestions}</span>
-              <span>{answeredCount} answered • {flaggedCount} flagged</span>
+              <span>
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+              </span>
+              <span>
+                {answeredCount} answered • {flaggedCount} flagged
+              </span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
@@ -182,25 +232,28 @@ export function ExamFlow({ examId }: ExamFlowProps) {
           {/* Question Navigator Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-32">
-              <h3 className="font-semibold text-gray-900 mb-4">Question Navigator</h3>
-              
+              <h3 className="font-semibold text-gray-900 mb-4">
+                Question Navigator
+              </h3>
+
               <div className="grid grid-cols-5 gap-2 mb-4">
                 {questions.map((question, index) => {
                   const isAnswered = userAnswers[index] !== null;
                   const isCurrent = index === currentQuestionIndex;
                   const isFlagged = question.flagged;
-                  
+
                   return (
                     <button
                       key={index}
                       onClick={() => goToQuestion(index)}
                       className={`
                         w-8 h-8 text-xs font-medium rounded border-2 transition-all
-                        ${isCurrent 
-                          ? "border-blue-500 bg-blue-500 text-white" 
-                          : isAnswered
-                          ? "border-green-500 bg-green-100 text-green-700"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                        ${
+                          isCurrent
+                            ? "border-blue-500 bg-blue-500 text-white"
+                            : isAnswered
+                            ? "border-green-500 bg-green-100 text-green-700"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                         }
                         ${isFlagged ? "ring-2 ring-yellow-400" : ""}
                       `}
@@ -210,7 +263,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                   );
                 })}
               </div>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
@@ -243,21 +296,24 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                     )}
                   </div>
                 </div>
-                
+
                 <Button
                   onClick={toggleFlag}
                   variant="outline"
                   size="sm"
                   className={`
-                    ${currentQuestion.flagged 
-                      ? "border-yellow-500 text-yellow-600" 
-                      : "border-gray-300"
+                    ${
+                      currentQuestion.flagged
+                        ? "border-yellow-500 text-yellow-600"
+                        : "border-gray-300"
                     }
                   `}
                 >
-                  <Flag className={`h-4 w-4 mr-1 ${
-                    currentQuestion.flagged ? "fill-current" : ""
-                  }`} />
+                  <Flag
+                    className={`h-4 w-4 mr-1 ${
+                      currentQuestion.flagged ? "fill-current" : ""
+                    }`}
+                  />
                   {currentQuestion.flagged ? "Unflag" : "Flag"}
                 </Button>
               </div>
@@ -272,29 +328,34 @@ export function ExamFlow({ examId }: ExamFlowProps) {
               {/* Answer Options */}
               <div className="space-y-4 mb-8">
                 {currentQuestion.options.map((option, index) => {
-                  const isSelected = userAnswers[currentQuestionIndex] === index;
+                  const isSelected =
+                    userAnswers[currentQuestionIndex] === index;
                   const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
-                  
+
                   return (
                     <button
                       key={index}
                       onClick={() => handleAnswerSelect(index)}
                       className={`
                         w-full p-4 text-left rounded-lg border-2 transition-all
-                        ${isSelected
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                         }
                       `}
                     >
                       <div className="flex items-start space-x-3">
-                        <div className={`
+                        <div
+                          className={`
                           w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium
-                          ${isSelected
-                            ? "border-blue-500 bg-blue-500 text-white"
-                            : "border-gray-300 text-gray-600"
+                          ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-500 text-white"
+                              : "border-gray-300 text-gray-600"
                           }
-                        `}>
+                        `}
+                        >
                           {optionLabel}
                         </div>
                         <span className="text-gray-900">{option}</span>
@@ -314,7 +375,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
                 </Button>
-                
+
                 <div className="flex space-x-3">
                   <Button
                     onClick={() => {
@@ -324,13 +385,13 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                   >
                     Save & Continue
                   </Button>
-                  
+
                   {currentQuestionIndex === totalQuestions - 1 ? (
-                    <Button onClick={handleSubmitExam}>
-                      Submit Exam
-                    </Button>
+                    <Button onClick={handleSubmitExam}>Submit Exam</Button>
                   ) : (
-                    <Button onClick={() => goToQuestion(currentQuestionIndex + 1)}>
+                    <Button
+                      onClick={() => goToQuestion(currentQuestionIndex + 1)}
+                    >
                       Next
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
@@ -350,12 +411,13 @@ export function ExamFlow({ examId }: ExamFlowProps) {
               <AlertTriangle className="h-6 w-6 text-yellow-500" />
               <h3 className="text-lg font-semibold">Submit Exam?</h3>
             </div>
-            
+
             <div className="space-y-3 mb-6">
               <p className="text-gray-700">
-                Are you sure you want to submit your exam? This action cannot be undone.
+                Are you sure you want to submit your exam? This action cannot be
+                undone.
               </p>
-              
+
               <div className="bg-gray-50 p-3 rounded">
                 <div className="text-sm space-y-1">
                   <div>Total Questions: {totalQuestions}</div>
@@ -365,7 +427,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex space-x-3">
               <Button
                 onClick={() => setShowWarning(false)}
@@ -374,10 +436,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
               >
                 Continue Exam
               </Button>
-              <Button
-                onClick={confirmSubmit}
-                className="flex-1"
-              >
+              <Button onClick={confirmSubmit} className="flex-1">
                 Submit Now
               </Button>
             </div>

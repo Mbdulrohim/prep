@@ -1,7 +1,7 @@
 // src/lib/aiHelper.ts
 // AI-powered assistance for missed questions
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 interface AIHelpRequest {
   questionText: string;
@@ -35,40 +35,42 @@ class AIHelper {
       if (process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
         this.openai = new OpenAI({
           apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-          dangerouslyAllowBrowser: true // Note: In production, use server-side API
+          dangerouslyAllowBrowser: true, // Note: In production, use server-side API
         });
         this.initialized = true;
       }
     } catch (error) {
-      console.warn('OpenAI not initialized:', error);
+      console.warn("OpenAI not initialized:", error);
     }
   }
 
   /**
    * Get AI-powered help for a missed question
    */
-  async getHelpForMissedQuestion(request: AIHelpRequest): Promise<AIHelpResponse> {
+  async getHelpForMissedQuestion(
+    request: AIHelpRequest
+  ): Promise<AIHelpResponse> {
     if (!this.initialized || !this.openai) {
       return this.getFallbackHelp(request);
     }
 
     try {
       const prompt = this.buildPrompt(request);
-      
+
       const completion = await this.openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
-            content: `You are an expert nursing education assistant. Help students understand why they got a question wrong and provide clear, educational explanations. Always be encouraging and supportive.`
+            content: `You are an expert nursing education assistant. Help students understand why they got a question wrong and provide clear, educational explanations. Always be encouraging and supportive.`,
           },
           {
             role: "user",
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         max_tokens: 500,
-        temperature: 0.7
+        temperature: 0.7,
       });
 
       const response = completion.choices[0]?.message?.content;
@@ -77,9 +79,8 @@ class AIHelper {
       }
 
       return this.parseAIResponse(response, request);
-
     } catch (error) {
-      console.error('AI Help Error:', error);
+      console.error("AI Help Error:", error);
       return this.getFallbackHelp(request);
     }
   }
@@ -120,42 +121,59 @@ Keep it encouraging and educational.
   /**
    * Parse AI response into structured format
    */
-  private parseAIResponse(response: string, request: AIHelpRequest): AIHelpResponse {
+  private parseAIResponse(
+    response: string,
+    request: AIHelpRequest
+  ): AIHelpResponse {
     try {
-      const lines = response.split('\n').filter(line => line.trim());
-      
-      let explanation = '';
+      const lines = response.split("\n").filter((line) => line.trim());
+
+      let explanation = "";
       let keyPoints: string[] = [];
       let studyTips: string[] = [];
       let relatedTopics: string[] = [];
 
       for (const line of lines) {
-        if (line.startsWith('EXPLANATION:')) {
-          explanation = line.replace('EXPLANATION:', '').trim();
-        } else if (line.startsWith('KEY_POINTS:')) {
-          keyPoints = line.replace('KEY_POINTS:', '').split('|').map(p => p.trim());
-        } else if (line.startsWith('STUDY_TIPS:')) {
-          studyTips = line.replace('STUDY_TIPS:', '').split('|').map(t => t.trim());
-        } else if (line.startsWith('RELATED_TOPICS:')) {
-          relatedTopics = line.replace('RELATED_TOPICS:', '').split('|').map(t => t.trim());
+        if (line.startsWith("EXPLANATION:")) {
+          explanation = line.replace("EXPLANATION:", "").trim();
+        } else if (line.startsWith("KEY_POINTS:")) {
+          keyPoints = line
+            .replace("KEY_POINTS:", "")
+            .split("|")
+            .map((p) => p.trim());
+        } else if (line.startsWith("STUDY_TIPS:")) {
+          studyTips = line
+            .replace("STUDY_TIPS:", "")
+            .split("|")
+            .map((t) => t.trim());
+        } else if (line.startsWith("RELATED_TOPICS:")) {
+          relatedTopics = line
+            .replace("RELATED_TOPICS:", "")
+            .split("|")
+            .map((t) => t.trim());
         }
       }
 
       // Fallback to basic parsing if structured format not found
       if (!explanation) {
-        explanation = response.slice(0, 300) + '...';
+        explanation = response.slice(0, 300) + "...";
       }
 
       return {
         success: true,
-        explanation: explanation || 'The AI provided helpful insights for this question.',
-        keyPoints: keyPoints.length > 0 ? keyPoints : this.getDefaultKeyPoints(request),
-        studyTips: studyTips.length > 0 ? studyTips : this.getDefaultStudyTips(request),
-        relatedTopics: relatedTopics.length > 0 ? relatedTopics : this.getDefaultRelatedTopics(request)
+        explanation:
+          explanation || "The AI provided helpful insights for this question.",
+        keyPoints:
+          keyPoints.length > 0 ? keyPoints : this.getDefaultKeyPoints(request),
+        studyTips:
+          studyTips.length > 0 ? studyTips : this.getDefaultStudyTips(request),
+        relatedTopics:
+          relatedTopics.length > 0
+            ? relatedTopics
+            : this.getDefaultRelatedTopics(request),
       };
-
     } catch (error) {
-      console.error('Error parsing AI response:', error);
+      console.error("Error parsing AI response:", error);
       return this.getFallbackHelp(request);
     }
   }
@@ -169,7 +187,7 @@ Keep it encouraging and educational.
       explanation: `The correct answer is "${request.correctAnswer}". ${request.explanation}`,
       keyPoints: this.getDefaultKeyPoints(request),
       studyTips: this.getDefaultStudyTips(request),
-      relatedTopics: this.getDefaultRelatedTopics(request)
+      relatedTopics: this.getDefaultRelatedTopics(request),
     };
   }
 
@@ -178,24 +196,27 @@ Keep it encouraging and educational.
    */
   private getDefaultKeyPoints(request: AIHelpRequest): string[] {
     const defaultPoints = {
-      'RN': [
-        'Focus on patient safety and evidence-based practice',
-        'Consider the nursing process: assess, diagnose, plan, implement, evaluate',
-        'Remember to prioritize immediate life-threatening conditions'
+      RN: [
+        "Focus on patient safety and evidence-based practice",
+        "Consider the nursing process: assess, diagnose, plan, implement, evaluate",
+        "Remember to prioritize immediate life-threatening conditions",
       ],
-      'RM': [
-        'Consider maternal and fetal wellbeing equally',
-        'Focus on normal physiological processes vs complications',
-        'Remember emergency protocols for obstetric situations'
+      RM: [
+        "Consider maternal and fetal wellbeing equally",
+        "Focus on normal physiological processes vs complications",
+        "Remember emergency protocols for obstetric situations",
       ],
-      'RPHN': [
-        'Think population health vs individual care',
-        'Consider prevention and health promotion strategies',
-        'Focus on community assessment and intervention'
-      ]
+      RPHN: [
+        "Think population health vs individual care",
+        "Consider prevention and health promotion strategies",
+        "Focus on community assessment and intervention",
+      ],
     };
 
-    return defaultPoints[request.category as keyof typeof defaultPoints] || defaultPoints['RN'];
+    return (
+      defaultPoints[request.category as keyof typeof defaultPoints] ||
+      defaultPoints["RN"]
+    );
   }
 
   /**
@@ -204,9 +225,9 @@ Keep it encouraging and educational.
   private getDefaultStudyTips(request: AIHelpRequest): string[] {
     return [
       `Review textbook chapters on ${request.topic}`,
-      'Practice similar questions to reinforce learning',
-      'Create concept maps linking related topics',
-      'Discuss with study group or instructor'
+      "Practice similar questions to reinforce learning",
+      "Create concept maps linking related topics",
+      "Discuss with study group or instructor",
     ];
   }
 
@@ -215,14 +236,18 @@ Keep it encouraging and educational.
    */
   private getDefaultRelatedTopics(request: AIHelpRequest): string[] {
     const relatedTopicsMap = {
-      'Basic Patient Care': ['Safety Measures', 'Infection Control'],
-      'Pharmacology': ['Drug Interactions', 'Dosage Calculations'],
-      'Assessment': ['Physical Examination', 'Health History'],
-      'Emergency Care': ['First Aid', 'Crisis Intervention']
+      "Basic Patient Care": ["Safety Measures", "Infection Control"],
+      Pharmacology: ["Drug Interactions", "Dosage Calculations"],
+      Assessment: ["Physical Examination", "Health History"],
+      "Emergency Care": ["First Aid", "Crisis Intervention"],
     };
 
-    return relatedTopicsMap[request.topic as keyof typeof relatedTopicsMap] || 
-           ['Evidence-Based Practice', 'Professional Standards'];
+    return (
+      relatedTopicsMap[request.topic as keyof typeof relatedTopicsMap] || [
+        "Evidence-Based Practice",
+        "Professional Standards",
+      ]
+    );
   }
 
   /**
@@ -234,7 +259,7 @@ Keep it encouraging and educational.
       `Professional ${category} Practice Guidelines`,
       `Evidence-Based Research on ${topic}`,
       `Case Studies in ${topic}`,
-      `${category} Board Review Questions`
+      `${category} Board Review Questions`,
     ];
   }
 }

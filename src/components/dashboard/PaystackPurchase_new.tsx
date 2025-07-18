@@ -14,9 +14,8 @@ export function PaystackPurchase() {
     name: "Full Exam Access",
     price: 1000, // ₦1,000 for all exam access
     features: [
-      "Access to all available exam categories",
-      "Paper 1 & Paper 2 included (₦1,000 covers both)",
-      "Each exam category costs ₦1,000 total",
+      "Access to all exam categories",
+      "Paper 1 & Paper 2 for each exam",
       "10,000+ practice questions",
       "AI-powered explanations",
       "Advanced analytics & progress tracking",
@@ -24,7 +23,7 @@ export function PaystackPurchase() {
       "90 days access",
       "Priority support",
     ],
-    description: "₦1,000 covers both Paper 1 & Paper 2 for any exam category",
+    description: "Complete exam preparation package",
   };
 
   const handlePayment = async () => {
@@ -140,8 +139,8 @@ export function PaystackPurchase() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <Zap className="w-5 h-5" />
-                  Pay ₦1,000 with Paystack
+                  <CreditCard className="w-5 h-5" />
+                  Pay with Paystack
                 </div>
               )}
             </Button>

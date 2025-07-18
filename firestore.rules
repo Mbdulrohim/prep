@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email in [
+               'doyextech@gmail.com',
+               'ibrahimadekunle3030@gmail.com',
+               'adekunleibrahim6060@gmail.com'
+             ];
+    }
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // User profiles - users can read/write their own profile, admins can read all
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    // User access control - only admins can manage
+    match /userAccess/{accessId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Exam attempts - users can manage their own attempts, admins can read all
+    match /examAttempts/{attemptId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // Questions - authenticated users can read, only admins can write
+    match /questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Feedback - users can create and read their own, admins can read all
+    match /feedback/{feedbackId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Access codes - only backend/admin functions can access
+    match /accessCodes/{codeId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Payment sessions - users can manage their own, admins can read all
+    match /paymentSessions/{sessionId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // University data - read access for authenticated users, write for admins
+    match /universities/{universityId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Leaderboard data - read access for authenticated users
+    match /leaderboard/{entryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Default deny all other documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

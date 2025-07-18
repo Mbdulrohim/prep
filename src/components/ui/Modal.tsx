@@ -14,22 +14,22 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    // The overlay with a backdrop blur for a modern look
+    // The overlay with a backdrop for a modern look
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
       onClick={onClose} // Close modal when clicking the overlay
     >
       {/* The modal panel itself */}
       <div
-        className="relative w-full max-w-lg mx-auto bg-card rounded-2xl shadow-xl border border-border animate-in fade-in-0 zoom-in-95"
+        className="relative w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 transform transition-all duration-200 scale-100"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between p-5 border-b border-border rounded-t-2xl">
-          <div className="text-xl font-semibold text-foreground">{title}</div>
+        <div className="flex items-start justify-between p-5 border-b border-gray-200 rounded-t-2xl bg-white">
+          <div className="text-xl font-semibold text-gray-900">{title}</div>
           <button
             onClick={onClose}
-            className="p-1.5 text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="p-1.5 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600 transition-colors"
             aria-label="Close modal"
           >
             <X size={20} />
@@ -37,7 +37,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
         </div>
 
         {/* Modal Body */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 bg-white rounded-b-2xl">{children}</div>
       </div>
     </div>
   );

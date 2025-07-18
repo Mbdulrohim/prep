@@ -1,7 +1,7 @@
 // src/app/api/validate-access-code/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,21 +9,21 @@ export async function POST(request: NextRequest) {
 
     if (!code) {
       return NextResponse.json(
-        { valid: false, error: 'Access code is required' },
+        { valid: false, error: "Access code is required" },
         { status: 400 }
       );
     }
 
     // Clean the code (remove spaces, convert to uppercase)
-    const cleanCode = code.replace(/\s+/g, '').toUpperCase();
+    const cleanCode = code.replace(/\s+/g, "").toUpperCase();
 
     // Get access code from Firestore
-    const accessCodeDoc = await getDoc(doc(db, 'accessCodes', cleanCode));
+    const accessCodeDoc = await getDoc(doc(db, "accessCodes", cleanCode));
 
     if (!accessCodeDoc.exists()) {
       return NextResponse.json({
         valid: false,
-        error: 'Invalid access code'
+        error: "Invalid access code",
       });
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!accessCodeData.isActive) {
       return NextResponse.json({
         valid: false,
-        error: 'This access code has been deactivated'
+        error: "This access code has been deactivated",
       });
     }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (now > expiryDate) {
       return NextResponse.json({
         valid: false,
-        error: 'This access code has expired'
+        error: "This access code has expired",
       });
     }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (accessCodeData.currentUses >= accessCodeData.maxUses) {
       return NextResponse.json({
         valid: false,
-        error: 'This access code has been fully used'
+        error: "This access code has been fully used",
       });
     }
 
@@ -61,14 +61,13 @@ export async function POST(request: NextRequest) {
         examCategory: accessCodeData.examCategory,
         papers: accessCodeData.papers,
         expiryDate: accessCodeData.expiryDate,
-        remainingUses: accessCodeData.maxUses - accessCodeData.currentUses
-      }
+        remainingUses: accessCodeData.maxUses - accessCodeData.currentUses,
+      },
     });
-
   } catch (error) {
-    console.error('Error validating access code:', error);
+    console.error("Error validating access code:", error);
     return NextResponse.json(
-      { valid: false, error: 'Failed to validate access code' },
+      { valid: false, error: "Failed to validate access code" },
       { status: 500 }
     );
   }

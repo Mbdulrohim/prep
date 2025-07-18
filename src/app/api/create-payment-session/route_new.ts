@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         userId,
         reference,
       },
-      channels: ["card", "bank", "ussd", "qr", "mobile_money"],
+      channels: ["card", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
     });
 
     if (!paymentData.status) {

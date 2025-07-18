@@ -5,7 +5,15 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
-import { LogIn, LogOut, User as UserIcon, Menu, X, Trophy, MessageSquare } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  User as UserIcon,
+  Menu,
+  X,
+  Trophy,
+  MessageSquare,
+} from "lucide-react";
 
 export function Header() {
   const { user, loading, signInWithGoogle, logout } = useAuth();

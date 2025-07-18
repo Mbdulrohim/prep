@@ -1,19 +1,19 @@
 // src/lib/examAttempts.ts
 // Comprehensive exam attempt management system
 
-import { db } from '@/lib/firebase';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
   updateDoc,
-  serverTimestamp 
-} from 'firebase/firestore';
+  serverTimestamp,
+} from "firebase/firestore";
 
 export interface ExamAttempt {
   id: string;
@@ -72,7 +72,7 @@ export interface UserAccess {
       completed: boolean;
       score: number;
       attemptDate: Date;
-    }
+    };
   };
   maxAttempts: number;
   remainingAttempts: number;
@@ -98,7 +98,7 @@ class ExamAttemptManager {
    * Check if user can start a new exam
    */
   async canUserStartExam(
-    userId: string, 
+    userId: string,
     examId: string
   ): Promise<{
     canStart: boolean;
@@ -107,70 +107,72 @@ class ExamAttemptManager {
   }> {
     try {
       // Check user access
-      const userAccessDoc = await getDoc(doc(db, 'userAccess', userId));
+      const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
       if (!userAccessDoc.exists()) {
-        return { canStart: false, reason: 'No access permissions found' };
+        return { canStart: false, reason: "No access permissions found" };
       }
 
       const userAccess = userAccessDoc.data() as UserAccess;
-      
+
       // Check if access is active
       if (!userAccess.isActive) {
-        return { canStart: false, reason: 'Access has been deactivated' };
+        return { canStart: false, reason: "Access has been deactivated" };
       }
 
       // Check if user is restricted
       if (userAccess.isRestricted) {
-        return { 
-          canStart: false, 
-          reason: `Access restricted: ${userAccess.restrictionReason || 'Contact admin'}` 
+        return {
+          canStart: false,
+          reason: `Access restricted: ${
+            userAccess.restrictionReason || "Contact admin"
+          }`,
         };
       }
 
       // Check expiry
       const now = new Date();
-      const expiryDate = userAccess.expiryDate instanceof Date 
-        ? userAccess.expiryDate 
-        : new Date(userAccess.expiryDate);
+      const expiryDate =
+        userAccess.expiryDate instanceof Date
+          ? userAccess.expiryDate
+          : new Date(userAccess.expiryDate);
       if (now > expiryDate) {
-        return { canStart: false, reason: 'Access has expired' };
+        return { canStart: false, reason: "Access has expired" };
       }
 
       // Check if exam was already attempted
       if (userAccess.attemptsMade[examId]) {
         const existingAttemptDoc = await getDoc(
-          doc(db, 'examAttempts', userAccess.attemptsMade[examId].attemptId)
+          doc(db, "examAttempts", userAccess.attemptsMade[examId].attemptId)
         );
-        
+
         if (existingAttemptDoc.exists()) {
           const existingAttempt = existingAttemptDoc.data() as ExamAttempt;
-          
+
           if (existingAttempt.completed) {
-            return { 
-              canStart: false, 
-              reason: 'Exam already completed. You can review your answers.',
-              existingAttempt 
+            return {
+              canStart: false,
+              reason: "Exam already completed. You can review your answers.",
+              existingAttempt,
             };
           }
-          
+
           // Allow continuation of incomplete exam
-          return { 
-            canStart: true, 
-            existingAttempt 
+          return {
+            canStart: true,
+            existingAttempt,
           };
         }
       }
 
       // Check remaining attempts
       if (userAccess.remainingAttempts <= 0) {
-        return { canStart: false, reason: 'No remaining attempts' };
+        return { canStart: false, reason: "No remaining attempts" };
       }
 
       return { canStart: true };
-
     } catch (error) {
-      console.error('Error checking exam eligibility:', error);
-      return { canStart: false, reason: 'System error. Please try again.' };
+      console.error("Error checking exam eligibility:", error);
+      return { canStart: false, reason: "System error. Please try again." };
     }
   }
 
@@ -189,7 +191,7 @@ class ExamAttemptManager {
   ): Promise<{ success: boolean; attemptId?: string; error?: string }> {
     try {
       const attemptId = `${userId}_${examId}_${Date.now()}`;
-      
+
       const examAttempt: ExamAttempt = {
         id: attemptId,
         userId,
@@ -215,34 +217,33 @@ class ExamAttemptManager {
         canReview: true,
         reviewedQuestions: [],
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Save exam attempt
-      await setDoc(doc(db, 'examAttempts', attemptId), examAttempt);
+      await setDoc(doc(db, "examAttempts", attemptId), examAttempt);
 
       // Get current user access to update remaining attempts
-      const userAccessDoc = await getDoc(doc(db, 'userAccess', userId));
+      const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
       const currentUserAccess = userAccessDoc.data() as UserAccess;
 
       // Update user access
-      await updateDoc(doc(db, 'userAccess', userId), {
+      await updateDoc(doc(db, "userAccess", userId), {
         [`attemptsMade.${examId}`]: {
           attemptId,
           completed: false,
           score: 0,
-          attemptDate: new Date()
+          attemptDate: new Date(),
         },
         remainingAttempts: (currentUserAccess.remainingAttempts || 1) - 1,
         lastLoginAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       return { success: true, attemptId };
-
     } catch (error) {
-      console.error('Error starting exam attempt:', error);
-      return { success: false, error: 'Failed to start exam attempt' };
+      console.error("Error starting exam attempt:", error);
+      return { success: false, error: "Failed to start exam attempt" };
     }
   }
 
@@ -255,16 +256,19 @@ class ExamAttemptManager {
     timeSpent: number
   ): Promise<{ success: boolean; results?: any; error?: string }> {
     try {
-      const attemptDoc = await getDoc(doc(db, 'examAttempts', attemptId));
+      const attemptDoc = await getDoc(doc(db, "examAttempts", attemptId));
       if (!attemptDoc.exists()) {
-        return { success: false, error: 'Exam attempt not found' };
+        return { success: false, error: "Exam attempt not found" };
       }
 
       const attempt = attemptDoc.data() as ExamAttempt;
-      
+
       // Calculate results
-      const results = this.calculateResults(attempt.assignedQuestions, userAnswers);
-      
+      const results = this.calculateResults(
+        attempt.assignedQuestions,
+        userAnswers
+      );
+
       const updatedAttempt: Partial<ExamAttempt> = {
         userAnswers,
         endTime: new Date(),
@@ -277,24 +281,23 @@ class ExamAttemptManager {
         wrongAnswers: results.wrongAnswers,
         unanswered: results.unanswered,
         missedQuestions: results.missedQuestions,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Update exam attempt
-      await updateDoc(doc(db, 'examAttempts', attemptId), updatedAttempt);
+      await updateDoc(doc(db, "examAttempts", attemptId), updatedAttempt);
 
       // Update user access with final results
-      await updateDoc(doc(db, 'userAccess', attempt.userId), {
+      await updateDoc(doc(db, "userAccess", attempt.userId), {
         [`attemptsMade.${attempt.examId}.completed`]: true,
         [`attemptsMade.${attempt.examId}.score`]: results.score,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       return { success: true, results };
-
     } catch (error) {
-      console.error('Error submitting exam attempt:', error);
-      return { success: false, error: 'Failed to submit exam' };
+      console.error("Error submitting exam attempt:", error);
+      return { success: false, error: "Failed to submit exam" };
     }
   }
 
@@ -302,7 +305,7 @@ class ExamAttemptManager {
    * Calculate exam results
    */
   private calculateResults(
-    questions: Question[], 
+    questions: Question[],
     userAnswers: (number | null)[]
   ): {
     score: number;
@@ -341,7 +344,7 @@ class ExamAttemptManager {
       correctAnswers,
       wrongAnswers,
       unanswered,
-      missedQuestions
+      missedQuestions,
     };
   }
 
@@ -351,16 +354,15 @@ class ExamAttemptManager {
   async getUserExamAttempts(userId: string): Promise<ExamAttempt[]> {
     try {
       const q = query(
-        collection(db, 'examAttempts'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        collection(db, "examAttempts"),
+        where("userId", "==", userId),
+        orderBy("createdAt", "desc")
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => doc.data() as ExamAttempt);
-
+      return querySnapshot.docs.map((doc) => doc.data() as ExamAttempt);
     } catch (error) {
-      console.error('Error getting user exam attempts:', error);
+      console.error("Error getting user exam attempts:", error);
       return [];
     }
   }
@@ -368,25 +370,27 @@ class ExamAttemptManager {
   /**
    * Get exam attempt for review
    */
-  async getExamAttemptForReview(attemptId: string, userId: string): Promise<ExamAttempt | null> {
+  async getExamAttemptForReview(
+    attemptId: string,
+    userId: string
+  ): Promise<ExamAttempt | null> {
     try {
-      const attemptDoc = await getDoc(doc(db, 'examAttempts', attemptId));
-      
+      const attemptDoc = await getDoc(doc(db, "examAttempts", attemptId));
+
       if (!attemptDoc.exists()) {
         return null;
       }
 
       const attempt = attemptDoc.data() as ExamAttempt;
-      
+
       // Verify ownership and completion
       if (attempt.userId !== userId || !attempt.completed) {
         return null;
       }
 
       return attempt;
-
     } catch (error) {
-      console.error('Error getting exam attempt for review:', error);
+      console.error("Error getting exam attempt for review:", error);
       return null;
     }
   }
@@ -394,30 +398,32 @@ class ExamAttemptManager {
   /**
    * Mark question as reviewed
    */
-  async markQuestionAsReviewed(attemptId: string, questionIndex: number): Promise<boolean> {
+  async markQuestionAsReviewed(
+    attemptId: string,
+    questionIndex: number
+  ): Promise<boolean> {
     try {
-      const attemptDoc = await getDoc(doc(db, 'examAttempts', attemptId));
-      
+      const attemptDoc = await getDoc(doc(db, "examAttempts", attemptId));
+
       if (!attemptDoc.exists()) {
         return false;
       }
 
       const attempt = attemptDoc.data() as ExamAttempt;
       const reviewedQuestions = attempt.reviewedQuestions || [];
-      
+
       if (!reviewedQuestions.includes(questionIndex)) {
         reviewedQuestions.push(questionIndex);
-        
-        await updateDoc(doc(db, 'examAttempts', attemptId), {
+
+        await updateDoc(doc(db, "examAttempts", attemptId), {
           reviewedQuestions,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         });
       }
 
       return true;
-
     } catch (error) {
-      console.error('Error marking question as reviewed:', error);
+      console.error("Error marking question as reviewed:", error);
       return false;
     }
   }

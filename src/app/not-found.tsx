@@ -1,7 +1,7 @@
-import React from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { Search, Home, ArrowLeft } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Search, Home, ArrowLeft } from "lucide-react";
 
 export default function NotFoundPage() {
   return (
@@ -17,10 +17,10 @@ export default function NotFoundPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           Page Not Found
         </h2>
-        
+
         <p className="text-gray-600 mb-8">
-          The page you're looking for doesn't exist or has been moved. 
-          Let's get you back to your studies!
+          The page you're looking for doesn't exist or has been moved. Let's get
+          you back to your studies!
         </p>
 
         {/* Navigation Buttons */}
@@ -31,7 +31,7 @@ export default function NotFoundPage() {
               Go to Homepage
             </Button>
           </Link>
-          
+
           <Link href="/dashboard">
             <Button
               variant="outline"
@@ -47,13 +47,22 @@ export default function NotFoundPage() {
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-4">Quick Links:</p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <Link href="/exam/medical-surgical" className="text-blue-600 hover:underline">
+            <Link
+              href="/exam/medical-surgical"
+              className="text-blue-600 hover:underline"
+            >
               Medical-Surgical
             </Link>
-            <Link href="/exam/pediatric" className="text-blue-600 hover:underline">
+            <Link
+              href="/exam/pediatric"
+              className="text-blue-600 hover:underline"
+            >
               Pediatric Nursing
             </Link>
-            <Link href="/exam/obstetric" className="text-blue-600 hover:underline">
+            <Link
+              href="/exam/obstetric"
+              className="text-blue-600 hover:underline"
+            >
               Obstetric Nursing
             </Link>
             <Link href="/leaderboard" className="text-blue-600 hover:underline">

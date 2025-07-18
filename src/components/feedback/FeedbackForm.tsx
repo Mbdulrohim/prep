@@ -1,50 +1,81 @@
 // src/components/feedback/FeedbackForm.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { feedbackManager } from '@/lib/feedback';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { Star, Send, X } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { feedbackManager } from "@/lib/feedback";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Star, Send, X } from "lucide-react";
 
 interface FeedbackFormProps {
   isOpen: boolean;
   onClose: () => void;
   examId?: string;
-  initialType?: 'bug' | 'feature' | 'complaint' | 'compliment' | 'suggestion' | 'other';
+  initialType?:
+    | "bug"
+    | "feature"
+    | "complaint"
+    | "compliment"
+    | "suggestion"
+    | "other";
 }
 
-export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }: FeedbackFormProps) {
+export function FeedbackForm({
+  isOpen,
+  onClose,
+  examId,
+  initialType = "other",
+}: FeedbackFormProps) {
   const { user, userProfile } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  
+
   const [formData, setFormData] = useState({
     type: initialType,
-    category: 'other' as const,
-    subject: '',
-    message: ''
+    category: "other" as const,
+    subject: "",
+    message: "",
   });
 
   const feedbackTypes = [
-    { value: 'bug', label: 'Bug Report', description: 'Something isn\'t working' },
-    { value: 'feature', label: 'Feature Request', description: 'Suggest a new feature' },
-    { value: 'complaint', label: 'Complaint', description: 'Report an issue or problem' },
-    { value: 'compliment', label: 'Compliment', description: 'Share positive feedback' },
-    { value: 'suggestion', label: 'Suggestion', description: 'General improvement idea' },
-    { value: 'other', label: 'Other', description: 'Something else' }
+    {
+      value: "bug",
+      label: "Bug Report",
+      description: "Something isn't working",
+    },
+    {
+      value: "feature",
+      label: "Feature Request",
+      description: "Suggest a new feature",
+    },
+    {
+      value: "complaint",
+      label: "Complaint",
+      description: "Report an issue or problem",
+    },
+    {
+      value: "compliment",
+      label: "Compliment",
+      description: "Share positive feedback",
+    },
+    {
+      value: "suggestion",
+      label: "Suggestion",
+      description: "General improvement idea",
+    },
+    { value: "other", label: "Other", description: "Something else" },
   ];
 
   const categories = [
-    { value: 'exam', label: 'Exam & Questions' },
-    { value: 'payment', label: 'Payment & Billing' },
-    { value: 'ui', label: 'User Interface' },
-    { value: 'performance', label: 'Performance' },
-    { value: 'content', label: 'Content Quality' },
-    { value: 'other', label: 'Other' }
+    { value: "exam", label: "Exam & Questions" },
+    { value: "payment", label: "Payment & Billing" },
+    { value: "ui", label: "User Interface" },
+    { value: "performance", label: "Performance" },
+    { value: "content", label: "Content Quality" },
+    { value: "other", label: "Other" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,15 +86,15 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
     try {
       await feedbackManager.submitFeedback({
         userId: user.uid,
-        userEmail: user.email || '',
-        userName: userProfile.displayName || user.email || 'Anonymous',
-        university: userProfile.university || 'Not specified',
+        userEmail: user.email || "",
+        userName: userProfile.displayName || user.email || "Anonymous",
+        university: userProfile.university || "Not specified",
         type: formData.type as any,
         category: formData.category,
         subject: formData.subject,
         message: formData.message,
         rating: rating > 0 ? rating : undefined,
-        examId
+        examId,
       });
 
       setSubmitted(true);
@@ -72,14 +103,14 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
         setSubmitted(false);
         setFormData({
           type: initialType,
-          category: 'other',
-          subject: '',
-          message: ''
+          category: "other",
+          subject: "",
+          message: "",
         });
         setRating(0);
       }, 2000);
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      console.error("Error submitting feedback:", error);
     } finally {
       setSubmitting(false);
     }
@@ -91,9 +122,9 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
       setSubmitted(false);
       setFormData({
         type: initialType,
-        category: 'other',
-        subject: '',
-        message: ''
+        category: "other",
+        subject: "",
+        message: "",
       });
       setRating(0);
     }
@@ -110,7 +141,8 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
             Feedback Submitted!
           </h3>
           <p className="text-gray-600">
-            Thank you for your feedback. We'll review it and get back to you if needed.
+            Thank you for your feedback. We'll review it and get back to you if
+            needed.
           </p>
         </div>
       </Modal>
@@ -138,19 +170,19 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
                 <Star
                   className={`h-6 w-6 ${
                     star <= (hoverRating || rating)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
+                      ? "text-yellow-400 fill-current"
+                      : "text-gray-300"
                   }`}
                 />
               </button>
             ))}
             {rating > 0 && (
               <span className="ml-2 text-sm text-gray-600">
-                {rating === 1 && 'Poor'}
-                {rating === 2 && 'Fair'}
-                {rating === 3 && 'Good'}
-                {rating === 4 && 'Very Good'}
-                {rating === 5 && 'Excellent'}
+                {rating === 1 && "Poor"}
+                {rating === 2 && "Fair"}
+                {rating === 3 && "Good"}
+                {rating === 4 && "Very Good"}
+                {rating === 5 && "Excellent"}
               </span>
             )}
           </div>
@@ -163,7 +195,9 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
           </label>
           <select
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+            onChange={(e) =>
+              setFormData({ ...formData, type: e.target.value as any })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           >
@@ -182,7 +216,9 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
           </label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+            onChange={(e) =>
+              setFormData({ ...formData, category: e.target.value as any })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           >
@@ -202,7 +238,9 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
           <input
             type="text"
             value={formData.subject}
-            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, subject: e.target.value })
+            }
             placeholder="Brief summary of your feedback"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
@@ -216,7 +254,9 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
           </label>
           <textarea
             value={formData.message}
-            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, message: e.target.value })
+            }
             placeholder="Please provide detailed feedback..."
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -228,10 +268,22 @@ export function FeedbackForm({ isOpen, onClose, examId, initialType = 'other' }:
         {userProfile && (
           <div className="bg-gray-50 p-3 rounded-md">
             <div className="text-sm text-gray-600">
-              <div><strong>Name:</strong> {userProfile.displayName || 'Not provided'}</div>
-              <div><strong>Email:</strong> {user?.email}</div>
-              <div><strong>University:</strong> {userProfile.university || 'Not specified'}</div>
-              {examId && <div><strong>Exam ID:</strong> {examId}</div>}
+              <div>
+                <strong>Name:</strong>{" "}
+                {userProfile.displayName || "Not provided"}
+              </div>
+              <div>
+                <strong>Email:</strong> {user?.email}
+              </div>
+              <div>
+                <strong>University:</strong>{" "}
+                {userProfile.university || "Not specified"}
+              </div>
+              {examId && (
+                <div>
+                  <strong>Exam ID:</strong> {examId}
+                </div>
+              )}
             </div>
           </div>
         )}

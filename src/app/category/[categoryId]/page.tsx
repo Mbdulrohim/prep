@@ -35,37 +35,37 @@ export default function CategoryPage() {
         questions: 250,
         duration: "2.5 hours",
         available: true,
-        difficulty: "Intermediate" as const
+        difficulty: "Intermediate" as const,
       },
       {
-        id: "rn-paper-2", 
+        id: "rn-paper-2",
         title: "RN Paper 2",
         description: "Advanced nursing practice and specialized care",
         questions: 250,
         duration: "2.5 hours",
         available: true,
-        difficulty: "Intermediate" as const
-      }
+        difficulty: "Intermediate" as const,
+      },
     ],
     rm: [
       {
         id: "rm-paper-1",
-        title: "RM Paper 1", 
+        title: "RM Paper 1",
         description: "Midwifery fundamentals and maternal care",
         questions: 250,
         duration: "2.5 hours",
         available: false,
-        difficulty: "Intermediate" as const
+        difficulty: "Intermediate" as const,
       },
       {
         id: "rm-paper-2",
         title: "RM Paper 2",
-        description: "Advanced midwifery practice and neonatal care", 
+        description: "Advanced midwifery practice and neonatal care",
         questions: 250,
         duration: "2.5 hours",
         available: false,
-        difficulty: "Intermediate" as const
-      }
+        difficulty: "Intermediate" as const,
+      },
     ],
     rphn: [
       {
@@ -73,9 +73,9 @@ export default function CategoryPage() {
         title: "RPHN Paper 1",
         description: "Public health fundamentals and community care",
         questions: 250,
-        duration: "2.5 hours", 
+        duration: "2.5 hours",
         available: false,
-        difficulty: "Intermediate" as const
+        difficulty: "Intermediate" as const,
       },
       {
         id: "rphn-paper-2",
@@ -84,22 +84,24 @@ export default function CategoryPage() {
         questions: 250,
         duration: "2.5 hours",
         available: false,
-        difficulty: "Intermediate" as const
-      }
-    ]
+        difficulty: "Intermediate" as const,
+      },
+    ],
   };
 
-  const examsForCategory = examsByCategory[categoryId as keyof typeof examsByCategory] || [];
-  
+  const examsForCategory =
+    examsByCategory[categoryId as keyof typeof examsByCategory] || [];
+
   const categoryTitles = {
     rn: "Registered Nursing",
-    rm: "Registered Midwifery", 
-    rphn: "Public Health Nursing"
+    rm: "Registered Midwifery",
+    rphn: "Public Health Nursing",
   };
 
-  const categoryTitle = categoryTitles[categoryId as keyof typeof categoryTitles] || "Exams";
+  const categoryTitle =
+    categoryTitles[categoryId as keyof typeof categoryTitles] || "Exams";
 
-  const handleExamClick = (exam: typeof examsForCategory[0]) => {
+  const handleExamClick = (exam: (typeof examsForCategory)[0]) => {
     if (exam.available) {
       // Navigate to the specific exam, e.g., /exam/rn-paper-1
       router.push(`/exam/${exam.id}`);
@@ -123,16 +125,20 @@ export default function CategoryPage() {
               <div
                 key={exam.id}
                 className={`bg-white border rounded-2xl p-6 transition-all ${
-                  exam.available 
-                    ? 'border-slate-200 hover:border-blue-300 hover:shadow-lg cursor-pointer' 
-                    : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                  exam.available
+                    ? "border-slate-200 hover:border-blue-300 hover:shadow-lg cursor-pointer"
+                    : "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
                 }`}
                 onClick={() => handleExamClick(exam)}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-grow">
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className={`text-xl font-semibold ${exam.available ? 'text-slate-800' : 'text-gray-600'}`}>
+                      <h2
+                        className={`text-xl font-semibold ${
+                          exam.available ? "text-slate-800" : "text-gray-600"
+                        }`}
+                      >
                         {exam.title}
                       </h2>
                       {!exam.available && (
@@ -141,22 +147,38 @@ export default function CategoryPage() {
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm mb-3 ${exam.available ? 'text-slate-600' : 'text-gray-500'}`}>
+                    <p
+                      className={`text-sm mb-3 ${
+                        exam.available ? "text-slate-600" : "text-gray-500"
+                      }`}
+                    >
                       {exam.description}
                     </p>
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium ${exam.available ? 'text-slate-700' : 'text-gray-500'}`}>
+                        <span
+                          className={`font-medium ${
+                            exam.available ? "text-slate-700" : "text-gray-500"
+                          }`}
+                        >
                           📝 {exam.questions} Questions
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium ${exam.available ? 'text-slate-700' : 'text-gray-500'}`}>
+                        <span
+                          className={`font-medium ${
+                            exam.available ? "text-slate-700" : "text-gray-500"
+                          }`}
+                        >
                           ⏱️ {exam.duration}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium ${exam.available ? 'text-blue-600' : 'text-gray-500'}`}>
+                        <span
+                          className={`font-medium ${
+                            exam.available ? "text-blue-600" : "text-gray-500"
+                          }`}
+                        >
                           📊 {exam.difficulty}
                         </span>
                       </div>
@@ -164,7 +186,10 @@ export default function CategoryPage() {
                     {exam.available && (
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex-grow bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{ width: "0%" }}
+                          ></div>
                         </div>
                         <span className="text-sm font-semibold text-slate-600">
                           0% Complete
@@ -179,7 +204,10 @@ export default function CategoryPage() {
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button disabled className="gap-2 bg-gray-300 cursor-not-allowed">
+                      <Button
+                        disabled
+                        className="gap-2 bg-gray-300 cursor-not-allowed"
+                      >
                         Coming Soon
                       </Button>
                     )}

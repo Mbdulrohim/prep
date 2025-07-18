@@ -11,7 +11,9 @@ export interface StudentDetails {
 }
 
 interface PreExamModalProps {
+  examId?: string;
   onStartExam: (details: StudentDetails) => void;
+  onCancel?: () => void;
   examDetails?: {
     title: string;
     description: string;
@@ -33,17 +35,17 @@ export function PreExamModal({
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       setError("Please enter your full name");
       return;
     }
-    
+
     if (!university.trim()) {
       setError("Please enter your university");
       return;
     }
-    
+
     if (!agreedToTerms) {
       setError("Please agree to the exam terms and conditions");
       return;
@@ -89,7 +91,9 @@ export function PreExamModal({
         {/* Exam Details */}
         {examDetails && (
           <div className="bg-gray-50 rounded-lg p-6 mb-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Exam Information</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">
+              Exam Information
+            </h3>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-center space-x-3">
                 <FileText className="h-5 w-5 text-blue-600" />
@@ -102,7 +106,9 @@ export function PreExamModal({
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm text-gray-600">Duration</p>
-                  <p className="font-semibold">{formatDuration(examDetails.durationMinutes)}</p>
+                  <p className="font-semibold">
+                    {formatDuration(examDetails.durationMinutes)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -112,7 +118,10 @@ export function PreExamModal({
         {/* Student Information Form */}
         <form onSubmit={handleStart} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Full Name *
             </label>
             <input
@@ -127,7 +136,10 @@ export function PreExamModal({
           </div>
 
           <div>
-            <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="university"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               University/Institution *
             </label>
             <UniversitySelector
@@ -151,7 +163,7 @@ export function PreExamModal({
               <li>• Once submitted, you cannot modify your answers</li>
               <li>• Results will be available immediately after submission</li>
             </ul>
-            
+
             <label className="flex items-start space-x-3">
               <input
                 type="checkbox"
@@ -160,7 +172,8 @@ export function PreExamModal({
                 className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <span className="text-sm text-blue-900">
-                I agree to the terms and conditions and confirm that I will complete this exam honestly and independently.
+                I agree to the terms and conditions and confirm that I will
+                complete this exam honestly and independently.
               </span>
             </label>
           </div>

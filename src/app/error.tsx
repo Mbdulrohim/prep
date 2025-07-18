@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -23,15 +23,18 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Oops! Something went wrong
         </h1>
-        
+
         <p className="text-gray-600 mb-8">
-          We encountered an unexpected error. Don't worry, our team has been notified and is working on it.
+          We encountered an unexpected error. Don't worry, our team has been
+          notified and is working on it.
         </p>
 
         {/* Error Details (only in development) */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
-            <h3 className="text-sm font-medium text-red-800 mb-2">Error Details:</h3>
+            <h3 className="text-sm font-medium text-red-800 mb-2">
+              Error Details:
+            </h3>
             <pre className="text-xs text-red-700 overflow-auto">
               {error.message}
             </pre>
@@ -47,7 +50,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
-          
+
           <Link href="/">
             <Button
               variant="outline"
@@ -61,7 +64,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 
         {/* Support Message */}
         <p className="text-sm text-gray-500 mt-6">
-          If this problem persists, please{' '}
+          If this problem persists, please{" "}
           <Link href="/dashboard" className="text-blue-600 hover:underline">
             contact our support team
           </Link>

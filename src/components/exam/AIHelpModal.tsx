@@ -11,7 +11,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
 
 interface Question {
@@ -31,15 +31,20 @@ interface AIHelpModalProps {
   onClose: () => void;
 }
 
-export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpModalProps) {
+export function AIHelpModal({
+  question,
+  userAnswer,
+  isOpen,
+  onClose,
+}: AIHelpModalProps) {
   const [aiResponse, setAiResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const getAIHelp = async () => {
     setLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       const response = await aiHelper.getHelpForMissedQuestion({
         questionText: question.text,
@@ -47,16 +52,16 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
         userAnswer: question.options[userAnswer],
         explanation: question.explanation,
         category: question.category,
-        topic: question.topics[0] || 'General'
+        topic: question.topics[0] || "General",
       });
 
       if (response.success) {
         setAiResponse(response);
       } else {
-        setError(response.error || 'Failed to get AI help');
+        setError(response.error || "Failed to get AI help");
       }
     } catch (err) {
-      setError('Unable to connect to AI assistant');
+      setError("Unable to connect to AI assistant");
     } finally {
       setLoading(false);
     }
@@ -74,7 +79,9 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
               <Brain className="h-8 w-8 mr-3" />
               <div>
                 <h2 className="text-2xl font-bold">AI Learning Assistant</h2>
-                <p className="text-purple-100">Personalized help for your missed question</p>
+                <p className="text-purple-100">
+                  Personalized help for your missed question
+                </p>
               </div>
             </div>
             <Button
@@ -90,14 +97,17 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
         <div className="p-6">
           {/* Question Summary */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3">Question Summary</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">
+              Question Summary
+            </h3>
             <p className="text-gray-700 mb-4">{question.text}</p>
-            
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
                 <span className="text-sm">
-                  <strong>Correct:</strong> {question.options[question.correctAnswer]}
+                  <strong>Correct:</strong>{" "}
+                  {question.options[question.correctAnswer]}
                 </span>
               </div>
               <div className="flex items-center">
@@ -120,7 +130,8 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
                 Get AI-Powered Explanation
               </Button>
               <p className="text-sm text-gray-600 mt-2">
-                Our AI will analyze your mistake and provide personalized learning guidance
+                Our AI will analyze your mistake and provide personalized
+                learning guidance
               </p>
             </div>
           )}
@@ -157,7 +168,9 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center mb-3">
                   <Lightbulb className="h-5 w-5 text-blue-600 mr-2" />
-                  <h4 className="font-semibold text-blue-900">AI Explanation</h4>
+                  <h4 className="font-semibold text-blue-900">
+                    AI Explanation
+                  </h4>
                 </div>
                 <p className="text-blue-800">{aiResponse.explanation}</p>
               </div>
@@ -166,7 +179,9 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-center mb-3">
                   <Target className="h-5 w-5 text-green-600 mr-2" />
-                  <h4 className="font-semibold text-green-900">Key Learning Points</h4>
+                  <h4 className="font-semibold text-green-900">
+                    Key Learning Points
+                  </h4>
                 </div>
                 <ul className="space-y-2">
                   {aiResponse.keyPoints.map((point: string, index: number) => (
@@ -198,23 +213,29 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <div className="flex items-center mb-3">
                   <Target className="h-5 w-5 text-orange-600 mr-2" />
-                  <h4 className="font-semibold text-orange-900">Related Topics to Review</h4>
+                  <h4 className="font-semibold text-orange-900">
+                    Related Topics to Review
+                  </h4>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {aiResponse.relatedTopics.map((topic: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium"
-                    >
-                      {topic}
-                    </span>
-                  ))}
+                  {aiResponse.relatedTopics.map(
+                    (topic: string, index: number) => (
+                      <span
+                        key={index}
+                        className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium"
+                      >
+                        {topic}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
 
               {/* Original Explanation */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Original Explanation</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">
+                  Original Explanation
+                </h4>
                 <p className="text-gray-700">{question.explanation}</p>
               </div>
             </div>
@@ -222,18 +243,16 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
 
           {/* Actions */}
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="px-6"
-            >
+            <Button onClick={onClose} variant="outline" className="px-6">
               Close
             </Button>
-            
+
             {aiResponse && (
               <div className="flex space-x-3">
                 <Button
-                  onClick={() => window.open('https://example.com/study-resources', '_blank')}
+                  onClick={() =>
+                    window.open("https://example.com/study-resources", "_blank")
+                  }
                   variant="outline"
                   className="px-6"
                 >
@@ -243,7 +262,7 @@ export function AIHelpModal({ question, userAnswer, isOpen, onClose }: AIHelpMod
                 <Button
                   onClick={() => {
                     // Mark as reviewed or save to study list
-                    console.log('Question marked for review');
+                    console.log("Question marked for review");
                     onClose();
                   }}
                   className="bg-blue-600 hover:bg-blue-700 px-6"

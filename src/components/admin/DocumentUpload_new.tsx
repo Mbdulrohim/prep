@@ -92,15 +92,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     setUploadMessage("");
 
     try {
-      const result = await DocumentParser.parseDocxFile(file, selectedExam);
+      const examCategory = selectedExam || "RN"; // Default to RN if no exam selected
+      const result = await DocumentParser.parseDocxFile(file, examCategory);
+      const questions = result.questions;
 
-      if (!result.success) {
-        setUploadStatus("error");
-        setUploadMessage(result.error || "Failed to parse document.");
-        return;
-      }
-
-      if (result.questions.length === 0) {
+      if (questions.length === 0) {
         setUploadStatus("error");
         setUploadMessage(
           "No questions found in the document. Please check the formatting."
@@ -108,10 +104,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         return;
       }
 
-      setExtractedQuestions(result.questions);
+      setExtractedQuestions(questions);
       setUploadStatus("success");
       setUploadMessage(
-        `Successfully extracted ${result.questions.length} questions from ${file.name}`
+        `Successfully extracted ${questions.length} questions from ${file.name}`
       );
     } catch (error) {
       console.error("Error parsing document:", error);
