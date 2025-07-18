@@ -333,6 +333,60 @@ export default function AdminDashboard() {
     }
   };
 
+  const grantUserAccess = async (userId: string, planType: string = 'full_access', daysValid: number = 90) => {
+    try {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + daysValid);
+      
+      await updateDoc(doc(db, 'userAccess', userId), {
+        hasAccess: true,
+        planType: planType,
+        accessGrantedAt: new Date(),
+        expiryDate: expiryDate,
+        grantedBy: user?.uid,
+        updatedAt: new Date()
+      });
+      
+      // Update local state
+      setUsers(prev => prev.map(userData => 
+        userData.id === userId 
+          ? { ...userData, accessCategory: planType, expiryDate }
+          : userData
+      ));
+      
+      alert(`Access granted successfully for ${daysValid} days`);
+      
+    } catch (error) {
+      console.error('Error granting user access:', error);
+      alert('Failed to grant user access');
+    }
+  };
+
+  const revokeUserAccess = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, 'userAccess', userId), {
+        hasAccess: false,
+        planType: '',
+        accessRevokedAt: new Date(),
+        revokedBy: user?.uid,
+        updatedAt: new Date()
+      });
+      
+      // Update local state
+      setUsers(prev => prev.map(userData => 
+        userData.id === userId 
+          ? { ...userData, accessCategory: '', expiryDate: undefined }
+          : userData
+      ));
+      
+      alert('Access revoked successfully');
+      
+    } catch (error) {
+      console.error('Error revoking user access:', error);
+      alert('Failed to revoke user access');
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -587,14 +641,33 @@ export default function AdminDashboard() {
                           )}
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                           <div>
                             <span className="text-gray-500">University:</span>
                             <p className="font-medium">{userData.university}</p>
                           </div>
                           <div>
-                            <span className="text-gray-500">Category:</span>
-                            <p className="font-medium">{userData.accessCategory || 'None'}</p>
+                            <span className="text-gray-500">Access:</span>
+                            <p className="font-medium">
+                              {userData.accessCategory ? (
+                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                                  {userData.accessCategory}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
+                                  No Access
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Expiry:</span>
+                            <p className="font-medium">
+                              {userData.expiryDate ? 
+                                new Date(userData.expiryDate).toLocaleDateString() : 
+                                'N/A'
+                              }
+                            </p>
                           </div>
                           <div>
                             <span className="text-gray-500">Attempts:</span>
@@ -613,12 +686,35 @@ export default function AdminDashboard() {
                         )}
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex flex-wrap gap-2">
+                        {/* Access Management */}
+                        {userData.accessCategory ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => revokeUserAccess(userData.id)}
+                            className="text-orange-600 hover:text-orange-700 border-orange-300"
+                          >
+                            <UserX className="h-4 w-4 mr-1" />
+                            Revoke Access
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => grantUserAccess(userData.id, 'full_access', 90)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            Grant Access
+                          </Button>
+                        )}
+                        
+                        {/* Restriction Management */}
                         {userData.isRestricted ? (
                           <Button
                             size="sm"
                             onClick={() => toggleUserRestriction(userData.id, false)}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-blue-600 hover:bg-blue-700"
                           >
                             <UserCheck className="h-4 w-4 mr-1" />
                             Unrestrict
@@ -637,6 +733,23 @@ export default function AdminDashboard() {
                             Restrict
                           </Button>
                         )}
+                        
+                        {/* Extended Access Options */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const days = prompt('Grant access for how many days? (default: 90)');
+                            const daysNumber = days ? parseInt(days) : 90;
+                            if (daysNumber > 0) {
+                              grantUserAccess(userData.id, 'full_access', daysNumber);
+                            }
+                          }}
+                          className="text-purple-600 hover:text-purple-700 border-purple-300"
+                        >
+                          <Clock className="h-4 w-4 mr-1" />
+                          Custom Access
+                        </Button>
                       </div>
                     </div>
                   </div>

@@ -1,15 +1,7 @@
-import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-
-const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: {
-    default: 'PREP - Nigerian Nursing Exam Preparation Platform',
-    template: '%s | PREP'
-  },
+  title: 'PREP - Nigerian Nursing Exam Preparation Platform',
   description: 'Comprehensive exam preparation platform for Nigerian nursing students. Practice with 10,000+ questions, AI-powered explanations, and university rankings.',
   keywords: 'nursing exam, Nigeria, NANNM, RN, RM, RPHN, exam preparation, medical education, nursing students',
   authors: [{ name: 'PREP Team' }],
@@ -57,21 +49,8 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: 'your-google-verification-code',
+  },
   category: 'education',
 };
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${nunito.variable} font-sans antialiased bg-background text-foreground`}
-      >
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
-  );
-}

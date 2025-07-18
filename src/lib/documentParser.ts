@@ -11,11 +11,20 @@ export interface ParsedQuestion {
   difficulty?: string;
 }
 
+export interface ParseError {
+  line: number;
+  issue: string;
+  suggestion: string;
+}
+
 export interface ParseResult {
   questions: ParsedQuestion[];
   success: boolean;
   error?: string;
+  errors?: ParseError[];
   totalQuestions: number;
+  duplicatesFound: number;
+  skippedQuestions: number;
 }
 
 export class DocumentParser {
@@ -33,12 +42,15 @@ export class DocumentParser {
       const text = result.value;
       
       // Parse questions from the extracted text
-      const questions = this.parseQuestionsFromText(text, examCategory);
+      const parseResult = this.parseQuestionsFromTextEnhanced(text, examCategory);
       
       return {
-        questions,
+        questions: parseResult.questions,
         success: true,
-        totalQuestions: questions.length
+        totalQuestions: parseResult.questions.length,
+        duplicatesFound: parseResult.duplicatesFound,
+        skippedQuestions: parseResult.skippedQuestions,
+        errors: parseResult.errors
       };
       
     } catch (error) {
@@ -47,44 +59,146 @@ export class DocumentParser {
         questions: [],
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        totalQuestions: 0
+        totalQuestions: 0,
+        duplicatesFound: 0,
+        skippedQuestions: 0,
+        errors: []
       };
     }
   }
 
   /**
-   * Parse questions from plain text
+   * Enhanced parsing with error reporting and duplicate detection
    */
-  private static parseQuestionsFromText(text: string, examCategory: string): ParsedQuestion[] {
+  private static parseQuestionsFromTextEnhanced(text: string, examCategory: string): Omit<ParseResult, 'success'> {
     const questions: ParsedQuestion[] = [];
+    const errors: ParseError[] = [];
+    const questionTexts = new Set<string>(); // For duplicate detection
+    let duplicatesFound = 0;
+    let skippedQuestions = 0;
     
-    // Split text into potential question blocks
-    // Look for patterns like "1.", "2.", "Question 1:", etc.
-    const questionBlocks = text.split(/(?=\d+\.|Question\s+\d+)/i).filter(block => block.trim());
+    // Enhanced patterns to match various formats
+    const questionBlocks = text.split(/(?=(?:\d+[\.\)]\s*|Q\d+[\.\:]\s*|Question\s+\d+[\:\.]?\s*|\d+\s+[A-Z]))/i)
+      .filter(block => block.trim());
     
     for (let i = 0; i < questionBlocks.length; i++) {
       const block = questionBlocks[i].trim();
       if (!block) continue;
       
       try {
-        const parsedQuestion = this.parseQuestionBlock(block, examCategory, i + 1);
+        const parsedQuestion = this.parseQuestionBlockEnhanced(block, examCategory, i + 1, errors);
         if (parsedQuestion) {
+          // Check for duplicates
+          const questionKey = parsedQuestion.text.toLowerCase().trim();
+          if (questionTexts.has(questionKey)) {
+            duplicatesFound++;
+            errors.push({
+              line: i + 1,
+              issue: 'Duplicate question detected',
+              suggestion: 'Remove or modify this question as it already exists'
+            });
+            continue;
+          }
+          
+          questionTexts.add(questionKey);
           questions.push(parsedQuestion);
+        } else {
+          skippedQuestions++;
         }
       } catch (error) {
-        console.warn(`Failed to parse question block ${i + 1}:`, error);
+        skippedQuestions++;
+        errors.push({
+          line: i + 1,
+          issue: 'Failed to parse question',
+          suggestion: 'Check question format: ensure it has question text, 4 options (A-D), and correct answer'
+        });
       }
     }
     
-    return questions;
+    return {
+      questions,
+      errors,
+      duplicatesFound,
+      skippedQuestions,
+      totalQuestions: questions.length
+    };
   }
 
   /**
-   * Parse a single question block
+   * Parse questions from plain text (legacy method)
+   */
+  private static parseQuestionsFromText(text: string, examCategory: string): ParsedQuestion[] {
+    const result = this.parseQuestionsFromTextEnhanced(text, examCategory);
+    return result.questions;
+  }
+
+  /**
+   * Enhanced question block parser with error collection
+   */
+  private static parseQuestionBlockEnhanced(
+    block: string, 
+    examCategory: string, 
+    questionNumber: number,
+    errors: ParseError[]
+  ): ParsedQuestion | null {
+    try {
+      // Use the existing parseQuestionBlock but with error tracking
+      const result = this.parseQuestionBlock(block, examCategory, questionNumber);
+      
+      if (!result) {
+        errors.push({
+          line: questionNumber,
+          issue: 'Could not parse question block',
+          suggestion: 'Check question format: ensure it has question text, at least 2 options, and follows standard format'
+        });
+        return null;
+      }
+      
+      // Additional validation for enhanced parsing
+      if (!result.text || result.text.length < 10) {
+        errors.push({
+          line: questionNumber,
+          issue: 'Question text too short',
+          suggestion: 'Question text should be at least 10 characters long'
+        });
+        return null;
+      }
+      
+      const optionCount = Object.keys(result.options).length;
+      if (optionCount < 2) {
+        errors.push({
+          line: questionNumber,
+          issue: `Only ${optionCount} options found`,
+          suggestion: 'Questions should have at least 2 options, preferably 4 (A-D)'
+        });
+        return null;
+      }
+      
+      if (optionCount < 4) {
+        errors.push({
+          line: questionNumber,
+          issue: `Only ${optionCount} options found, expected 4`,
+          suggestion: 'Consider adding more options for better question quality'
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      errors.push({
+        line: questionNumber,
+        issue: 'Parse error occurred',
+        suggestion: 'Check question format and try again'
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Parse a single question block with improved format detection
    */
   private static parseQuestionBlock(block: string, examCategory: string, questionNumber: number): ParsedQuestion | null {
-    // Remove question number prefix
-    const content = block.replace(/^\d+\.\s*|^Question\s+\d+:?\s*/i, '').trim();
+    // Enhanced regex to remove various question number formats
+    const content = block.replace(/^(?:\d+[\.\)]\s*|Q\d+[\.\:]\s*|Question\s+\d+[\:\.]?\s*|\d+\s+)/i, '').trim();
     
     // Split into lines
     const lines = content.split('\n').map(line => line.trim()).filter(line => line);

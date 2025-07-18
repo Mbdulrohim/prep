@@ -1,4 +1,11 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google"; // Using Nunito as requested
+import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+
+const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
+
+import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";

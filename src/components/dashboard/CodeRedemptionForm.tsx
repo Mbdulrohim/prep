@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ArrowRight } from "lucide-react";
 
-export function CodeRedemptionForm() {
+export function CodeRedemptionForm({ onAccessGranted }: { onAccessGranted?: (accessDetails: any) => void }) {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
