@@ -18,7 +18,6 @@ import {
   Building,
   MessageSquare,
   Star,
-  BookOpen,
   Lock,
   CheckCircle,
   Clock,
@@ -27,6 +26,7 @@ import {
   Zap,
   Smartphone,
   QrCode,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -35,8 +35,15 @@ import { useUserStats } from "@/hooks/useUserStats";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
+// Admin access control
+const ADMIN_EMAILS = [
+  "doyextech@gmail.com",
+  "ibrahimadekunle3030@gmail.com",
+  "adekunleibrahim6060@gmail.com",
+];
+
 export default function DashboardPage() {
-  const { user, userProfile, updateUserProfile } = useAuth();
+  const { user, userProfile, updateUserProfile, signInWithGoogle } = useAuth();
   const {
     stats,
     examProgress,
@@ -89,7 +96,7 @@ export default function DashboardPage() {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="flex items-center gap-3 mb-4">
-                <BookOpen className="w-8 h-8 text-blue-600" />
+                <FileText className="w-8 h-8 text-blue-600" />
                 <h3 className="text-xl font-semibold text-gray-900">
                   Comprehensive Coverage
                 </h3>
@@ -154,12 +161,13 @@ export default function DashboardPage() {
               both Paper 1 & Paper 2 for any exam category.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/exam/rn">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold">
-                  <BookOpen className="w-5 h-5 mr-2" />
-                  Try Free Demo
-                </Button>
-              </Link>
+              <Button
+                onClick={signInWithGoogle}
+                className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all"
+              >
+                <LogIn className="w-5 h-5 mr-2" />
+                Sign In with Google
+              </Button>
               <Link href="/leaderboard">
                 <Button
                   variant="outline"
@@ -171,7 +179,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <p className="text-sm text-gray-500 mt-4">
-              Sign in to access full features and payment options
+              Access full features and payment options after signing in
             </p>
           </div>
         </div>
@@ -213,8 +221,9 @@ export default function DashboardPage() {
     );
   }
 
-  // Check if user has access to any exams - simplified check
-  const hasExamAccess = stats && stats.totalExamsCompleted > 0;
+  // Check if user has access to any exams - Admin gets unlimited access
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+  const hasExamAccess = isAdmin || (stats && stats.totalExamsCompleted > 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -254,7 +263,7 @@ export default function DashboardPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <div className="bg-white/10 rounded-lg p-4 text-center">
-                      <BookOpen className="h-8 w-8 mx-auto mb-2" />
+                      <QrCode className="h-8 w-8 mx-auto mb-2" />
                       <div className="text-lg font-bold">10,000+</div>
                       <div className="text-sm text-blue-100">Questions</div>
                     </div>
@@ -498,7 +507,7 @@ export default function DashboardPage() {
                       id: "fundamentals",
                       name: "Fundamentals of Nursing",
                       questions: 2000,
-                      icon: BookOpen,
+                      icon: Zap,
                     },
                   ].map((exam) => (
                     <Link
