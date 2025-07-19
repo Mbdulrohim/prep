@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
         phonenumber: "",
       },
       customizations: {
-        title: "PREP - Nursing Exam Access",
-        description: "Payment for complete exam access",
+        title: "PREP - Premium Nursing Exam Access",
+        description: "Payment for premium exam preparation with 3 mock exams",
         logo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/image.png`,
       },
       meta: flutterwaveService.createPaymentMetadata(userId, planType, {

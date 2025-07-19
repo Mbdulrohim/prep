@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
-import { FlutterwavePurchase } from "@/components/dashboard/FlutterwavePurchase";
+import { PricingPlans } from "@/components/dashboard/PricingPlans";
 import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
@@ -365,8 +365,8 @@ export default function DashboardPage() {
                     <div className="flex-1 border-t border-gray-300"></div>
                   </div>
 
-                  {/* Flutterwave Payment */}
-                  <FlutterwavePurchase />
+                  {/* Pricing Plans */}
+                  <PricingPlans />
                 </div>
               </div>
             </div>
