@@ -78,6 +78,7 @@ export default function RootLayout({
         className={`${nunito.variable} font-sans antialiased bg-background text-foreground`}
       >
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

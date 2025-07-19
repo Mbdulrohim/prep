@@ -1,37 +1,42 @@
 // src/app/api/create-payment-session/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { paystackService } from "@/lib/paystack";
+import { flutterwaveService } from "@/lib/flutterwave";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, amount, planName, userId, metadata } = await request.json();
+    const { email, amount, planType, userId, txRef, customerName } = await request.json();
 
-    if (!email || !amount || !planName || !userId) {
+    if (!email || !amount || !planType || !userId || !txRef) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Generate reference
-    const reference = paystackService.generateReference();
-
-    // Initialize Paystack payment
-    const paymentData = await paystackService.initializePayment({
-      email,
+    // Initialize Flutterwave payment
+    const paymentData = await flutterwaveService.initializePayment({
+      tx_ref: txRef,
       amount,
-      reference,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
-      metadata: {
-        ...metadata,
-        planName,
-        userId,
-        reference,
+      currency: "NGN",
+      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success`,
+      payment_options: "card,mobilemoney,ussd,banktransfer",
+      customer: {
+        email,
+        name: customerName || "PREP Student",
+        phonenumber: "",
       },
-      channels: ["card", "bank", "ussd", "qr", "mobile_money"],
+      customizations: {
+        title: "PREP - Nursing Exam Access",
+        description: "Payment for complete exam access",
+        logo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/image.png`,
+      },
+      meta: flutterwaveService.createPaymentMetadata(userId, planType, {
+        txRef,
+        customerName,
+      }),
     });
 
-    if (!paymentData.status) {
+    if (paymentData.status !== "success") {
       return NextResponse.json(
         { error: paymentData.message || "Failed to initialize payment" },
         { status: 400 }
@@ -39,10 +44,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      status: true,
-      authorization_url: paymentData.data.authorization_url,
-      access_code: paymentData.data.access_code,
-      reference: paymentData.data.reference,
+      status: "success",
+      data: {
+        link: paymentData.data.link,
+        tx_ref: txRef,
+      },
     });
   } catch (error) {
     console.error("Payment session creation error:", error);

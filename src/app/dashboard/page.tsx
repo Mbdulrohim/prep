@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
-import { PaystackPurchase } from "@/components/dashboard/PaystackPurchase";
+import { FlutterwavePurchase } from "@/components/dashboard/FlutterwavePurchase";
 import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
@@ -23,8 +23,6 @@ import {
   TrendingUp,
   Target,
   Zap,
-  Smartphone,
-  QrCode,
   LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -58,7 +56,7 @@ export default function DashboardPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<"paystack">("paystack");
+    useState<"flutterwave">("flutterwave");
   const [rnExams, setRnExams] = useState<ExamData[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
   const [userAccess, setUserAccess] = useState<any>(null);
@@ -318,7 +316,7 @@ export default function DashboardPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <div className="bg-white/10 rounded-lg p-4 text-center">
-                      <QrCode className="h-8 w-8 mx-auto mb-2" />
+                      <FileText className="h-8 w-8 mx-auto mb-2" />
                       <div className="text-lg font-bold">10,000+</div>
                       <div className="text-sm text-blue-100">Questions</div>
                     </div>
@@ -343,7 +341,7 @@ export default function DashboardPage() {
                       <div className="text-left">
                         <div className="font-semibold">Card Payment</div>
                         <div className="text-sm text-gray-500">
-                          Pay securely with Paystack - Instant access
+                          Pay securely with Flutterwave - Instant access
                         </div>
                       </div>
                     </div>
@@ -367,49 +365,8 @@ export default function DashboardPage() {
                     <div className="flex-1 border-t border-gray-300"></div>
                   </div>
 
-                  {/* Paystack Payment */}
-                  <PaystackPurchase />
-
-                  <div className="mt-8 space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Alternative Payment Methods
-                    </h3>
-                    <p className="text-gray-600">
-                      Choose from multiple payment options that suit you:
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 border border-gray-200 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
-                          <span className="font-medium">Mobile Money</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          MTN, Airtel, 9mobile, Glo
-                        </p>
-                      </div>
-
-                      <div className="p-4 border border-gray-200 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <QrCode className="h-5 w-5 text-purple-600 mr-2" />
-                          <span className="font-medium">USSD Codes</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          Quick USSD payment codes
-                        </p>
-                      </div>
-
-                      <div className="p-4 border border-gray-200 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
-                          <span className="font-medium">POS Payment</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          Visit any POS terminal
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Flutterwave Payment */}
+                  <FlutterwavePurchase />
                 </div>
               </div>
             </div>
