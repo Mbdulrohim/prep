@@ -24,6 +24,7 @@ import {
   Target,
   Zap,
   LogIn,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -582,60 +583,77 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Add schedule info */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <h4 className="font-semibold text-blue-900 mb-2">
-                        📅 Exam Schedule
+                    {/* Schedule warning */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        📅 Schedule Not Set
                       </h4>
-                      <p className="text-sm text-blue-700">
-                        <strong>Paper 1:</strong> Day 1 - Must be completed
-                        before Paper 2<br />
-                        <strong>Paper 2:</strong> Day 2 - Available after Paper
-                        1 completion
+                      <p className="text-sm text-orange-700">
+                        <strong>Admin Notice:</strong> RN exam dates have not been scheduled yet.<br />
+                        Please contact administration to set exam schedule before exams become available.
                       </p>
-                      <p className="text-xs text-blue-600 mt-2">
-                        ⚠️ Both papers must be taken on consecutive days as per
-                        exam regulations
+                      <p className="text-xs text-orange-600 mt-2">
+                        ⚠️ Both papers require admin scheduling and must be taken during scheduled periods
                       </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {rnExams.map((exam, index) => (
-                        <Link
-                          key={exam.id}
-                          href={`/exam/${exam.id}`}
-                          className="group p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">
-                                  {exam.title}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  {exam.questionsCount} questions •{" "}
-                                  {exam.durationMinutes} mins
-                                </p>
-                                <p className="text-xs text-blue-600 mt-1">
-                                  Day {index + 1} - {exam.difficulty}
-                                </p>
-                              </div>
+                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-600 font-medium">Schedule Required</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-gray-400" />
                             </div>
-                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                            <div>
+                              <h4 className="font-medium text-gray-600">
+                                RN Paper 1
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                250 questions • 150 mins
+                              </p>
+                              <p className="text-xs text-blue-600 mt-1">
+                                CBT Format - Comprehensive
+                              </p>
+                            </div>
                           </div>
-                        </Link>
-                      ))}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-600 font-medium">Schedule Required</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-600">
+                                RN Paper 2
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                250 questions • 150 mins
+                              </p>
+                              <p className="text-xs text-blue-600 mt-1">
+                                CBT Format - Advanced
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    {rnExams.length === 0 && (
-                      <div className="text-center py-8">
-                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">No RN exams available</p>
+                    <div className="text-center py-4">
+                      <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Waiting for admin to set exam schedule
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -648,22 +666,26 @@ export default function DashboardPage() {
                   RM Exam Schedule
                 </h3>
                 <div className="space-y-4">
-                  {/* Add schedule info */}
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-semibold text-purple-900 mb-2">
-                      📅 Exam Schedule (Coming Soon)
+                  {/* Schedule warning */}
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      📅 Schedule Not Set
                     </h4>
-                    <p className="text-sm text-purple-700">
-                      <strong>Paper 1:</strong> Day 1 - Must be completed before Paper 2<br />
-                      <strong>Paper 2:</strong> Day 2 - Available after Paper 1 completion
+                    <p className="text-sm text-orange-700">
+                      <strong>Admin Notice:</strong> RM exam dates have not been scheduled yet.<br />
+                      Please contact administration to set exam schedule before exams become available.
                     </p>
-                    <p className="text-xs text-purple-600 mt-2">
-                      ⚠️ RM exam schedule will be announced soon. Both papers must be taken on consecutive days as per exam regulations
+                    <p className="text-xs text-orange-600 mt-2">
+                      ⚠️ RM exams are 250 questions each with 150 minutes duration. Both papers require admin scheduling.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60">
+                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                      <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-600 font-medium">Schedule Required</span>
+                      </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
@@ -674,20 +696,20 @@ export default function DashboardPage() {
                               RM Paper 1
                             </h4>
                             <p className="text-sm text-gray-500">
-                              150 questions • 180 mins
+                              250 questions • 150 mins
                             </p>
-                            <p className="text-xs text-purple-600 mt-1">
-                              Day 1 - Coming Soon
+                            <p className="text-xs text-green-600 mt-1">
+                              CBT Format - Midwifery Fundamentals
                             </p>
                           </div>
-                        </div>
-                        <div className="text-gray-400">
-                          <span className="text-sm">Not Available</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60">
+                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                      <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-600 font-medium">Schedule Required</span>
+                      </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
@@ -698,15 +720,93 @@ export default function DashboardPage() {
                               RM Paper 2
                             </h4>
                             <p className="text-sm text-gray-500">
-                              150 questions • 180 mins
+                              250 questions • 150 mins
                             </p>
-                            <p className="text-xs text-purple-600 mt-1">
-                              Day 2 - Coming Soon
+                            <p className="text-xs text-green-600 mt-1">
+                              CBT Format - Advanced Practice
                             </p>
                           </div>
                         </div>
-                        <div className="text-gray-400">
-                          <span className="text-sm">Not Available</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center py-4">
+                    <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Waiting for admin to set exam schedule
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RPHN Exam Schedule */}
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  RPHN Exam Schedule
+                </h3>
+                <div className="space-y-4">
+                  {/* Coming soon notice */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-semibold text-purple-900 mb-2">
+                      🚧 Coming Soon
+                    </h4>
+                    <p className="text-sm text-purple-700">
+                      <strong>RPHN Exams:</strong> Currently under development.<br />
+                      This exam category will be available in a future update with full CBT support.
+                    </p>
+                    <p className="text-xs text-purple-600 mt-2">
+                      ⏳ RPHN (Registered Public Health Nurse) certification exams will follow the same 250-question, 150-minute format.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
+                      <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
+                        <span className="text-purple-700 font-medium">Coming Soon</span>
+                      </div>
+                      <div className="flex items-center justify-between blur-sm">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
+                            <FileText className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-purple-700">
+                              RPHN Paper 1
+                            </h4>
+                            <p className="text-sm text-purple-600">
+                              250 questions • 150 mins
+                            </p>
+                            <p className="text-xs text-purple-500 mt-1">
+                              CBT Format - Public Health Fundamentals
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
+                      <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
+                        <span className="text-purple-700 font-medium">Coming Soon</span>
+                      </div>
+                      <div className="flex items-center justify-between blur-sm">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
+                            <FileText className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-purple-700">
+                              RPHN Paper 2
+                            </h4>
+                            <p className="text-sm text-purple-600">
+                              250 questions • 150 mins
+                            </p>
+                            <p className="text-xs text-purple-500 mt-1">
+                              CBT Format - Advanced Public Health
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -714,8 +814,8 @@ export default function DashboardPage() {
 
                   <div className="text-center py-4">
                     <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
-                      <Clock className="h-4 w-4 mr-2" />
-                      RM exams will be available soon
+                      <Star className="h-4 w-4 mr-2" />
+                      RPHN exams coming in future update
                     </div>
                   </div>
                 </div>

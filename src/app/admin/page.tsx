@@ -105,6 +105,7 @@ export default function AdminDashboard() {
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<
     | "overview"
+    | "exam-schedule"
     | "upload"
     | "questions"
     | "users"
@@ -130,6 +131,16 @@ export default function AdminDashboard() {
     activeUsers: 0,
     restrictedUsers: 0,
   });
+  
+  // Exam scheduling state
+  const [examSchedules, setExamSchedules] = useState<{
+    [examId: string]: {
+      startDate: string;
+      endDate: string;
+      isScheduled: boolean;
+    };
+  }>({});
+  const [schedulingLoading, setSchedulingLoading] = useState(false);
 
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
@@ -580,6 +591,72 @@ export default function AdminDashboard() {
     }
   };
 
+  // Exam scheduling functions
+  const handleScheduleExam = async (examId: string) => {
+    if (!user?.uid) return;
+    
+    const schedule = examSchedules[examId];
+    if (!schedule?.startDate || !schedule?.endDate) {
+      alert("Please set both start and end dates");
+      return;
+    }
+
+    const startDate = new Date(schedule.startDate);
+    const endDate = new Date(schedule.endDate);
+    
+    if (startDate >= endDate) {
+      alert("End date must be after start date");
+      return;
+    }
+
+    setSchedulingLoading(true);
+    try {
+      const { examScheduleManager } = await import("@/lib/examSchedule");
+      
+      // Convert examId to proper format for exam schedule manager
+      const examType = examId.includes('rn') ? 'RN' : 
+                      examId.includes('rm') ? 'RM' : 'RPHN';
+      const paper = examId.includes('paper-2') ? 'paper2' : 'paper1';
+      
+      await examScheduleManager.updateSchedule(`${examType}_${paper}`, {
+        scheduledDate: startDate,
+        isActive: true,
+      });
+
+      // Update local state
+      setExamSchedules(prev => ({
+        ...prev,
+        [examId]: { ...prev[examId], isScheduled: true }
+      }));
+
+      showToast({
+        type: "success",
+        title: "Exam Scheduled",
+        message: `${examId.toUpperCase()} has been scheduled successfully`,
+      });
+    } catch (error) {
+      console.error("Error scheduling exam:", error);
+      showToast({
+        type: "error",
+        title: "Scheduling Failed",
+        message: "Failed to schedule exam. Please try again.",
+      });
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleScheduleInputChange = (examId: string, field: 'startDate' | 'endDate', value: string) => {
+    setExamSchedules(prev => ({
+      ...prev,
+      [examId]: {
+        ...prev[examId],
+        [field]: value,
+        isScheduled: false,
+      }
+    }));
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -617,6 +694,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "exam-schedule", label: "Exam Scheduling", icon: Calendar },
     { id: "upload", label: "Upload Documents", icon: Upload },
     { id: "questions", label: "Manage Questions", icon: Database },
     { id: "users", label: "User Management", icon: Users },
@@ -775,6 +853,272 @@ export default function AdminDashboard() {
                     </span>
                     <span className="text-gray-400">Just now</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Exam Scheduling Tab */}
+          {activeTab === "exam-schedule" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Exam Scheduling Management
+                  </h2>
+                  <p className="text-gray-600">
+                    Set exam dates and manage availability for all exam categories.
+                    Exams will remain unavailable until scheduled.
+                  </p>
+                </div>
+
+                {/* Exam Schedule Cards */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* RN Paper 1 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-blue-600">RN Paper 1</h3>
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        {examSchedules['rn-paper-1']?.isScheduled ? 'Scheduled' : 'Not Scheduled'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={examSchedules['rn-paper-1']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rn-paper-1', 'startDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={examSchedules['rn-paper-1']?.endDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rn-paper-1', 'endDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <button 
+                        onClick={() => handleScheduleExam('rn-paper-1')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RN Paper 2 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-blue-600">RN Paper 2</h3>
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        Not Scheduled
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <button className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
+                        Schedule Exam
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RM Paper 1 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-green-600">RM Paper 1</h3>
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        Not Scheduled
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      
+                      <button className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                        Schedule Exam
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RM Paper 2 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-green-600">RM Paper 2</h3>
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        Not Scheduled
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      
+                      <button className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                        Schedule Exam
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RPHN Paper 1 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-purple-600">RPHN Paper 1</h3>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3 opacity-50">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                        />
+                      </div>
+                      
+                      <button disabled className="w-full bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed">
+                        Coming Soon
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RPHN Paper 2 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-purple-600">RPHN Paper 2</h3>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    
+                    <div className="space-y-3 opacity-50">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                        />
+                      </div>
+                      
+                      <button disabled className="w-full bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed">
+                        Coming Soon
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Important Notes:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• All exams are currently unavailable until scheduled by admin</li>
+                    <li>• Students will see a "Schedule not set" message for unscheduled exams</li>
+                    <li>• Once scheduled, exams become available between start and end dates</li>
+                    <li>• RPHN exams are coming soon and cannot be scheduled yet</li>
+                    <li>• Each exam is 250 questions with 150 minutes duration</li>
+                  </ul>
                 </div>
               </div>
             </div>

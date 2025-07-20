@@ -143,6 +143,83 @@ export class ExamScheduleManager {
     return now >= schedule.scheduledDate;
   }
 
+  // Get exam availability with detailed information
+  async getExamAvailability(examId: string): Promise<{
+    isAvailable: boolean;
+    reason?: string;
+    scheduleId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }> {
+    try {
+      // Convert examId to scheduleId format
+      let examType = "";
+      let paper = "";
+      
+      if (examId.includes("rn")) {
+        examType = "RN";
+      } else if (examId.includes("rm")) {
+        examType = "RM";
+      } else if (examId.includes("rphn")) {
+        examType = "RPHN";
+      }
+      
+      if (examId.includes("paper-1")) {
+        paper = "paper1";
+      } else if (examId.includes("paper-2")) {
+        paper = "paper2";
+      }
+      
+      const scheduleId = `${examType}_${paper}`;
+      const schedule = await this.getSchedule(scheduleId);
+
+      if (!schedule) {
+        return {
+          isAvailable: false,
+          reason: "Exam schedule not found. Please contact admin to set up exam schedule.",
+        };
+      }
+
+      if (!schedule.isActive) {
+        return {
+          isAvailable: false,
+          reason: "Exam is currently inactive. Please contact admin.",
+        };
+      }
+
+      if (!schedule.scheduledDate) {
+        return {
+          isAvailable: false,
+          reason: "Exam date not set yet. Admin must set exam schedule before it becomes available.",
+        };
+      }
+
+      const now = new Date();
+      const scheduledDate = schedule.scheduledDate;
+
+      if (now < scheduledDate) {
+        return {
+          isAvailable: false,
+          reason: `Exam will be available from ${scheduledDate.toLocaleDateString()}`,
+          scheduleId,
+          startDate: scheduledDate,
+        };
+      }
+
+      return {
+        isAvailable: true,
+        scheduleId,
+        startDate: scheduledDate,
+      };
+    } catch (error) {
+      console.error("Error checking exam availability:", error);
+      return {
+        isAvailable: false,
+        reason: "Error checking exam availability. Please try again.",
+      };
+    }
+  }
+
   // Get exam status message
   async getExamStatusMessage(examType: string, paper: string): Promise<string> {
     const scheduleId = `${examType}_${paper}`;

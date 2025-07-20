@@ -25,7 +25,7 @@ export interface Question {
 
 // Exam definitions
 const ALL_EXAMS: ExamData[] = [
-  // RN Paper 1 - Available
+  // RN Paper 1 - Requires Admin Schedule Setup
   {
     id: "rn-paper-1",
     category: "RN",
@@ -47,9 +47,9 @@ const ALL_EXAMS: ExamData[] = [
       "Nutrition & Dietetics",
     ],
     color: "from-blue-500 to-blue-600",
-    available: true,
+    available: false, // Changed to false - requires admin setup
   },
-  // RN Paper 2 - Available
+  // RN Paper 2 - Requires Admin Schedule Setup
   {
     id: "rn-paper-2",
     category: "RN",
@@ -73,9 +73,9 @@ const ALL_EXAMS: ExamData[] = [
       "Computer Literacy",
     ],
     color: "from-blue-600 to-indigo-600",
-    available: true,
+    available: false, // Changed to false - requires admin setup
   },
-  // RM Papers - Coming Soon
+  // RM Papers - Requires Admin Schedule Setup
   {
     id: "rm-paper-1",
     category: "RM",
@@ -83,7 +83,7 @@ const ALL_EXAMS: ExamData[] = [
     description:
       "Midwifery fundamentals, maternal care, and reproductive health basics.",
     questionsCount: 250,
-    durationMinutes: 150,
+    durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
       "Reproductive Health",
@@ -92,6 +92,8 @@ const ALL_EXAMS: ExamData[] = [
       "Postpartum Care",
       "Newborn Care",
       "Family Planning",
+      "Infection Control",
+      "Emergency Obstetrics",
     ],
     color: "from-green-500 to-emerald-600",
     available: false,
@@ -103,7 +105,7 @@ const ALL_EXAMS: ExamData[] = [
     description:
       "Advanced midwifery practice, high-risk pregnancies, and specialized care.",
     questionsCount: 250,
-    durationMinutes: 150,
+    durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
       "High-Risk Pregnancies",
@@ -112,11 +114,13 @@ const ALL_EXAMS: ExamData[] = [
       "Advanced Procedures",
       "Research & Evidence",
       "Professional Practice",
+      "Midwifery Management",
+      "Ethics & Legal Issues",
     ],
     color: "from-green-600 to-teal-600",
     available: false,
   },
-  // RPHN Papers - Coming Soon
+  // RPHN Papers - Requires Admin Schedule Setup
   {
     id: "rphn-paper-1",
     category: "RPHN",
@@ -124,7 +128,7 @@ const ALL_EXAMS: ExamData[] = [
     description:
       "Public health fundamentals, community assessment, and health promotion.",
     questionsCount: 250,
-    durationMinutes: 150,
+    durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
       "Community Health Assessment",
@@ -133,6 +137,8 @@ const ALL_EXAMS: ExamData[] = [
       "Disease Prevention",
       "Environmental Health",
       "Population Health",
+      "Primary Health Care",
+      "Health Promotion",
     ],
     color: "from-purple-500 to-fuchsia-600",
     available: false,
@@ -144,7 +150,7 @@ const ALL_EXAMS: ExamData[] = [
     description:
       "Advanced public health practice, policy development, and program management.",
     questionsCount: 250,
-    durationMinutes: 150,
+    durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
       "Health Policy & Advocacy",
@@ -153,6 +159,8 @@ const ALL_EXAMS: ExamData[] = [
       "Global Health Issues",
       "Emergency Preparedness",
       "Leadership in Public Health",
+      "Research Methods",
+      "Quality Improvement",
     ],
     color: "from-purple-600 to-violet-600",
     available: false,
@@ -449,6 +457,31 @@ export async function fetchQuestionsForExam(
   return fullQuestions
     .map((q: Omit<Question, "flagged">) => ({ ...q, flagged: false }))
     .sort(() => Math.random() - 0.5); // Simple shuffle
+}
+
+// Function to get exam availability with schedule check
+export async function getExamAvailabilityStatus(examId: string): Promise<{
+  isAvailable: boolean;
+  reason?: string;
+  scheduleInfo?: any;
+}> {
+  try {
+    // Import dynamically to avoid circular dependency
+    const { examScheduleManager } = await import("./examSchedule");
+    const availability = await examScheduleManager.getExamAvailability(examId);
+    
+    return {
+      isAvailable: availability.isAvailable,
+      reason: availability.reason,
+      scheduleInfo: availability,
+    };
+  } catch (error) {
+    console.error("Error checking exam availability:", error);
+    return {
+      isAvailable: false,
+      reason: "Error checking exam availability. Please contact admin.",
+    };
+  }
 }
 
 export async function getExamById(examId: string): Promise<ExamData | null> {
