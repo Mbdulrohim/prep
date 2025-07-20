@@ -59,16 +59,12 @@ export function PreExamModal({
     }
   }, [userProfile]);
 
-  // Auto-start exam if user profile has all required info
+  // Auto-agree to terms if user profile has all required info
   useEffect(() => {
     if (userProfile && name && university && !agreedToTerms) {
       setAgreedToTerms(true);
-      // Small delay to show the modal briefly before auto-starting
-      setTimeout(() => {
-        handleStart();
-      }, 500);
     }
-  }, [name, university, userProfile]);
+  }, [name, university, userProfile, agreedToTerms]);
 
   const handleStart = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -89,7 +85,11 @@ export function PreExamModal({
     }
 
     setError("");
-    onStartExam({ name: name.trim(), university: university.trim() });
+    
+    // Add a small delay to ensure form submission is processed properly
+    setTimeout(() => {
+      onStartExam({ name: name.trim(), university: university.trim() });
+    }, 100);
   };
 
   const formatDuration = (minutes: number) => {

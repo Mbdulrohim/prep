@@ -88,13 +88,12 @@ export default function ExamPage() {
     if (!user?.uid || !canStartExam || !userProfile) return;
 
     try {
-      // For now, we'll use a simplified version - in production you'd pass actual questions
-      // This is a placeholder that would need to be integrated with your question loading system
       setStudentDetails(details);
       setShowPreExamModal(false);
-
-      // Reset exam state and load fresh questions
-      await resetExam(examId);
+      
+      // Start loading questions immediately after closing modal
+      // The exam attempt will be created when questions are ready
+      
     } catch (error) {
       console.error("Error starting exam:", error);
       setError("Failed to start exam. Please try again.");

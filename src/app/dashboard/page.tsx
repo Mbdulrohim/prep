@@ -654,11 +654,11 @@ export default function DashboardPage() {
                       📅 Exam Schedule (Coming Soon)
                     </h4>
                     <p className="text-sm text-purple-700">
-                      <strong>Paper 1:</strong> TBA - Written examination<br />
-                      <strong>Paper 2:</strong> TBA - Practical assessment
+                      <strong>Paper 1:</strong> Day 1 - Must be completed before Paper 2<br />
+                      <strong>Paper 2:</strong> Day 2 - Available after Paper 1 completion
                     </p>
                     <p className="text-xs text-purple-600 mt-2">
-                      ⚠️ RM exam schedule will be announced soon. Stay tuned for updates!
+                      ⚠️ RM exam schedule will be announced soon. Both papers must be taken on consecutive days as per exam regulations
                     </p>
                   </div>
 
@@ -671,7 +671,7 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <h4 className="font-medium text-gray-600">
-                              RM Paper 1 - Theory
+                              RM Paper 1
                             </h4>
                             <p className="text-sm text-gray-500">
                               150 questions • 180 mins
@@ -695,10 +695,10 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <h4 className="font-medium text-gray-600">
-                              RM Paper 2 - Practical
+                              RM Paper 2
                             </h4>
                             <p className="text-sm text-gray-500">
-                              100 questions • 150 mins
+                              150 questions • 180 mins
                             </p>
                             <p className="text-xs text-purple-600 mt-1">
                               Day 2 - Coming Soon
