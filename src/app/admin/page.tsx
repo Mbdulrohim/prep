@@ -591,21 +591,24 @@ export default function AdminDashboard() {
     }
   };
 
-  // Exam scheduling functions
   const handleScheduleExam = async (examId: string) => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      console.error('No user authenticated');
+      return;
+    }
+    
+    console.log('Authenticated user:', { uid: user.uid, email: user.email });
     
     const schedule = examSchedules[examId];
-    if (!schedule?.startDate || !schedule?.endDate) {
-      alert("Please set both start and end dates");
+    if (!schedule?.startDate) {
+      alert("Please set the exam start date and time");
       return;
     }
 
     const startDate = new Date(schedule.startDate);
-    const endDate = new Date(schedule.endDate);
     
-    if (startDate >= endDate) {
-      alert("End date must be after start date");
+    if (startDate <= new Date()) {
+      alert("Exam start time must be in the future");
       return;
     }
 
@@ -617,42 +620,63 @@ export default function AdminDashboard() {
       const examType = examId.includes('rn') ? 'RN' : 
                       examId.includes('rm') ? 'RM' : 'RPHN';
       const paper = examId.includes('paper-2') ? 'paper2' : 'paper1';
+      const scheduleId = `${examType}_${paper}`;
       
-      await examScheduleManager.updateSchedule(`${examType}_${paper}`, {
+      console.log('Scheduling exam:', { examId, examType, paper, scheduleId, startDate });
+      
+      // First initialize if doesn't exist
+      await examScheduleManager.initializeDefaultSchedules();
+      console.log('Default schedules initialized');
+      
+      // Then update with the scheduled date
+      const updateResult = await examScheduleManager.updateSchedule(scheduleId, {
         scheduledDate: startDate,
         isActive: true,
+        duration: 150, // 2.5 hours
+        totalQuestions: 250,
       });
+      
+      console.log('Schedule update result:', updateResult);
 
       // Update local state
       setExamSchedules(prev => ({
         ...prev,
-        [examId]: { ...prev[examId], isScheduled: true }
+        [examId]: { 
+          ...prev[examId], 
+          isScheduled: true,
+          endDate: new Date(startDate.getTime() + 150 * 60 * 1000).toISOString().slice(0, 16)
+        }
       }));
 
       showToast({
         type: "success",
         title: "Exam Scheduled",
-        message: `${examId.toUpperCase()} has been scheduled successfully`,
+        message: `${examId.toUpperCase()} has been scheduled for ${startDate.toLocaleString()}`,
       });
+      
+      console.log('Exam scheduled successfully');
     } catch (error) {
       console.error("Error scheduling exam:", error);
+      console.error("Error details:", error instanceof Error ? error.message : 'Unknown error');
       showToast({
         type: "error",
         title: "Scheduling Failed",
-        message: "Failed to schedule exam. Please try again.",
+        message: `Failed to schedule exam: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     } finally {
       setSchedulingLoading(false);
     }
   };
 
-  const handleScheduleInputChange = (examId: string, field: 'startDate' | 'endDate', value: string) => {
+  const handleScheduleInputChange = (examId: string, field: 'startDate', value: string) => {
     setExamSchedules(prev => ({
       ...prev,
       [examId]: {
         ...prev[examId],
         [field]: value,
         isScheduled: false,
+        // Auto-calculate end time (150 minutes later)
+        endDate: value ? new Date(new Date(value).getTime() + 150 * 60 * 1000).toISOString().slice(0, 16) : '',
       }
     }));
   };
@@ -887,7 +911,7 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
@@ -895,18 +919,11 @@ export default function AdminDashboard() {
                           onChange={(e) => handleScheduleInputChange('rn-paper-1', 'startDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={examSchedules['rn-paper-1']?.endDate || ''}
-                          onChange={(e) => handleScheduleInputChange('rn-paper-1', 'endDate', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        {examSchedules['rn-paper-1']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rn-paper-1'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
                       <button 
@@ -932,26 +949,27 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
+                          value={examSchedules['rn-paper-2']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rn-paper-2', 'startDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
+                        {examSchedules['rn-paper-2']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rn-paper-2'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-                      
-                      <button className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
-                        Schedule Exam
+                      <button 
+                        onClick={() => handleScheduleExam('rn-paper-2')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
                       </button>
                     </div>
                   </div>
@@ -969,26 +987,27 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
+                          value={examSchedules['rm-paper-1']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rm-paper-1', 'startDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
+                        {examSchedules['rm-paper-1']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rm-paper-1'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        />
-                      </div>
-                      
-                      <button className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
-                        Schedule Exam
+                      <button 
+                        onClick={() => handleScheduleExam('rm-paper-1')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
                       </button>
                     </div>
                   </div>
@@ -1006,26 +1025,27 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
+                          value={examSchedules['rm-paper-2']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rm-paper-2', 'startDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
+                        {examSchedules['rm-paper-2']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rm-paper-2'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        />
-                      </div>
-                      
-                      <button className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
-                        Schedule Exam
+                      <button 
+                        onClick={() => handleScheduleExam('rm-paper-2')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
                       </button>
                     </div>
                   </div>
@@ -1034,37 +1054,36 @@ export default function AdminDashboard() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-purple-600">RPHN Paper 1</h3>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                        Coming Soon
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        Not Scheduled
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
                     
-                    <div className="space-y-3 opacity-50">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
-                          disabled
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                          value={examSchedules['rphn-paper-1']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rphn-paper-1', 'startDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         />
+                        {examSchedules['rphn-paper-1']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rphn-paper-1'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          disabled
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
-                        />
-                      </div>
-                      
-                      <button disabled className="w-full bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed">
-                        Coming Soon
+                      <button 
+                        onClick={() => handleScheduleExam('rphn-paper-1')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
                       </button>
                     </div>
                   </div>
@@ -1073,37 +1092,36 @@ export default function AdminDashboard() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-purple-600">RPHN Paper 2</h3>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                        Coming Soon
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                        Not Scheduled
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
                     
-                    <div className="space-y-3 opacity-50">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time
+                          Start Date & Time (150 minutes duration)
                         </label>
                         <input
                           type="datetime-local"
-                          disabled
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
+                          value={examSchedules['rphn-paper-2']?.startDate || ''}
+                          onChange={(e) => handleScheduleInputChange('rphn-paper-2', 'startDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         />
+                        {examSchedules['rphn-paper-2']?.endDate && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Ends at: {new Date(examSchedules['rphn-paper-2'].endDate).toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          End Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          disabled
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
-                        />
-                      </div>
-                      
-                      <button disabled className="w-full bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed">
-                        Coming Soon
+                      <button 
+                        onClick={() => handleScheduleExam('rphn-paper-2')}
+                        disabled={schedulingLoading}
+                        className="w-full bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      >
+                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
                       </button>
                     </div>
                   </div>
@@ -1111,13 +1129,13 @@ export default function AdminDashboard() {
 
                 {/* Instructions */}
                 <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Important Notes:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">Exam Scheduling Instructions:</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• All exams are currently unavailable until scheduled by admin</li>
-                    <li>• Students will see a "Schedule not set" message for unscheduled exams</li>
-                    <li>• Once scheduled, exams become available between start and end dates</li>
-                    <li>• RPHN exams are coming soon and cannot be scheduled yet</li>
-                    <li>• Each exam is 250 questions with 150 minutes duration</li>
+                    <li>• Set the start date and time for each exam (150 minutes duration)</li>
+                    <li>• All exams have 250 questions and 150 minutes duration</li>
+                    <li>• Students cannot access unscheduled exams</li>
+                    <li>• Once scheduled, exams become available at the start time</li>
+                    <li>• End time is automatically calculated (150 minutes after start)</li>
                   </ul>
                 </div>
               </div>

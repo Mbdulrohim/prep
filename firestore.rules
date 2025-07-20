@@ -94,6 +94,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Exam schedules - only admins can manage, authenticated users can read
+    match /examSchedules/{scheduleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;

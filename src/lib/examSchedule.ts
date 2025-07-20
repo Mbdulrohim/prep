@@ -49,8 +49,8 @@ export class ExamScheduleManager {
             paper,
             scheduledDate: null, // Will be set by admin
             isActive: false,
-            duration: 120, // 2 hours
-            totalQuestions: 50,
+            duration: 150, // 2.5 hours (150 minutes)
+            totalQuestions: 250,
             passingScore: 70,
             createdAt: new Date(),
             updatedAt: new Date(),
