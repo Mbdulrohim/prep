@@ -13,12 +13,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the correct redirect URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const redirectUrl = `${baseUrl}/payment/success`;
+    
+    console.log("Payment session redirect URL:", redirectUrl);
+
     // Initialize Flutterwave payment
     const paymentData = await flutterwaveService.initializePayment({
       tx_ref: txRef,
       amount,
       currency: "NGN",
-      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success`,
+      redirect_url: redirectUrl,
       payment_options: "card,mobilemoney,ussd,banktransfer",
       customer: {
         email,
@@ -28,7 +34,7 @@ export async function POST(request: NextRequest) {
       customizations: {
         title: "PREP - Premium Nursing Exam Access",
         description: "Payment for premium exam preparation with 3 mock exams",
-        logo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/image.png`,
+        logo: `${baseUrl}/image.png`,
       },
       meta: flutterwaveService.createPaymentMetadata(userId, planType, {
         txRef,

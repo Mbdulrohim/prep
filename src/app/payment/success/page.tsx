@@ -35,16 +35,34 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        // Verify payment with Flutterwave
-        const verification = await flutterwaveService.verifyPayment(transactionId);
+        console.log("Verifying payment with details:", { transactionId, txRef, userId: user?.uid });
 
-        if (verification.status === "success" && verification.data.status === "successful") {
+        // Use our backend verification endpoint
+        const response = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            transactionId,
+            txRef,
+            userId: user?.uid,
+          }),
+        });
+
+        const result = await response.json();
+        console.log("Verification result:", result);
+
+        if (result.success && result.hasAccess) {
           setStatus("success");
           setMessage("Payment successful! You now have access to all exam materials.");
-          setTransactionDetails(verification.data);
+          setTransactionDetails(result.transaction);
+        } else if (result.success && !result.hasAccess) {
+          setStatus("failed");
+          setMessage("Payment was processed but access was not granted. Please contact support.");
         } else {
           setStatus("failed");
-          setMessage("Payment verification failed. Please contact support if amount was debited.");
+          setMessage(result.message || "Payment verification failed. Please contact support if amount was debited.");
         }
       } catch (error) {
         console.error("Payment verification error:", error);
@@ -53,8 +71,19 @@ export default function PaymentSuccessPage() {
       }
     };
 
-    verifyPayment();
-  }, [searchParams]);
+    if (user?.uid) {
+      verifyPayment();
+    } else {
+      // Wait for user to be loaded
+      const timer = setTimeout(() => {
+        if (!user?.uid) {
+          setStatus("failed");
+          setMessage("Please sign in to verify your payment");
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, user?.uid]);
 
   if (status === "loading") {
     return (

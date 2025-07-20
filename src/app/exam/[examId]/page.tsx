@@ -235,7 +235,11 @@ export default function ExamPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <PreExamModal onStartExam={handleStartExam} />
+        <PreExamModal 
+          onStartExam={handleStartExam} 
+          examDetails={examDetails}
+          userProfile={userProfile}
+        />
       </div>
     );
   }

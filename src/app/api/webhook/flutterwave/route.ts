@@ -77,11 +77,19 @@ async function handleSuccessfulPayment(data: any) {
 
     // Handle individual payment - Premium Access with 3 mock exams
     const accessRef = doc(db, "userAccess", userId);
+    
+    // Calculate expiry date (90 days from now)
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 90);
+    
     const accessData = {
       userId,
       planType,
       isActive: true,
+      hasAccess: true,
+      isRestricted: false,
       purchaseDate: new Date(),
+      expiryDate,
       maxAttempts: 6, // 3 mock exams (Paper 1 & Paper 2)
       remainingAttempts: 6,
       paymentReference: tx_ref,
@@ -93,16 +101,18 @@ async function handleSuccessfulPayment(data: any) {
       retakeAllowed: true,
       groupLeaderboard: false,
       examTypes: ["RN", "RM", "RPHN"],
+      attemptsMade: {},
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    await setDoc(accessRef, accessData);
+    await setDoc(accessRef, accessData, { merge: true });
 
     // Update user's payment status
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
       hasAccess: true,
+      isActive: true,
       lastPaymentDate: new Date(),
       paymentProvider: "flutterwave",
       planType: "premium_access",

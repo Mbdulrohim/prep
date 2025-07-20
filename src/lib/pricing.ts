@@ -17,20 +17,17 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "premium_access",
-    name: "Premium Access",
-    description: "Complete exam preparation with 3 mock exams",
+    name: "Focused RN Exam Prep",
+    description: "Build confidence and test your knowledge with this essential preparation package, designed specifically for your professional exams.",
     price: 1000,
     currency: "NGN",
     type: "individual",
     features: [
-      "Access to all nursing exam questions",
-      "3 Full Mock Exams (Paper 1 & Paper 2)",
-      "AI-powered explanations & hints",
-      "Detailed progress tracking & analytics",
-      "University leaderboards",
-      "Unlimited practice sessions",
-      "Study performance insights",
-      "Exam readiness assessment"
+      "**Full Mock Exam Experience** - Practice under real CBT conditions",
+      "**Current NMCN Questions** - Updated curriculum content", 
+      "**Core Clinical Topics** - Medical-Surgical, Foundations & Maternal Health",
+      "**Professional Scenarios** - Ethics, Management & Current Trends",
+      "**Performance Analysis** - Identify strengths and focus areas"
     ],
     attemptsPerUser: 6, // 3 mock exams total (Paper 1 & Paper 2)
     examTypes: ["RN", "RM", "RPHN"],
@@ -106,8 +103,26 @@ export const PRICING_CONFIG = {
   discountPercentage: 66,
   finalPrice: 1000,
   mockExamCount: 3,
-  showDiscount: true
+  showDiscount: true,
+  promotionStartDate: new Date('2025-08-01'), // August 1st, 2025
+  promotionDurationDays: 50
 };
+
+export function getPromotionTimeLeft() {
+  const now = new Date();
+  const endDate = new Date(PRICING_CONFIG.promotionStartDate);
+  endDate.setDate(endDate.getDate() + PRICING_CONFIG.promotionDurationDays);
+  
+  const timeLeft = endDate.getTime() - now.getTime();
+  const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+  
+  return {
+    daysLeft: Math.max(0, daysLeft),
+    endDate,
+    isActive: daysLeft > 0 && now >= PRICING_CONFIG.promotionStartDate,
+    hasStarted: now >= PRICING_CONFIG.promotionStartDate
+  };
+}
 
 export function getDiscountedPrice() {
   return {
@@ -120,10 +135,16 @@ export function getDiscountedPrice() {
 
 export function formatPriceWithDiscount() {
   const discount = getDiscountedPrice();
+  const promotion = getPromotionTimeLeft();
+  
   return {
     originalFormatted: formatPrice(discount.original),
     discountedFormatted: formatPrice(discount.discounted),
     savingsFormatted: formatPrice(discount.savings),
-    discountPercent: discount.discountPercent
+    savings: discount.savings,
+    discountPercent: discount.discountPercent,
+    daysLeft: promotion.daysLeft,
+    isPromotionActive: promotion.isActive,
+    hasPromotionStarted: promotion.hasStarted
   };
 }

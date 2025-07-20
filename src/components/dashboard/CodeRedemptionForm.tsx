@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 import { accessCodeManager } from '@/lib/accessCodes';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -110,18 +111,11 @@ export const CodeRedemptionForm: React.FC<CodeRedemptionFormProps> = ({ onSucces
         </div>
 
         {message.text && (
-          <div className={`flex items-center p-3 rounded-lg ${
-            message.type === 'success' 
-              ? 'bg-green-100 text-green-800 border border-green-200' 
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
-            {message.type === 'success' ? (
-              <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-            )}
-            <span className="text-sm">{message.text}</span>
-          </div>
+          <Alert
+            type={message.type === 'success' ? 'success' : 'error'}
+            message={message.text}
+            onClose={() => setMessage({ type: '', text: '' })}
+          />
         )}
 
         <Button

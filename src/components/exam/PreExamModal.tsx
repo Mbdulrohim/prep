@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { UniversitySelector } from "@/components/ui/UniversitySelector";
 import { Clock, FileText, AlertCircle, CheckCircle } from "lucide-react";
@@ -21,20 +21,56 @@ interface PreExamModalProps {
     durationMinutes: number;
   } | null;
   loading?: boolean;
+  userProfile?: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    university?: string | null;
+  } | null;
 }
 
 export function PreExamModal({
   onStartExam,
   examDetails,
   loading = false,
+  userProfile,
 }: PreExamModalProps) {
   const [name, setName] = useState<string>("");
   const [university, setUniversity] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const handleStart = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Auto-populate user details from profile
+  useEffect(() => {
+    if (userProfile) {
+      const displayName = userProfile.name || 
+        (userProfile.firstName && userProfile.lastName 
+          ? `${userProfile.firstName} ${userProfile.lastName}` 
+          : userProfile.firstName || "");
+      
+      if (displayName) {
+        setName(displayName);
+      }
+      
+      if (userProfile.university) {
+        setUniversity(userProfile.university);
+      }
+    }
+  }, [userProfile]);
+
+  // Auto-start exam if user profile has all required info
+  useEffect(() => {
+    if (userProfile && name && university && !agreedToTerms) {
+      setAgreedToTerms(true);
+      // Small delay to show the modal briefly before auto-starting
+      setTimeout(() => {
+        handleStart();
+      }, 500);
+    }
+  }, [name, university, userProfile]);
+
+  const handleStart = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     if (!name.trim()) {
       setError("Please enter your full name");

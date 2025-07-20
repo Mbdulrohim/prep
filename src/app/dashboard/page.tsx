@@ -69,23 +69,38 @@ export default function DashboardPage() {
     }
   }, [user, userProfile, refreshData]);
 
-  // Check user access to exams
+  // Check user access to exams with enhanced debugging
   const checkUserAccess = async () => {
     if (!user) return;
     
     setAccessLoading(true);
     try {
+      console.log("Checking user access for:", user.uid);
       const userAccessDoc = await getDoc(doc(db, "userAccess", user.uid));
+      
       if (userAccessDoc.exists()) {
         const accessData = userAccessDoc.data();
+        console.log("User access data found:", accessData);
         
         // Check if access is still valid
         const now = new Date();
         const expiryDate = accessData.expiryDate?.toDate() || new Date(0);
-        const isActive = accessData.isActive && now < expiryDate && !accessData.isRestricted;
+        const isActive = accessData.isActive && 
+                        now < expiryDate && 
+                        !accessData.isRestricted &&
+                        accessData.hasAccess;
         
-        setUserAccess(isActive ? accessData : null);
+        console.log("Access validation:", {
+          isActive: accessData.isActive,
+          hasAccess: accessData.hasAccess,
+          isExpired: now >= expiryDate,
+          isRestricted: accessData.isRestricted,
+          finalAccessStatus: isActive
+        });
+        
+        setUserAccess({ ...accessData, hasValidAccess: isActive });
       } else {
+        console.log("No user access document found");
         setUserAccess(null);
       }
     } catch (error) {
@@ -93,6 +108,31 @@ export default function DashboardPage() {
       setUserAccess(null);
     } finally {
       setAccessLoading(false);
+    }
+  };
+
+  // Refresh user access from server
+  const refreshUserAccess = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch("/api/refresh-user-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+      
+      const result = await response.json();
+      console.log("Refresh access result:", result);
+      
+      if (result.success) {
+        // Update local state
+        await checkUserAccess();
+        // Also refresh user stats
+        refreshData();
+      }
+    } catch (error) {
+      console.error("Error refreshing user access:", error);
     }
   };
 
@@ -128,6 +168,43 @@ export default function DashboardPage() {
     } finally {
       setProfileLoading(false);
     }
+  };
+
+  // Development test functions
+  const testPaymentVerification = async () => {
+    if (!user) return;
+    console.log("🧪 Testing Payment Verification...");
+    
+    try {
+      const response = await fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactionId: "test_txn_" + Date.now(),
+          txRef: "test_ref_" + Date.now(),
+          userId: user.uid,
+        }),
+      });
+      
+      const result = await response.json();
+      console.log("Payment test result:", result);
+      alert(`Payment test: ${result.success ? 'SUCCESS' : 'FAILED'} - Check console for details`);
+      
+      if (result.success) {
+        await refreshUserAccess();
+      }
+    } catch (error) {
+      console.error("Payment test error:", error);
+      alert(`Payment test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const testExamFlow = () => {
+    console.log("🎯 Testing Exam Flow...");
+    console.log("User Profile:", userProfile);
+    console.log("User Access:", userAccess);
+    console.log("Has Valid Access:", userAccess?.hasValidAccess);
+    alert("Exam flow test - Check console for details");
   };
 
   // Handle logged-out users
@@ -609,7 +686,38 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Development Tools - Removed for production */}
+        {/* Development Tools - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-yellow-800 mb-2">🛠️ Development Tools</h3>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                onClick={testPaymentVerification}
+                size="sm" 
+                variant="outline"
+                className="text-xs"
+              >
+                Test Payment
+              </Button>
+              <Button 
+                onClick={testExamFlow}
+                size="sm" 
+                variant="outline"
+                className="text-xs"
+              >
+                Test Exam Flow
+              </Button>
+              <Button 
+                onClick={refreshUserAccess}
+                size="sm" 
+                variant="outline"
+                className="text-xs"
+              >
+                Refresh Access
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}

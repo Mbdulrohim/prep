@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
+import { Alert, useToast } from "@/components/ui/Alert";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
 import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
 import { ParsedQuestion } from "@/lib/documentParser";
@@ -101,6 +102,7 @@ interface UniversityRanking {
 
 export default function AdminDashboard() {
   const { user, userProfile } = useAuth();
+  const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<
     | "overview"
     | "upload"
@@ -537,10 +539,18 @@ export default function AdminDashboard() {
         )
       );
 
-      alert(`Access granted successfully for ${daysValid} days`);
+      showToast({
+        type: 'success',
+        title: 'Access Granted',
+        message: `Access granted successfully for ${daysValid} days`
+      });
     } catch (error) {
       console.error("Error granting user access:", error);
-      alert("Failed to grant user access");
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to grant user access'
+      });
     }
   };
 
@@ -1500,6 +1510,9 @@ export default function AdminDashboard() {
           onCancel={() => setShowAddQuestion(false)}
         />
       )}
+      
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 }
