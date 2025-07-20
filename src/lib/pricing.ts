@@ -18,22 +18,23 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "premium_access",
     name: "Focused RN Exam Prep",
-    description: "Build confidence and test your knowledge with this essential preparation package, designed specifically for your professional exams.",
+    description:
+      "Build confidence and test your knowledge with this essential preparation package, designed specifically for your professional exams.",
     price: 1000,
     currency: "NGN",
     type: "individual",
     features: [
       "**Full Mock Exam Experience** - Practice under real CBT conditions",
-      "**Current NMCN Questions** - Updated curriculum content", 
+      "**Current NMCN Questions** - Updated curriculum content",
       "**Core Clinical Topics** - Medical-Surgical, Foundations & Maternal Health",
       "**Professional Scenarios** - Ethics, Management & Current Trends",
-      "**Performance Analysis** - Identify strengths and focus areas"
+      "**Performance Analysis** - Identify strengths and focus areas",
     ],
     attemptsPerUser: 6, // 3 mock exams total (Paper 1 & Paper 2)
     examTypes: ["RN", "RM", "RPHN"],
     retakeAllowed: true,
-    groupLeaderboard: false
-  }
+    groupLeaderboard: false,
+  },
 ];
 
 export const EXAM_TOPICS = {
@@ -41,7 +42,7 @@ export const EXAM_TOPICS = {
     "Accident and Emergency Nursing",
     "Critical care nursing",
     "Public health Nursing",
-    "Community health nursing", 
+    "Community health nursing",
     "Mental health nursing",
     "Pediatric nursing",
     "Cardio thoracic Nursing",
@@ -57,7 +58,7 @@ export const EXAM_TOPICS = {
     "Nurse administrator",
     "Nurse Educator",
     "Orthopaedic nursing",
-    "Perioperative nurses"
+    "Perioperative nurses",
   ],
   RM: [
     "Basic Midwifery",
@@ -71,7 +72,7 @@ export const EXAM_TOPICS = {
     "High-risk pregnancy management",
     "Birth complications",
     "Newborn care",
-    "Breastfeeding and lactation"
+    "Breastfeeding and lactation",
   ],
   RPHN: [
     "Public health Nursing",
@@ -85,12 +86,12 @@ export const EXAM_TOPICS = {
     "Communicable disease control",
     "Non-communicable disease management",
     "Health policy and administration",
-    "Research and statistics"
-  ]
+    "Research and statistics",
+  ],
 };
 
 export function getPlanById(planId: string): PricingPlan | undefined {
-  return PRICING_PLANS.find(plan => plan.id === planId);
+  return PRICING_PLANS.find((plan) => plan.id === planId);
 }
 
 export function formatPrice(amount: number, currency: string = "NGN"): string {
@@ -104,23 +105,23 @@ export const PRICING_CONFIG = {
   finalPrice: 1000,
   mockExamCount: 3,
   showDiscount: true,
-  promotionStartDate: new Date('2025-08-01'), // August 1st, 2025
-  promotionDurationDays: 50
+  promotionStartDate: new Date("2025-08-01"), // August 1st, 2025
+  promotionDurationDays: 50,
 };
 
 export function getPromotionTimeLeft() {
   const now = new Date();
   const endDate = new Date(PRICING_CONFIG.promotionStartDate);
   endDate.setDate(endDate.getDate() + PRICING_CONFIG.promotionDurationDays);
-  
+
   const timeLeft = endDate.getTime() - now.getTime();
   const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
-  
+
   return {
     daysLeft: Math.max(0, daysLeft),
     endDate,
     isActive: daysLeft > 0 && now >= PRICING_CONFIG.promotionStartDate,
-    hasStarted: now >= PRICING_CONFIG.promotionStartDate
+    hasStarted: now >= PRICING_CONFIG.promotionStartDate,
   };
 }
 
@@ -129,14 +130,14 @@ export function getDiscountedPrice() {
     original: PRICING_CONFIG.originalPrice,
     discounted: PRICING_CONFIG.finalPrice,
     discountPercent: PRICING_CONFIG.discountPercentage,
-    savings: PRICING_CONFIG.originalPrice - PRICING_CONFIG.finalPrice
+    savings: PRICING_CONFIG.originalPrice - PRICING_CONFIG.finalPrice,
   };
 }
 
 export function formatPriceWithDiscount() {
   const discount = getDiscountedPrice();
   const promotion = getPromotionTimeLeft();
-  
+
   return {
     originalFormatted: formatPrice(discount.original),
     discountedFormatted: formatPrice(discount.discounted),
@@ -145,6 +146,6 @@ export function formatPriceWithDiscount() {
     discountPercent: discount.discountPercent,
     daysLeft: promotion.daysLeft,
     isPromotionActive: promotion.isActive,
-    hasPromotionStarted: promotion.hasStarted
+    hasPromotionStarted: promotion.hasStarted,
   };
 }

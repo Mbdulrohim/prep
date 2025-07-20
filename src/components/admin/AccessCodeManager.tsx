@@ -1,48 +1,59 @@
 // src/components/admin/AccessCodeManager.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { accessCodeManager, AccessCode } from '@/lib/accessCodes';
-import { 
-  Plus, 
-  Copy, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { accessCodeManager, AccessCode } from "@/lib/accessCodes";
+import {
+  Plus,
+  Copy,
+  Eye,
+  EyeOff,
+  Trash2,
   Calendar,
   Users,
   CheckCircle,
   XCircle,
-  Clock
-} from 'lucide-react';
+  Clock,
+} from "lucide-react";
 
 interface AccessCodeManagerProps {
   createdBy?: string;
 }
 
-export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy = 'admin' }) => {
+export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({
+  createdBy = "admin",
+}) => {
   const [accessCodes, setAccessCodes] = useState<AccessCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
-  const [newlyCreatedCode, setNewlyCreatedCode] = useState<AccessCode | null>(null);
+  const [newlyCreatedCode, setNewlyCreatedCode] = useState<AccessCode | null>(
+    null
+  );
 
   // Form state for creating new codes
   const [formData, setFormData] = useState({
-    examCategory: 'RN' as 'RN' | 'RM' | 'RPHN' | 'ALL',
+    examCategory: "RN" as "RN" | "RM" | "RPHN" | "ALL",
     papers: [] as string[],
     validFor: 90,
     maxUses: 1,
-    description: ''
+    description: "",
   });
 
   const paperOptions = {
-    RN: ['Paper 1', 'Paper 2'],
-    RM: ['Paper 1', 'Paper 2'],
-    RPHN: ['Paper 1', 'Paper 2'],
-    ALL: ['RN Paper 1', 'RN Paper 2', 'RM Paper 1', 'RM Paper 2', 'RPHN Paper 1', 'RPHN Paper 2']
+    RN: ["Paper 1", "Paper 2"],
+    RM: ["Paper 1", "Paper 2"],
+    RPHN: ["Paper 1", "Paper 2"],
+    ALL: [
+      "RN Paper 1",
+      "RN Paper 2",
+      "RM Paper 1",
+      "RM Paper 2",
+      "RPHN Paper 1",
+      "RPHN Paper 2",
+    ],
   };
 
   useEffect(() => {
@@ -55,7 +66,7 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
       const codes = await accessCodeManager.getAllAccessCodes();
       setAccessCodes(codes);
     } catch (error) {
-      console.error('Error loading access codes:', error);
+      console.error("Error loading access codes:", error);
     } finally {
       setLoading(false);
     }
@@ -63,8 +74,11 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
 
   const handleCreateCode = async () => {
     try {
-      const selectedPapers = formData.papers.length > 0 ? formData.papers : paperOptions[formData.examCategory];
-      
+      const selectedPapers =
+        formData.papers.length > 0
+          ? formData.papers
+          : paperOptions[formData.examCategory];
+
       const newCode = await accessCodeManager.createAccessCode(
         formData.examCategory,
         selectedPapers,
@@ -78,71 +92,74 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
       setShowCreateModal(false);
       setShowCodeModal(true);
       await loadAccessCodes();
-      
+
       // Reset form
       setFormData({
-        examCategory: 'RN',
+        examCategory: "RN",
         papers: [],
         validFor: 90,
         maxUses: 1,
-        description: ''
+        description: "",
       });
     } catch (error) {
-      console.error('Error creating access code:', error);
-      alert('Failed to create access code');
+      console.error("Error creating access code:", error);
+      alert("Failed to create access code");
     }
   };
 
   const handleDeactivateCode = async (codeId: string) => {
-    if (!confirm('Are you sure you want to deactivate this access code?')) return;
+    if (!confirm("Are you sure you want to deactivate this access code?"))
+      return;
 
     try {
       await accessCodeManager.deactivateAccessCode(codeId);
       await loadAccessCodes();
-      alert('Access code deactivated successfully');
+      alert("Access code deactivated successfully");
     } catch (error) {
-      console.error('Error deactivating access code:', error);
-      alert('Failed to deactivate access code');
+      console.error("Error deactivating access code:", error);
+      alert("Failed to deactivate access code");
     }
   };
 
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert('Code copied to clipboard!');
+      alert("Code copied to clipboard!");
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error("Failed to copy:", error);
     }
   };
 
   const formatDate = (date: Date | any) => {
     const dateObj = date?.toDate ? date.toDate() : new Date(date);
-    return dateObj.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const isExpired = (expiresAt: Date | any) => {
-    const expiryDate = expiresAt?.toDate ? expiresAt.toDate() : new Date(expiresAt);
+    const expiryDate = expiresAt?.toDate
+      ? expiresAt.toDate()
+      : new Date(expiresAt);
     return new Date() > expiryDate;
   };
 
   const getStatusColor = (code: AccessCode) => {
-    if (!code.isActive) return 'text-gray-500';
-    if (isExpired(code.expiresAt)) return 'text-red-500';
-    if (code.currentUses >= code.maxUses) return 'text-orange-500';
-    return 'text-green-500';
+    if (!code.isActive) return "text-gray-500";
+    if (isExpired(code.expiresAt)) return "text-red-500";
+    if (code.currentUses >= code.maxUses) return "text-orange-500";
+    return "text-green-500";
   };
 
   const getStatusText = (code: AccessCode) => {
-    if (!code.isActive) return 'Deactivated';
-    if (isExpired(code.expiresAt)) return 'Expired';
-    if (code.currentUses >= code.maxUses) return 'Used Up';
-    return 'Active';
+    if (!code.isActive) return "Deactivated";
+    if (isExpired(code.expiresAt)) return "Expired";
+    if (code.currentUses >= code.maxUses) return "Used Up";
+    return "Active";
   };
 
   return (
@@ -150,10 +167,17 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Access Code Management</h3>
-          <p className="text-gray-600">Create and manage access codes for exam access</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Access Code Management
+          </h3>
+          <p className="text-gray-600">
+            Create and manage access codes for exam access
+          </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
           Create Access Code
         </Button>
@@ -169,12 +193,19 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
         ) : accessCodes.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No access codes yet</h3>
-            <p className="text-gray-600">Create your first access code to get started</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No access codes yet
+            </h3>
+            <p className="text-gray-600">
+              Create your first access code to get started
+            </p>
           </div>
         ) : (
           accessCodes.map((code) => (
-            <div key={code.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+            <div
+              key={code.id}
+              className="border border-gray-200 rounded-lg p-4 bg-white"
+            >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -188,8 +219,14 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
                     >
                       <Copy className="h-4 w-4" />
                     </button>
-                    <span className={`flex items-center gap-1 text-sm font-medium ${getStatusColor(code)}`}>
-                      {code.isActive && !isExpired(code.expiresAt) && code.currentUses < code.maxUses ? (
+                    <span
+                      className={`flex items-center gap-1 text-sm font-medium ${getStatusColor(
+                        code
+                      )}`}
+                    >
+                      {code.isActive &&
+                      !isExpired(code.expiresAt) &&
+                      code.currentUses < code.maxUses ? (
                         <CheckCircle className="h-4 w-4" />
                       ) : (
                         <XCircle className="h-4 w-4" />
@@ -205,7 +242,9 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
                     </div>
                     <div>
                       <span className="text-gray-500">Usage:</span>
-                      <p className="font-medium">{code.currentUses}/{code.maxUses}</p>
+                      <p className="font-medium">
+                        {code.currentUses}/{code.maxUses}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Valid for:</span>
@@ -213,13 +252,17 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
                     </div>
                     <div>
                       <span className="text-gray-500">Expires:</span>
-                      <p className="font-medium">{formatDate(code.expiresAt)}</p>
+                      <p className="font-medium">
+                        {formatDate(code.expiresAt)}
+                      </p>
                     </div>
                   </div>
 
                   {code.description && (
                     <div className="mt-2">
-                      <span className="text-gray-500 text-sm">Description:</span>
+                      <span className="text-gray-500 text-sm">
+                        Description:
+                      </span>
                       <p className="text-gray-700">{code.description}</p>
                     </div>
                   )}
@@ -270,12 +313,20 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
             </label>
             <select
               value={formData.examCategory}
-              onChange={(e) => setFormData({ ...formData, examCategory: e.target.value as any, papers: [] })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  examCategory: e.target.value as any,
+                  papers: [],
+                })
+              }
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="RN">Registered Nurse (RN)</option>
               <option value="RM">Registered Midwife (RM)</option>
-              <option value="RPHN">Registered Public Health Nurse (RPHN)</option>
+              <option value="RPHN">
+                Registered Public Health Nurse (RPHN)
+              </option>
               <option value="ALL">All Categories</option>
             </select>
           </div>
@@ -292,9 +343,15 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
                     checked={formData.papers.includes(paper)}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setFormData({ ...formData, papers: [...formData.papers, paper] });
+                        setFormData({
+                          ...formData,
+                          papers: [...formData.papers, paper],
+                        });
                       } else {
-                        setFormData({ ...formData, papers: formData.papers.filter(p => p !== paper) });
+                        setFormData({
+                          ...formData,
+                          papers: formData.papers.filter((p) => p !== paper),
+                        });
                       }
                     }}
                     className="mr-2"
@@ -313,7 +370,12 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
               <input
                 type="number"
                 value={formData.validFor}
-                onChange={(e) => setFormData({ ...formData, validFor: parseInt(e.target.value) || 90 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    validFor: parseInt(e.target.value) || 90,
+                  })
+                }
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 min="1"
                 max="365"
@@ -327,7 +389,12 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
               <input
                 type="number"
                 value={formData.maxUses}
-                onChange={(e) => setFormData({ ...formData, maxUses: parseInt(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxUses: parseInt(e.target.value) || 1,
+                  })
+                }
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 min="1"
                 max="100"
@@ -341,7 +408,9 @@ export const AccessCodeManager: React.FC<AccessCodeManagerProps> = ({ createdBy 
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               rows={3}
               placeholder="Brief description of this access code..."

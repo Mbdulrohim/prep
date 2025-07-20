@@ -540,16 +540,16 @@ export default function AdminDashboard() {
       );
 
       showToast({
-        type: 'success',
-        title: 'Access Granted',
-        message: `Access granted successfully for ${daysValid} days`
+        type: "success",
+        title: "Access Granted",
+        message: `Access granted successfully for ${daysValid} days`,
       });
     } catch (error) {
       console.error("Error granting user access:", error);
       showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to grant user access'
+        type: "error",
+        title: "Error",
+        message: "Failed to grant user access",
       });
     }
   };
@@ -1482,7 +1482,7 @@ export default function AdminDashboard() {
           {/* Access Codes Tab */}
           {activeTab === "access-codes" && (
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <AccessCodeManager createdBy={user?.email || 'admin'} />
+              <AccessCodeManager createdBy={user?.email || "admin"} />
             </div>
           )}
         </div>
@@ -1510,7 +1510,7 @@ export default function AdminDashboard() {
           onCancel={() => setShowAddQuestion(false)}
         />
       )}
-      
+
       {/* Toast Container */}
       <ToastContainer />
     </div>

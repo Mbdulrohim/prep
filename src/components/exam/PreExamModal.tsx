@@ -43,15 +43,16 @@ export function PreExamModal({
   // Auto-populate user details from profile
   useEffect(() => {
     if (userProfile) {
-      const displayName = userProfile.name || 
-        (userProfile.firstName && userProfile.lastName 
-          ? `${userProfile.firstName} ${userProfile.lastName}` 
+      const displayName =
+        userProfile.name ||
+        (userProfile.firstName && userProfile.lastName
+          ? `${userProfile.firstName} ${userProfile.lastName}`
           : userProfile.firstName || "");
-      
+
       if (displayName) {
         setName(displayName);
       }
-      
+
       if (userProfile.university) {
         setUniversity(userProfile.university);
       }

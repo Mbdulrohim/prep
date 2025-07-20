@@ -6,16 +6,16 @@ import { PRICING_PLANS, formatPriceWithDiscount } from "@/lib/pricing";
 import { flutterwaveService } from "@/lib/flutterwave";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { 
-  CreditCard, 
-  CheckCircle, 
+import {
+  CreditCard,
+  CheckCircle,
   Clock,
   Loader,
   Calendar,
   BookOpen,
   Target,
   Users,
-  Award
+  Award,
 } from "lucide-react";
 
 export function PricingPlans() {
@@ -79,9 +79,7 @@ export function PricingPlans() {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          {plan.name}
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">{plan.name}</h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
           {plan.description}
         </p>
@@ -96,7 +94,8 @@ export function PricingPlans() {
               <span className="font-semibold">Limited Time Offer!</span>
             </div>
             <p className="text-sm">
-              {priceInfo.daysLeft} days left to save ₦{priceInfo.savings?.toLocaleString()}
+              {priceInfo.daysLeft} days left to save ₦
+              {priceInfo.savings?.toLocaleString()}
             </p>
           </div>
         </div>
@@ -135,14 +134,19 @@ export function PricingPlans() {
             <div className="space-y-3 mb-8">
               {plan.features.map((feature, index) => {
                 // Split feature text on ** to make bold parts
-                const parts = feature.split('**');
+                const parts = feature.split("**");
                 return (
                   <div key={index} className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-blue-600 mr-2 mt-1 flex-shrink-0" />
                     <span className="text-gray-700 text-sm leading-relaxed">
-                      {parts.map((part, partIndex) => 
+                      {parts.map((part, partIndex) =>
                         partIndex % 2 === 1 ? (
-                          <strong key={partIndex} className="text-gray-900 font-semibold">{part}</strong>
+                          <strong
+                            key={partIndex}
+                            className="text-gray-900 font-semibold"
+                          >
+                            {part}
+                          </strong>
                         ) : (
                           <span key={partIndex}>{part}</span>
                         )
@@ -156,7 +160,11 @@ export function PricingPlans() {
             {/* Error Message */}
             {error && (
               <div className="mb-4">
-                <Alert type="error" message={error} onClose={() => setError(null)} />
+                <Alert
+                  type="error"
+                  message={error}
+                  onClose={() => setError(null)}
+                />
               </div>
             )}
 
@@ -200,7 +208,8 @@ export function PricingPlans() {
           <Target className="h-12 w-12 text-blue-600 mx-auto mb-4" />
           <h3 className="font-semibold text-gray-900 mb-2">CBT Experience</h3>
           <p className="text-gray-600 text-sm">
-            Simulate the real exam environment with our computer-based testing platform
+            Simulate the real exam environment with our computer-based testing
+            platform
           </p>
         </div>
         <div className="text-center p-6 bg-purple-50 rounded-xl">

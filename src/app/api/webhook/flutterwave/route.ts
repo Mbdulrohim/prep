@@ -19,13 +19,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Flutterwave sends a test webhook during setup
-    const secretHash = process.env.FLUTTERWAVE_SECRET_HASH || "flw-webhook-secret";
-    
+    const secretHash =
+      process.env.FLUTTERWAVE_SECRET_HASH || "flw-webhook-secret";
+
     // For testing, let's temporarily allow webhooks without strict signature verification
     // TODO: Implement proper signature verification in production
     console.log("Webhook signature received:", signature);
     console.log("Expected signature:", secretHash);
-    
+
     // if (signature !== secretHash) {
     //   return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     // }
@@ -57,8 +58,11 @@ async function handleSuccessfulPayment(data: any) {
 
     // Verify the payment with Flutterwave
     const verification = await flutterwaveService.verifyPayment(data.id);
-    
-    if (verification.status !== "success" || verification.data.status !== "successful") {
+
+    if (
+      verification.status !== "success" ||
+      verification.data.status !== "successful"
+    ) {
       console.error("Payment verification failed:", verification);
       return;
     }
@@ -77,11 +81,11 @@ async function handleSuccessfulPayment(data: any) {
 
     // Handle individual payment - Premium Access with 3 mock exams
     const accessRef = doc(db, "userAccess", userId);
-    
+
     // Calculate expiry date (90 days from now)
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 90);
-    
+
     const accessData = {
       userId,
       planType,

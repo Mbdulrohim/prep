@@ -4,7 +4,8 @@ import { flutterwaveService } from "@/lib/flutterwave";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, amount, planType, userId, txRef, customerName } = await request.json();
+    const { email, amount, planType, userId, txRef, customerName } =
+      await request.json();
 
     if (!email || !amount || !planType || !userId || !txRef) {
       return NextResponse.json(
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     // Get the correct redirect URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const redirectUrl = `${baseUrl}/payment/success`;
-    
+
     console.log("Payment session redirect URL:", redirectUrl);
 
     // Initialize Flutterwave payment

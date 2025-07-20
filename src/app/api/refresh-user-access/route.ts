@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
     const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
     const userDoc = await getDoc(doc(db, "users", userId));
 
-    const hasUserAccess = userAccessDoc.exists() && userAccessDoc.data()?.isActive;
+    const hasUserAccess =
+      userAccessDoc.exists() && userAccessDoc.data()?.isActive;
     const hasUserFlag = userDoc.exists() && userDoc.data()?.hasAccess;
 
     let userAccessData = null;
@@ -42,7 +43,8 @@ export async function POST(request: NextRequest) {
         hasAccess: data.hasAccess,
         isActive: data.isActive,
         planType: data.planType,
-        lastPaymentDate: data.lastPaymentDate?.toDate?.() || data.lastPaymentDate,
+        lastPaymentDate:
+          data.lastPaymentDate?.toDate?.() || data.lastPaymentDate,
       };
     }
 
@@ -56,15 +58,14 @@ export async function POST(request: NextRequest) {
         userExists: userDoc.exists(),
         userAccessActive: hasUserAccess,
         userHasAccess: hasUserFlag,
-      }
+      },
     });
-
   } catch (error) {
     console.error("Error refreshing user access:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to refresh user access",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

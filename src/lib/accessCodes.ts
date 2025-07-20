@@ -1,23 +1,23 @@
 // src/lib/accessCodes.ts
-import { db } from './firebase';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  query, 
-  where, 
+import { db } from "./firebase";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  query,
+  where,
   getDocs,
   orderBy,
   limit,
-  Timestamp 
-} from 'firebase/firestore';
+  Timestamp,
+} from "firebase/firestore";
 
 export interface AccessCode {
   id: string;
   code: string;
-  examCategory: 'RN' | 'RM' | 'RPHN' | 'ALL';
+  examCategory: "RN" | "RM" | "RPHN" | "ALL";
   papers: string[];
   validFor: number; // days
   maxUses: number;
@@ -52,8 +52,8 @@ class AccessCodeManager {
 
   // Generate a unique access code
   private generateCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -62,7 +62,7 @@ class AccessCodeManager {
 
   // Create a new access code
   async createAccessCode(
-    examCategory: 'RN' | 'RM' | 'RPHN' | 'ALL',
+    examCategory: "RN" | "RM" | "RPHN" | "ALL",
     papers: string[],
     validFor: number = 90,
     maxUses: number = 1,
@@ -82,13 +82,13 @@ class AccessCodeManager {
       maxUses,
       currentUses: 0,
       isActive: true,
-      createdBy: createdBy || 'admin',
+      createdBy: createdBy || "admin",
       createdAt: now,
       expiresAt,
-      description
+      description,
     };
 
-    await setDoc(doc(db, 'accessCodes', code), accessCode);
+    await setDoc(doc(db, "accessCodes", code), accessCode);
     return accessCode;
   }
 
@@ -99,53 +99,68 @@ class AccessCodeManager {
     userEmail: string
   ): Promise<{ success: boolean; message: string; accessCode?: AccessCode }> {
     try {
-      const codeDoc = await getDoc(doc(db, 'accessCodes', code.toUpperCase()));
-      
+      const codeDoc = await getDoc(doc(db, "accessCodes", code.toUpperCase()));
+
       if (!codeDoc.exists()) {
-        return { success: false, message: 'Invalid access code' };
+        return { success: false, message: "Invalid access code" };
       }
 
       const accessCode = { ...codeDoc.data(), id: codeDoc.id } as AccessCode;
 
       // Check if code is active
       if (!accessCode.isActive) {
-        return { success: false, message: 'This access code has been deactivated' };
+        return {
+          success: false,
+          message: "This access code has been deactivated",
+        };
       }
 
       // Check if code has expired
-      const expiresAt = accessCode.expiresAt instanceof Date ? accessCode.expiresAt : (accessCode.expiresAt as any).toDate();
+      const expiresAt =
+        accessCode.expiresAt instanceof Date
+          ? accessCode.expiresAt
+          : (accessCode.expiresAt as any).toDate();
       if (new Date() > expiresAt) {
-        return { success: false, message: 'This access code has expired' };
+        return { success: false, message: "This access code has expired" };
       }
 
       // Check if code has reached max uses
       if (accessCode.currentUses >= accessCode.maxUses) {
-        return { success: false, message: 'This access code has reached its usage limit' };
+        return {
+          success: false,
+          message: "This access code has reached its usage limit",
+        };
       }
 
       // Check if user has already used this code
       const usageQuery = query(
-        collection(db, 'accessCodeUsage'),
-        where('codeId', '==', code.toUpperCase()),
-        where('userId', '==', userId)
+        collection(db, "accessCodeUsage"),
+        where("codeId", "==", code.toUpperCase()),
+        where("userId", "==", userId)
       );
       const usageSnapshot = await getDocs(usageQuery);
-      
+
       if (!usageSnapshot.empty) {
-        return { success: false, message: 'You have already used this access code' };
+        return {
+          success: false,
+          message: "You have already used this access code",
+        };
       }
 
       // Redeem the code
       await this.processCodeRedemption(accessCode, userId, userEmail);
 
-      return { 
-        success: true, 
-        message: 'Access code redeemed successfully!',
-        accessCode 
+      return {
+        success: true,
+        message: "Access code redeemed successfully!",
+        accessCode,
       };
     } catch (error) {
-      console.error('Error redeeming access code:', error);
-      return { success: false, message: 'An error occurred while redeeming the code' };
+      console.error("Error redeeming access code:", error);
+      return {
+        success: false,
+        message: "An error occurred while redeeming the code",
+      };
     }
   }
 
@@ -157,9 +172,9 @@ class AccessCodeManager {
   ): Promise<void> {
     try {
       // Update access code usage count
-      const codeRef = doc(db, 'accessCodes', accessCode.id);
+      const codeRef = doc(db, "accessCodes", accessCode.id);
       await updateDoc(codeRef, {
-        currentUses: accessCode.currentUses + 1
+        currentUses: accessCode.currentUses + 1,
       });
 
       // Record the usage
@@ -172,10 +187,10 @@ class AccessCodeManager {
         userEmail,
         usedAt: new Date(),
         examCategory: accessCode.examCategory,
-        papers: accessCode.papers
+        papers: accessCode.papers,
       };
-      
-      await setDoc(doc(db, 'accessCodeUsage', usageId), usageData);
+
+      await setDoc(doc(db, "accessCodeUsage", usageId), usageData);
 
       // Grant user access
       const expiryDate = new Date();
@@ -187,16 +202,15 @@ class AccessCodeManager {
         papers: accessCode.papers,
         accessGrantedAt: new Date(),
         expiryDate,
-        grantedBy: 'access_code',
+        grantedBy: "access_code",
         accessCodeUsed: accessCode.code,
         userEmail,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
-      await setDoc(doc(db, 'userAccess', userId), userAccessData);
-
+      await setDoc(doc(db, "userAccess", userId), userAccessData);
     } catch (error) {
-      console.error('Error processing code redemption:', error);
+      console.error("Error processing code redemption:", error);
       throw error;
     }
   }
@@ -205,22 +219,28 @@ class AccessCodeManager {
   async getAllAccessCodes(): Promise<AccessCode[]> {
     try {
       const codesQuery = query(
-        collection(db, 'accessCodes'),
-        orderBy('createdAt', 'desc')
+        collection(db, "accessCodes"),
+        orderBy("createdAt", "desc")
       );
       const snapshot = await getDocs(codesQuery);
-      
-      return snapshot.docs.map(doc => {
+
+      return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           ...data,
           id: doc.id,
-          createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt?.toDate() || new Date(),
-          expiresAt: data.expiresAt instanceof Date ? data.expiresAt : data.expiresAt?.toDate() || new Date()
+          createdAt:
+            data.createdAt instanceof Date
+              ? data.createdAt
+              : data.createdAt?.toDate() || new Date(),
+          expiresAt:
+            data.expiresAt instanceof Date
+              ? data.expiresAt
+              : data.expiresAt?.toDate() || new Date(),
         } as AccessCode;
       });
     } catch (error) {
-      console.error('Error fetching access codes:', error);
+      console.error("Error fetching access codes:", error);
       return [];
     }
   }
@@ -228,13 +248,13 @@ class AccessCodeManager {
   // Deactivate an access code
   async deactivateAccessCode(codeId: string): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'accessCodes', codeId), {
+      await updateDoc(doc(db, "accessCodes", codeId), {
         isActive: false,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
       return true;
     } catch (error) {
-      console.error('Error deactivating access code:', error);
+      console.error("Error deactivating access code:", error);
       return false;
     }
   }
@@ -243,22 +263,25 @@ class AccessCodeManager {
   async getCodeUsageStats(codeId: string): Promise<AccessCodeUsage[]> {
     try {
       const usageQuery = query(
-        collection(db, 'accessCodeUsage'),
-        where('codeId', '==', codeId),
-        orderBy('usedAt', 'desc')
+        collection(db, "accessCodeUsage"),
+        where("codeId", "==", codeId),
+        orderBy("usedAt", "desc")
       );
       const snapshot = await getDocs(usageQuery);
-      
-      return snapshot.docs.map(doc => {
+
+      return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           ...data,
           id: doc.id,
-          usedAt: data.usedAt instanceof Date ? data.usedAt : data.usedAt?.toDate() || new Date()
+          usedAt:
+            data.usedAt instanceof Date
+              ? data.usedAt
+              : data.usedAt?.toDate() || new Date(),
         } as AccessCodeUsage;
       });
     } catch (error) {
-      console.error('Error fetching code usage stats:', error);
+      console.error("Error fetching code usage stats:", error);
       return [];
     }
   }

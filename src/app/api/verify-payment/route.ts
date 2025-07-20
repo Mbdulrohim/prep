@@ -20,13 +20,16 @@ export async function POST(request: NextRequest) {
     // Verify payment with Flutterwave
     const verification = await flutterwaveService.verifyPayment(transactionId);
 
-    if (verification.status !== "success" || verification.data.status !== "successful") {
+    if (
+      verification.status !== "success" ||
+      verification.data.status !== "successful"
+    ) {
       console.error("Payment verification failed:", verification);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           message: "Payment verification failed",
-          details: verification 
+          details: verification,
         },
         { status: 400 }
       );
@@ -47,19 +50,22 @@ export async function POST(request: NextRequest) {
 
     // Check if this payment has already been processed
     const existingTransaction = await getDoc(doc(db, "transactions", txRef));
-    if (existingTransaction.exists() && existingTransaction.data().status === "successful") {
+    if (
+      existingTransaction.exists() &&
+      existingTransaction.data().status === "successful"
+    ) {
       console.log("Payment already processed, checking user access...");
-      
+
       // Return success but check if user actually has access
       const userAccessDoc = await getDoc(doc(db, "userAccess", verifiedUserId));
       const userDoc = await getDoc(doc(db, "users", verifiedUserId));
-      
+
       return NextResponse.json({
         success: true,
         message: "Payment already processed",
         hasAccess: userAccessDoc.exists() && userAccessDoc.data()?.isActive,
         hasUserAccess: userDoc.exists() && userDoc.data()?.hasAccess,
-        transaction: verification.data
+        transaction: verification.data,
       });
     }
 
@@ -123,7 +129,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
     });
 
-    console.log(`Payment verified and access granted for user ${verifiedUserId}`);
+    console.log(
+      `Payment verified and access granted for user ${verifiedUserId}`
+    );
 
     return NextResponse.json({
       success: true,
@@ -133,16 +141,15 @@ export async function POST(request: NextRequest) {
       accessData: {
         expiryDate: expiryDate.toISOString(),
         remainingAttempts: 6,
-        planType
-      }
+        planType,
+      },
     });
-
   } catch (error) {
     console.error("Payment verification error:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Payment verification failed",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

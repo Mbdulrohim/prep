@@ -16,7 +16,7 @@
     },
     {
       "collectionGroup": "examResults",
-      "queryScope": "COLLECTION", 
+      "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "userId",

@@ -12,7 +12,9 @@ export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const [status, setStatus] = useState<"loading" | "success" | "failed">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "failed">(
+    "loading"
+  );
   const [message, setMessage] = useState("");
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
 
@@ -35,7 +37,11 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        console.log("Verifying payment with details:", { transactionId, txRef, userId: user?.uid });
+        console.log("Verifying payment with details:", {
+          transactionId,
+          txRef,
+          userId: user?.uid,
+        });
 
         // Use our backend verification endpoint
         const response = await fetch("/api/verify-payment", {
@@ -55,19 +61,54 @@ export default function PaymentSuccessPage() {
 
         if (result.success && result.hasAccess) {
           setStatus("success");
-          setMessage("Payment successful! You now have access to all exam materials.");
+          setMessage(
+            "Payment successful! You now have access to all exam materials."
+          );
           setTransactionDetails(result.transaction);
         } else if (result.success && !result.hasAccess) {
           setStatus("failed");
-          setMessage("Payment was processed but access was not granted. Please contact support.");
+          setMessage(
+            "Payment was processed but access was not granted. Please contact support."
+          );
         } else {
-          setStatus("failed");
-          setMessage(result.message || "Payment verification failed. Please contact support if amount was debited.");
+          // Try manual verification as fallback
+          console.log("Standard verification failed, trying manual verification...");
+          
+          const manualResponse = await fetch("/api/manual-verify-payment", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              transactionId,
+              txRef,
+              userId: user?.uid,
+            }),
+          });
+
+          const manualResult = await manualResponse.json();
+          console.log("Manual verification result:", manualResult);
+
+          if (manualResult.success && manualResult.hasAccess) {
+            setStatus("success");
+            setMessage(
+              "Payment verified! You now have access to all exam materials."
+            );
+            setTransactionDetails(manualResult.transaction);
+          } else {
+            setStatus("failed");
+            setMessage(
+              result.message ||
+                "Payment verification failed. Please contact support if amount was debited."
+            );
+          }
         }
       } catch (error) {
         console.error("Payment verification error:", error);
         setStatus("failed");
-        setMessage("Unable to verify payment. Please contact support if amount was debited.");
+        setMessage(
+          "Unable to verify payment. Please contact support if amount was debited."
+        );
       }
     };
 
@@ -93,7 +134,9 @@ export default function PaymentSuccessPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             Verifying Payment...
           </h2>
-          <p className="text-gray-600">Please wait while we confirm your payment</p>
+          <p className="text-gray-600">
+            Please wait while we confirm your payment
+          </p>
         </div>
       </div>
     );
@@ -111,15 +154,18 @@ export default function PaymentSuccessPage() {
               Payment Successful!
             </h1>
             <p className="text-gray-600 mb-6">{message}</p>
-            
+
             {transactionDetails && (
               <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <h3 className="font-semibold text-gray-900 mb-2">Transaction Details</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Transaction Details
+                </h3>
                 <div className="space-y-1 text-sm text-gray-600">
                   <div className="flex justify-between">
                     <span>Amount:</span>
                     <span className="font-medium">
-                      {transactionDetails.currency} {transactionDetails.amount?.toLocaleString() || 'N/A'}
+                      {transactionDetails.currency}{" "}
+                      {transactionDetails.amount?.toLocaleString() || "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -130,7 +176,9 @@ export default function PaymentSuccessPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <span className="font-medium text-green-600">Successful</span>
+                    <span className="font-medium text-green-600">
+                      Successful
+                    </span>
                   </div>
                 </div>
               </div>
@@ -160,7 +208,7 @@ export default function PaymentSuccessPage() {
               Payment Failed
             </h1>
             <p className="text-gray-600 mb-6">{message}</p>
-            
+
             <div className="space-y-3">
               <Link href="/dashboard" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">

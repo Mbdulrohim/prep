@@ -1,81 +1,89 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert';
-import { accessCodeManager } from '@/lib/accessCodes';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  Gift, 
-  CheckCircle, 
-  AlertCircle,
-  Loader
-} from 'lucide-react';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { accessCodeManager } from "@/lib/accessCodes";
+import { useAuth } from "@/context/AuthContext";
+import { Gift, CheckCircle, AlertCircle, Loader } from "lucide-react";
 
 interface CodeRedemptionFormProps {
   onSuccess?: () => void;
 }
 
-export const CodeRedemptionForm: React.FC<CodeRedemptionFormProps> = ({ onSuccess }) => {
+export const CodeRedemptionForm: React.FC<CodeRedemptionFormProps> = ({
+  onSuccess,
+}) => {
   const { user, userProfile } = useAuth();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({ type: '', text: '' });
+  const [message, setMessage] = useState<{
+    type: "success" | "error" | "";
+    text: string;
+  }>({ type: "", text: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!code.trim()) {
-      setMessage({ type: 'error', text: 'Please enter an access code' });
+      setMessage({ type: "error", text: "Please enter an access code" });
       return;
     }
 
     if (!user || !userProfile) {
-      setMessage({ type: 'error', text: 'Please sign in to redeem codes' });
+      setMessage({ type: "error", text: "Please sign in to redeem codes" });
       return;
     }
 
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
 
     try {
       const result = await accessCodeManager.redeemAccessCode(
         code.trim().toUpperCase(),
         user.uid,
-        user.email || ''
+        user.email || ""
       );
 
       if (result.success) {
         const accessCode = result.accessCode;
-        let expiryDateStr = 'N/A';
-        
+        let expiryDateStr = "N/A";
+
         if (accessCode?.expiresAt) {
           try {
-            const expiryDate = (accessCode.expiresAt as any)?.toDate 
-              ? (accessCode.expiresAt as any).toDate() 
+            const expiryDate = (accessCode.expiresAt as any)?.toDate
+              ? (accessCode.expiresAt as any).toDate()
               : accessCode.expiresAt;
             expiryDateStr = new Date(expiryDate).toLocaleDateString();
           } catch {
-            expiryDateStr = 'N/A';
+            expiryDateStr = "N/A";
           }
         }
-        
-        setMessage({ 
-          type: 'success', 
-          text: `Success! You now have access to ${accessCode?.papers?.join(', ')} until ${expiryDateStr}` 
+
+        setMessage({
+          type: "success",
+          text: `Success! You now have access to ${accessCode?.papers?.join(
+            ", "
+          )} until ${expiryDateStr}`,
         });
-        setCode('');
-        
+        setCode("");
+
         // Call success callback after a delay
         setTimeout(() => {
           onSuccess?.();
         }, 2000);
       } else {
-        setMessage({ type: 'error', text: result.message || 'Failed to redeem code' });
+        setMessage({
+          type: "error",
+          text: result.message || "Failed to redeem code",
+        });
       }
     } catch (error) {
-      console.error('Code redemption error:', error);
-      setMessage({ type: 'error', text: 'An error occurred while redeeming the code' });
+      console.error("Code redemption error:", error);
+      setMessage({
+        type: "error",
+        text: "An error occurred while redeeming the code",
+      });
     } finally {
       setLoading(false);
     }
@@ -88,14 +96,21 @@ export const CodeRedemptionForm: React.FC<CodeRedemptionFormProps> = ({ onSucces
           <Gift className="h-5 w-5 text-green-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Have an Access Code?</h3>
-          <p className="text-sm text-gray-600">Redeem your access code to unlock exam content instantly</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Have an Access Code?
+          </h3>
+          <p className="text-sm text-gray-600">
+            Redeem your access code to unlock exam content instantly
+          </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="accessCode" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="accessCode"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Access Code
           </label>
           <input
@@ -112,9 +127,9 @@ export const CodeRedemptionForm: React.FC<CodeRedemptionFormProps> = ({ onSucces
 
         {message.text && (
           <Alert
-            type={message.type === 'success' ? 'success' : 'error'}
+            type={message.type === "success" ? "success" : "error"}
             message={message.text}
-            onClose={() => setMessage({ type: '', text: '' })}
+            onClose={() => setMessage({ type: "", text: "" })}
           />
         )}
 

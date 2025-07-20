@@ -30,28 +30,30 @@ const ALL_EXAMS: ExamData[] = [
     id: "rn-paper-1",
     category: "RN",
     title: "RN Paper 1",
-    description: "Comprehensive nursing fundamentals, patient care basics, and clinical practice skills.",
+    description:
+      "Comprehensive nursing fundamentals, patient care basics, and clinical practice skills.",
     questionsCount: 250,
     durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
     topics: [
       "Basic Patient Care",
-      "Vital Signs & Assessment", 
+      "Vital Signs & Assessment",
       "Infection Control",
       "Safety & Emergency Care",
       "Pharmacology Basics",
       "Medical-Surgical Nursing",
-      "Ethics & Communication"
+      "Ethics & Communication",
     ],
     color: "from-blue-500 to-blue-600",
     available: true,
   },
-  // RN Paper 2 - Available  
+  // RN Paper 2 - Available
   {
-    id: "rn-paper-2", 
+    id: "rn-paper-2",
     category: "RN",
     title: "RN Paper 2",
-    description: "Advanced nursing practice, specialized care, and clinical decision making.",
+    description:
+      "Advanced nursing practice, specialized care, and clinical decision making.",
     questionsCount: 250,
     durationMinutes: 150, // 2.5 hours
     difficulty: "Intermediate",
@@ -59,10 +61,10 @@ const ALL_EXAMS: ExamData[] = [
       "Advanced Medical-Surgical",
       "Critical Care Nursing",
       "Pediatric Nursing",
-      "Maternal Health", 
+      "Maternal Health",
       "Mental Health Nursing",
       "Community Health",
-      "Leadership & Management"
+      "Leadership & Management",
     ],
     color: "from-blue-600 to-indigo-600",
     available: true,
@@ -70,19 +72,20 @@ const ALL_EXAMS: ExamData[] = [
   // RM Papers - Coming Soon
   {
     id: "rm-paper-1",
-    category: "RM", 
+    category: "RM",
     title: "RM Paper 1",
-    description: "Midwifery fundamentals, maternal care, and reproductive health basics.",
+    description:
+      "Midwifery fundamentals, maternal care, and reproductive health basics.",
     questionsCount: 250,
     durationMinutes: 150,
     difficulty: "Intermediate",
     topics: [
       "Reproductive Health",
       "Antenatal Care",
-      "Normal Labor & Birth", 
+      "Normal Labor & Birth",
       "Postpartum Care",
       "Newborn Care",
-      "Family Planning"
+      "Family Planning",
     ],
     color: "from-green-500 to-emerald-600",
     available: false,
@@ -91,17 +94,18 @@ const ALL_EXAMS: ExamData[] = [
     id: "rm-paper-2",
     category: "RM",
     title: "RM Paper 2",
-    description: "Advanced midwifery practice, high-risk pregnancies, and specialized care.",
+    description:
+      "Advanced midwifery practice, high-risk pregnancies, and specialized care.",
     questionsCount: 250,
     durationMinutes: 150,
     difficulty: "Intermediate",
     topics: [
       "High-Risk Pregnancies",
-      "Obstetric Emergencies", 
+      "Obstetric Emergencies",
       "Neonatal Complications",
       "Advanced Procedures",
       "Research & Evidence",
-      "Professional Practice"
+      "Professional Practice",
     ],
     color: "from-green-600 to-teal-600",
     available: false,
@@ -110,8 +114,9 @@ const ALL_EXAMS: ExamData[] = [
   {
     id: "rphn-paper-1",
     category: "RPHN",
-    title: "RPHN Paper 1", 
-    description: "Public health fundamentals, community assessment, and health promotion.",
+    title: "RPHN Paper 1",
+    description:
+      "Public health fundamentals, community assessment, and health promotion.",
     questionsCount: 250,
     durationMinutes: 150,
     difficulty: "Intermediate",
@@ -121,7 +126,7 @@ const ALL_EXAMS: ExamData[] = [
       "Health Education",
       "Disease Prevention",
       "Environmental Health",
-      "Population Health"
+      "Population Health",
     ],
     color: "from-purple-500 to-fuchsia-600",
     available: false,
@@ -130,24 +135,25 @@ const ALL_EXAMS: ExamData[] = [
     id: "rphn-paper-2",
     category: "RPHN",
     title: "RPHN Paper 2",
-    description: "Advanced public health practice, policy development, and program management.",
-    questionsCount: 250, 
+    description:
+      "Advanced public health practice, policy development, and program management.",
+    questionsCount: 250,
     durationMinutes: 150,
     difficulty: "Intermediate",
     topics: [
       "Health Policy & Advocacy",
       "Program Planning & Evaluation",
-      "Advanced Epidemiology", 
+      "Advanced Epidemiology",
       "Global Health Issues",
       "Emergency Preparedness",
-      "Leadership in Public Health"
+      "Leadership in Public Health",
     ],
     color: "from-purple-600 to-violet-600",
     available: false,
   },
 ];
 
-// Questions for RN Paper 1 
+// Questions for RN Paper 1
 const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
   {
     id: 1,
@@ -159,7 +165,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Notify the physician.",
     ],
     correctAnswer: 1,
-    explanation: "This is a classic sign of a transfusion reaction. The absolute first priority is to stop the transfusion to prevent further harm to the patient.",
+    explanation:
+      "This is a classic sign of a transfusion reaction. The absolute first priority is to stop the transfusion to prevent further harm to the patient.",
   },
   {
     id: 2,
@@ -171,14 +178,16 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Monitoring for signs of infection",
     ],
     correctAnswer: 1,
-    explanation: "Maintaining airway patency is the highest priority for any patient, especially those with a new tracheostomy who are at risk for airway obstruction.",
+    explanation:
+      "Maintaining airway patency is the highest priority for any patient, especially those with a new tracheostomy who are at risk for airway obstruction.",
   },
   {
     id: 3,
     text: "A nurse is preparing to administer insulin to a diabetic patient. Which site is most appropriate for subcutaneous injection?",
     options: ["Thigh", "Upper arm", "Abdomen", "Buttocks"],
     correctAnswer: 2,
-    explanation: "The abdomen provides the most consistent absorption for insulin and is the preferred site for subcutaneous insulin injection.",
+    explanation:
+      "The abdomen provides the most consistent absorption for insulin and is the preferred site for subcutaneous insulin injection.",
   },
   {
     id: 4,
@@ -190,7 +199,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Wearing personal protective equipment.",
     ],
     correctAnswer: 2,
-    explanation: "Hand hygiene is the single most effective measure for preventing healthcare-associated infections and should be performed before and after every patient contact.",
+    explanation:
+      "Hand hygiene is the single most effective measure for preventing healthcare-associated infections and should be performed before and after every patient contact.",
   },
   {
     id: 5,
@@ -202,7 +212,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Restlessness and confusion",
     ],
     correctAnswer: 1,
-    explanation: "An oxygen saturation of 95% or higher indicates adequate oxygenation and effective oxygen therapy.",
+    explanation:
+      "An oxygen saturation of 95% or higher indicates adequate oxygenation and effective oxygen therapy.",
   },
   {
     id: 6,
@@ -214,19 +225,21 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Bilateral lower extremity edema",
     ],
     correctAnswer: 2,
-    explanation: "Classic signs of DVT include unilateral leg swelling, pain, tenderness, warmth, and redness in the affected extremity. Coolness, pallor, and diminished pulses are more indicative of arterial insufficiency.",
+    explanation:
+      "Classic signs of DVT include unilateral leg swelling, pain, tenderness, warmth, and redness in the affected extremity. Coolness, pallor, and diminished pulses are more indicative of arterial insufficiency.",
   },
   {
     id: 7,
     text: "A patient with hypertension asks about lifestyle modifications. Which statement by the patient indicates a need for further teaching?",
     options: [
-      "\"I should limit my sodium intake to less than 2,400 mg per day.\"",
-      "\"Regular exercise can help lower my blood pressure.\"",
-      "\"I can stop taking my medication once my blood pressure is normal.\"",
-      "\"I should monitor my blood pressure at home regularly.\"",
+      '"I should limit my sodium intake to less than 2,400 mg per day."',
+      '"Regular exercise can help lower my blood pressure."',
+      '"I can stop taking my medication once my blood pressure is normal."',
+      '"I should monitor my blood pressure at home regularly."',
     ],
     correctAnswer: 2,
-    explanation: "Patients should never stop taking antihypertensive medications without consulting their healthcare provider, even if blood pressure readings are normal. This indicates a need for further education.",
+    explanation:
+      "Patients should never stop taking antihypertensive medications without consulting their healthcare provider, even if blood pressure readings are normal. This indicates a need for further education.",
   },
   {
     id: 8,
@@ -238,7 +251,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Culture the fluid for bacteria",
     ],
     correctAnswer: 1,
-    explanation: "Clear fluid leaking from the nose after a head injury could indicate cerebrospinal fluid (CSF) leakage. CSF contains glucose, unlike nasal secretions. Testing for glucose helps differentiate and confirms CSF leakage, which requires immediate medical attention.",
+    explanation:
+      "Clear fluid leaking from the nose after a head injury could indicate cerebrospinal fluid (CSF) leakage. CSF contains glucose, unlike nasal secretions. Testing for glucose helps differentiate and confirms CSF leakage, which requires immediate medical attention.",
   },
   {
     id: 9,
@@ -250,7 +264,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Administer prescribed anti-anxiety medication immediately",
     ],
     correctAnswer: 1,
-    explanation: "Speaking in a calm, reassuring voice helps create a therapeutic environment and can help reduce the patient's anxiety level. This should be the first intervention before considering other options.",
+    explanation:
+      "Speaking in a calm, reassuring voice helps create a therapeutic environment and can help reduce the patient's anxiety level. This should be the first intervention before considering other options.",
   },
   {
     id: 10,
@@ -262,7 +277,8 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Discontinue all medications 24 hours before the procedure",
     ],
     correctAnswer: 2,
-    explanation: "Completing the prescribed bowel preparation exactly as directed is essential for adequate visualization during the colonoscopy and successful completion of the procedure.",
+    explanation:
+      "Completing the prescribed bowel preparation exactly as directed is essential for adequate visualization during the colonoscopy and successful completion of the procedure.",
   },
   // Continue with more questions to reach 250 total...
   // For now, I'll add a few more representative questions
@@ -271,12 +287,13 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
     text: "A newborn's Apgar score is 8 at 1 minute and 9 at 5 minutes. How should the nurse interpret these scores?",
     options: [
       "The newborn is in severe distress",
-      "The newborn requires immediate resuscitation", 
+      "The newborn requires immediate resuscitation",
       "The newborn is adapting well to extrauterine life",
-      "The newborn needs continuous monitoring"
+      "The newborn needs continuous monitoring",
     ],
     correctAnswer: 2,
-    explanation: "Apgar scores of 8-10 indicate that the newborn is adapting well to life outside the uterus. The improvement from 8 to 9 shows positive adaptation."
+    explanation:
+      "Apgar scores of 8-10 indicate that the newborn is adapting well to life outside the uterus. The improvement from 8 to 9 shows positive adaptation.",
   },
   {
     id: 12,
@@ -285,11 +302,12 @@ const RN_PAPER_1_QUESTIONS: Omit<Question, "flagged">[] = [
       "Gradual rewarming with blankets",
       "Rapid rewarming with hot water",
       "Monitoring core body temperature",
-      "Keep the room very warm"
+      "Keep the room very warm",
     ],
     correctAnswer: 1,
-    explanation: "Rapid rewarming can cause vasodilation and circulatory collapse. Gradual rewarming is the safest approach for hypothermic patients."
-  }
+    explanation:
+      "Rapid rewarming can cause vasodilation and circulatory collapse. Gradual rewarming is the safest approach for hypothermic patients.",
+  },
 ];
 
 // Questions for RN Paper 2
@@ -299,12 +317,13 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
     text: "A patient in the ICU has a central venous pressure (CVP) reading of 2 mmHg. What does this indicate?",
     options: [
       "Fluid overload",
-      "Normal fluid status", 
+      "Normal fluid status",
       "Hypovolemia",
-      "Heart failure"
+      "Heart failure",
     ],
     correctAnswer: 2,
-    explanation: "A CVP of 2 mmHg is below the normal range (2-8 mmHg) and indicates hypovolemia or inadequate venous return."
+    explanation:
+      "A CVP of 2 mmHg is below the normal range (2-8 mmHg) and indicates hypovolemia or inadequate venous return.",
   },
   {
     id: 2,
@@ -313,10 +332,11 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
       "Increased appetite",
       "Sunset eyes (downward gaze)",
       "Increased social interaction",
-      "Improved school performance"
+      "Improved school performance",
     ],
     correctAnswer: 1,
-    explanation: "Sunset eyes, where the eyes appear to gaze downward, is a classic sign of increased intracranial pressure in children."
+    explanation:
+      "Sunset eyes, where the eyes appear to gaze downward, is a classic sign of increased intracranial pressure in children.",
   },
   {
     id: 3,
@@ -325,22 +345,24 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
       "Gestational diabetes",
       "Preeclampsia with severe features",
       "Normal pregnancy changes",
-      "Migraine headache"
+      "Migraine headache",
     ],
     correctAnswer: 1,
-    explanation: "These symptoms (severe headache, visual changes, and severely elevated BP) indicate preeclampsia with severe features, which requires immediate medical intervention."
+    explanation:
+      "These symptoms (severe headache, visual changes, and severely elevated BP) indicate preeclampsia with severe features, which requires immediate medical intervention.",
   },
   {
     id: 4,
     text: "A patient with bipolar disorder is experiencing a manic episode. Which nursing intervention is most appropriate?",
     options: [
       "Encourage group activities",
-      "Provide a calm, low-stimulation environment", 
+      "Provide a calm, low-stimulation environment",
       "Engage in lengthy conversations",
-      "Allow unlimited visitors"
+      "Allow unlimited visitors",
     ],
     correctAnswer: 1,
-    explanation: "During a manic episode, patients benefit from a calm, low-stimulation environment to help reduce agitation and promote rest."
+    explanation:
+      "During a manic episode, patients benefit from a calm, low-stimulation environment to help reduce agitation and promote rest.",
   },
   {
     id: 5,
@@ -348,12 +370,13 @@ const RN_PAPER_2_QUESTIONS: Omit<Question, "flagged">[] = [
     options: [
       "Health promotion and education",
       "Early detection and screening",
-      "Rehabilitation and recovery", 
-      "Environmental modifications"
+      "Rehabilitation and recovery",
+      "Environmental modifications",
     ],
     correctAnswer: 1,
-    explanation: "Secondary prevention focuses on early detection of disease through screening and prompt treatment to prevent progression."
-  }
+    explanation:
+      "Secondary prevention focuses on early detection of disease through screening and prompt treatment to prevent progression.",
+  },
 ];
 
 // Question bank mapping
@@ -361,54 +384,61 @@ const QUESTIONS_DATA: Record<string, Omit<Question, "flagged">[]> = {
   "rn-paper-1": RN_PAPER_1_QUESTIONS,
   "rn-paper-2": RN_PAPER_2_QUESTIONS,
   "rm-paper-1": [], // Will be populated when available
-  "rm-paper-2": [], // Will be populated when available  
+  "rm-paper-2": [], // Will be populated when available
   "rphn-paper-1": [], // Will be populated when available
   "rphn-paper-2": [], // Will be populated when available
 };
 
 // Utility function to generate additional questions for full 250-question exams
-function generateAdditionalQuestions(baseQuestions: Omit<Question, "flagged">[], targetCount: number): Omit<Question, "flagged">[] {
+function generateAdditionalQuestions(
+  baseQuestions: Omit<Question, "flagged">[],
+  targetCount: number
+): Omit<Question, "flagged">[] {
   const questions = [...baseQuestions];
   let currentId = baseQuestions.length + 1;
-  
+
   while (questions.length < targetCount) {
     // Cycle through base questions and modify them slightly
-    const baseIndex = (questions.length - baseQuestions.length) % baseQuestions.length;
+    const baseIndex =
+      (questions.length - baseQuestions.length) % baseQuestions.length;
     const baseQuestion = baseQuestions[baseIndex];
-    
+
     questions.push({
       ...baseQuestion,
       id: currentId++,
       text: `Variation: ${baseQuestion.text}`,
     });
   }
-  
+
   return questions;
 }
 
 // Public API functions
 export async function fetchAllExams(): Promise<ExamData[]> {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   return ALL_EXAMS;
 }
 
-export async function fetchQuestionsForExam(examId: string): Promise<Question[]> {
+export async function fetchQuestionsForExam(
+  examId: string
+): Promise<Question[]> {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
   const baseQuestions = QUESTIONS_DATA[examId] || [];
   const exam = ALL_EXAMS.find((e: ExamData) => e.id === examId);
-  
+
   if (!exam) {
     throw new Error(`Exam not found: ${examId}`);
   }
-  
+
   // Generate full question set if needed
-  const fullQuestions = baseQuestions.length < exam.questionsCount
-    ? generateAdditionalQuestions(baseQuestions, exam.questionsCount)
-    : baseQuestions.slice(0, exam.questionsCount);
-  
+  const fullQuestions =
+    baseQuestions.length < exam.questionsCount
+      ? generateAdditionalQuestions(baseQuestions, exam.questionsCount)
+      : baseQuestions.slice(0, exam.questionsCount);
+
   // Add flagged property and shuffle questions
   return fullQuestions
     .map((q: Omit<Question, "flagged">) => ({ ...q, flagged: false }))
@@ -417,7 +447,7 @@ export async function fetchQuestionsForExam(examId: string): Promise<Question[]>
 
 export async function getExamById(examId: string): Promise<ExamData | null> {
   const exams = await fetchAllExams();
-  return exams.find(exam => exam.id === examId) || null;
+  return exams.find((exam) => exam.id === examId) || null;
 }
 
 // Backward compatibility

@@ -387,16 +387,22 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 {/* Stripe/Card Payment */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="font-medium text-gray-900">Card Payment</h3>
-                      <p className="text-sm text-gray-600">Pay with debit/credit card via Stripe</p>
+                      <h3 className="font-medium text-gray-900">
+                        Card Payment
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Pay with debit/credit card via Stripe
+                      </p>
                     </div>
-                    <div className="text-sm text-green-600 font-medium">Instant Access</div>
+                    <div className="text-sm text-green-600 font-medium">
+                      Instant Access
+                    </div>
                   </div>
                   <PaystackPurchase />
                 </div>
@@ -405,10 +411,16 @@ export default function DashboardPage() {
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="font-medium text-gray-900">Bank Transfer & Mobile Money</h3>
-                      <p className="text-sm text-gray-600">Pay via bank transfer, USSD, POS, or mobile wallets</p>
+                      <h3 className="font-medium text-gray-900">
+                        Bank Transfer & Mobile Money
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Pay via bank transfer, USSD, POS, or mobile wallets
+                      </p>
                     </div>
-                    <div className="text-sm text-blue-600 font-medium">No Card Required</div>
+                    <div className="text-sm text-blue-600 font-medium">
+                      No Card Required
+                    </div>
                   </div>
                   <Button
                     onClick={() => setShowAlternativePayment(true)}

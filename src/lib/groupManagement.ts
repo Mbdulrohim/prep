@@ -1,18 +1,18 @@
 // src/lib/groupManagement.ts
 import { db } from "./firebase";
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
   getDocs,
   arrayUnion,
   arrayRemove,
-  increment
+  increment,
 } from "firebase/firestore";
 
 export interface StudyGroup {
@@ -44,7 +44,7 @@ export interface GroupMember {
     [examType: string]: {
       paper1: number;
       paper2: number;
-    }
+    };
   };
 }
 
@@ -76,26 +76,30 @@ export class GroupManager {
     groupName: string,
     planId: string
   ): Promise<string> {
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    
+    const groupId = `group_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+
     const group: StudyGroup = {
       id: groupId,
       name: groupName,
       planId,
       ownerId,
       ownerEmail,
-      members: [{
-        userId: ownerId,
-        email: ownerEmail,
-        displayName: ownerEmail.split('@')[0],
-        joinedAt: new Date(),
-        role: "owner",
-        attemptsUsed: {
-          RN: { paper1: 0, paper2: 0 },
-          RM: { paper1: 0, paper2: 0 },
-          RPHN: { paper1: 0, paper2: 0 }
-        }
-      }],
+      members: [
+        {
+          userId: ownerId,
+          email: ownerEmail,
+          displayName: ownerEmail.split("@")[0],
+          joinedAt: new Date(),
+          role: "owner",
+          attemptsUsed: {
+            RN: { paper1: 0, paper2: 0 },
+            RM: { paper1: 0, paper2: 0 },
+            RPHN: { paper1: 0, paper2: 0 },
+          },
+        },
+      ],
       maxMembers: planId.includes("_5_") ? 5 : 10,
       currentMembers: 1,
       isPaid: false,
@@ -103,7 +107,7 @@ export class GroupManager {
       updatedAt: new Date(),
       examTypes: ["RN", "RM", "RPHN"],
       attemptsPerUser: 6,
-      retakeAllowed: true
+      retakeAllowed: true,
     };
 
     await setDoc(doc(db, "studyGroups", groupId), group);
@@ -125,18 +129,18 @@ export class GroupManager {
       collection(db, "studyGroups"),
       where("members", "array-contains-any", [userId])
     );
-    
+
     const snapshot = await getDocs(groupsQuery);
     const groups: StudyGroup[] = [];
-    
-    snapshot.forEach(doc => {
+
+    snapshot.forEach((doc) => {
       const group = { ...doc.data(), id: doc.id } as StudyGroup;
       // Check if user is actually in the members array
-      if (group.members.some(member => member.userId === userId)) {
+      if (group.members.some((member) => member.userId === userId)) {
         groups.push(group);
       }
     });
-    
+
     return groups;
   }
 
@@ -148,13 +152,15 @@ export class GroupManager {
   ): Promise<string> {
     const group = await this.getGroup(groupId);
     if (!group) throw new Error("Group not found");
-    
+
     if (group.currentMembers >= group.maxMembers) {
       throw new Error("Group is full");
     }
 
-    const invitationId = `invite_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    
+    const invitationId = `invite_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+
     const invitation: GroupInvitation = {
       id: invitationId,
       groupId,
@@ -163,7 +169,7 @@ export class GroupManager {
       inviteeEmail,
       status: "pending",
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     };
 
     await setDoc(doc(db, "groupInvitations", invitationId), invitation);
@@ -181,8 +187,10 @@ export class GroupManager {
     if (!inviteDoc.exists()) throw new Error("Invitation not found");
 
     const invitation = inviteDoc.data() as GroupInvitation;
-    if (invitation.status !== "pending") throw new Error("Invitation already processed");
-    if (invitation.expiresAt < new Date()) throw new Error("Invitation expired");
+    if (invitation.status !== "pending")
+      throw new Error("Invitation already processed");
+    if (invitation.expiresAt < new Date())
+      throw new Error("Invitation expired");
 
     const group = await this.getGroup(invitation.groupId);
     if (!group) throw new Error("Group not found");
@@ -201,24 +209,28 @@ export class GroupManager {
       attemptsUsed: {
         RN: { paper1: 0, paper2: 0 },
         RM: { paper1: 0, paper2: 0 },
-        RPHN: { paper1: 0, paper2: 0 }
-      }
+        RPHN: { paper1: 0, paper2: 0 },
+      },
     };
 
     await updateDoc(doc(db, "studyGroups", invitation.groupId), {
       members: arrayUnion(newMember),
       currentMembers: increment(1),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Update invitation status
     await updateDoc(doc(db, "groupInvitations", invitationId), {
-      status: "accepted"
+      status: "accepted",
     });
   }
 
   // Remove member from group
-  async removeMember(groupId: string, memberUserId: string, requesterId: string): Promise<void> {
+  async removeMember(
+    groupId: string,
+    memberUserId: string,
+    requesterId: string
+  ): Promise<void> {
     const group = await this.getGroup(groupId);
     if (!group) throw new Error("Group not found");
 
@@ -231,22 +243,25 @@ export class GroupManager {
       throw new Error("Cannot remove group owner");
     }
 
-    const memberToRemove = group.members.find(m => m.userId === memberUserId);
+    const memberToRemove = group.members.find((m) => m.userId === memberUserId);
     if (!memberToRemove) throw new Error("Member not found");
 
     await updateDoc(doc(db, "studyGroups", groupId), {
       members: arrayRemove(memberToRemove),
       currentMembers: increment(-1),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   }
 
   // Mark group as paid
-  async markGroupAsPaid(groupId: string, paymentReference: string): Promise<void> {
+  async markGroupAsPaid(
+    groupId: string,
+    paymentReference: string
+  ): Promise<void> {
     await updateDoc(doc(db, "studyGroups", groupId), {
       isPaid: true,
       paymentReference,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Grant access to all group members
@@ -259,7 +274,11 @@ export class GroupManager {
   }
 
   // Grant access to group member
-  private async grantGroupAccess(userId: string, groupId: string, planId: string): Promise<void> {
+  private async grantGroupAccess(
+    userId: string,
+    groupId: string,
+    planId: string
+  ): Promise<void> {
     const accessData = {
       userId,
       planType: "group_access",
@@ -272,7 +291,7 @@ export class GroupManager {
       retakeAllowed: true,
       groupLeaderboard: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     await setDoc(doc(db, "userAccess", userId), accessData);
@@ -280,22 +299,22 @@ export class GroupManager {
 
   // Update member's exam attempts
   async updateMemberAttempts(
-    groupId: string, 
-    userId: string, 
-    examType: string, 
+    groupId: string,
+    userId: string,
+    examType: string,
     paper: "paper1" | "paper2"
   ): Promise<void> {
     const group = await this.getGroup(groupId);
     if (!group) throw new Error("Group not found");
 
-    const memberIndex = group.members.findIndex(m => m.userId === userId);
+    const memberIndex = group.members.findIndex((m) => m.userId === userId);
     if (memberIndex === -1) throw new Error("Member not found");
 
     group.members[memberIndex].attemptsUsed[examType][paper] += 1;
 
     await updateDoc(doc(db, "studyGroups", groupId), {
       members: group.members,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   }
 }

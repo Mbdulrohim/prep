@@ -1,8 +1,8 @@
 // src/lib/flutterwave.ts
 export const FLUTTERWAVE_CONFIG = {
-  publicKey: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "FLWPUBK_TEST-a8fabea2d377d97dccf31ed9766d643a-X",
-  secretKey: process.env.FLUTTERWAVE_SECRET_KEY || "FLWSECK_TEST-3a63d8465476b934adeb87961d3c7ab7-X",
-  encryptionKey: process.env.FLUTTERWAVE_ENCRYPTION_KEY || "FLWSECK_TESTee296a174f9c",
+  publicKey: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
+  secretKey: process.env.FLUTTERWAVE_SECRET_KEY,
+  encryptionKey: process.env.FLUTTERWAVE_ENCRYPTION_KEY,
   baseUrl: "https://api.flutterwave.com/v3",
 };
 

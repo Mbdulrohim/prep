@@ -57,14 +57,17 @@ export class UserAccessManager {
     }
   }
 
-  async checkExamAccess(userId: string, examType: string): Promise<{
+  async checkExamAccess(
+    userId: string,
+    examType: string
+  ): Promise<{
     hasAccess: boolean;
     attemptsRemaining: number;
     maxAttempts: number;
     canRetake: boolean;
   }> {
     const access = await this.getUserAccess(userId);
-    
+
     if (!access || !access.isActive) {
       return {
         hasAccess: false,
@@ -115,7 +118,7 @@ export class UserAccessManager {
     try {
       // Get current attempts for this exam type and paper
       const attemptId = `${userId}_${examType}_paper${paper}_${Date.now()}`;
-      
+
       const attemptData: MockExamAttempt = {
         userId,
         examType,
@@ -142,17 +145,24 @@ export class UserAccessManager {
     }
   }
 
-  private async getNextAttemptNumber(userId: string, examType: string, paper: number): Promise<number> {
+  private async getNextAttemptNumber(
+    userId: string,
+    examType: string,
+    paper: number
+  ): Promise<number> {
     // For simplicity, we'll determine attempt number based on remaining attempts
     // This is a simplified approach - in production, you might want to query existing attempts
     const access = await this.getUserAccess(userId);
     if (!access) return 1;
-    
+
     const used = access.maxAttempts - access.remainingAttempts;
     return Math.floor(used / 2) + 1; // Each exam type has 2 papers, so divide by 2
   }
 
-  async getMockExamHistory(userId: string, examType?: string): Promise<MockExamAttempt[]> {
+  async getMockExamHistory(
+    userId: string,
+    examType?: string
+  ): Promise<MockExamAttempt[]> {
     try {
       // In a real implementation, you'd query the mockExamAttempts collection
       // For now, return empty array as this is primarily for the payment flow
@@ -167,11 +177,14 @@ export class UserAccessManager {
     totalAttempts: number;
     averageScore: number;
     bestScore: number;
-    examTypeStats: Record<string, {
-      attempts: number;
-      averageScore: number;
-      bestScore: number;
-    }>;
+    examTypeStats: Record<
+      string,
+      {
+        attempts: number;
+        averageScore: number;
+        bestScore: number;
+      }
+    >;
   }> {
     try {
       // Simplified stats - in production, you'd aggregate from attempts collection

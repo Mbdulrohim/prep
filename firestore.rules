@@ -26,19 +26,20 @@ service cloud.firestore {
     // User profiles - users can read/write their own profile, admins can read all
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create, update: if isOwner(userId);
+      allow create, update: if isOwner(userId) || isAuthenticated();
       allow delete: if isAdmin();
     }
 
-    // User access control - only admins can manage
+    // User access control - allow authenticated writes for payment
     match /userAccess/{accessId} {
-      allow read, write: if isAdmin();
+      allow read: if isOwner(accessId) || isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     // Exam attempts - users can manage their own attempts, admins can read all
     match /examAttempts/{attemptId} {
       allow read: if isAuthenticated() || isAdmin();
-      allow create, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated();
       allow delete: if isAdmin();
     }
 
@@ -48,22 +49,36 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Feedback - users can create and read their own, admins can read all
+    // Exam results - users can manage their own results, admins can read all
+    match /examResults/{resultId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Feedback - authenticated users can create, admins can read all
     match /feedback/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Access codes - only admins can manage
+    match /accessCodes/{codeId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Transactions - allow authenticated users to read their own, create during payment
+    match /transactions/{transactionId} {
       allow read: if isAuthenticated() || isAdmin();
       allow create: if isAuthenticated();
       allow update, delete: if isAdmin();
     }
 
-    // Access codes - only backend/admin functions can access
-    match /accessCodes/{codeId} {
-      allow read, write: if isAdmin();
-    }
-
     // Payment sessions - users can manage their own, admins can read all
     match /paymentSessions/{sessionId} {
       allow read: if isAuthenticated() || isAdmin();
-      allow create, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated();
       allow delete: if isAdmin();
     }
 

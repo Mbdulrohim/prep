@@ -39,6 +39,7 @@ ADMIN_EMAIL=your_admin_email@domain.com
 ## Testing Configuration:
 
 For development/testing, you can use test keys:
+
 - Flutterwave test keys start with `FLWPUBK_TEST-` and `FLWSECK_TEST-`
 - Firebase project should be a separate test project
 - OpenAI can use the same key with proper usage limits

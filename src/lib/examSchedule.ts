@@ -1,6 +1,13 @@
 // src/lib/examSchedule.ts
 import { db } from "./firebase";
-import { doc, setDoc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 
 export interface ExamSchedule {
   id: string;
@@ -34,7 +41,7 @@ export class ExamScheduleManager {
       for (const paper of papers) {
         const scheduleId = `${examType}_${paper}`;
         const existingSchedule = await this.getSchedule(scheduleId);
-        
+
         if (!existingSchedule) {
           const schedule: ExamSchedule = {
             id: scheduleId,
@@ -46,7 +53,7 @@ export class ExamScheduleManager {
             totalQuestions: 50,
             passingScore: 70,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           };
 
           await setDoc(doc(db, "examSchedules", scheduleId), schedule);
@@ -62,9 +69,17 @@ export class ExamScheduleManager {
       const data = scheduleDoc.data();
       return {
         ...data,
-        scheduledDate: data.scheduledDate ? (data.scheduledDate.toDate ? data.scheduledDate.toDate() : new Date(data.scheduledDate)) : null,
-        createdAt: data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt)
+        scheduledDate: data.scheduledDate
+          ? data.scheduledDate.toDate
+            ? data.scheduledDate.toDate()
+            : new Date(data.scheduledDate)
+          : null,
+        createdAt: data.createdAt.toDate
+          ? data.createdAt.toDate()
+          : new Date(data.createdAt),
+        updatedAt: data.updatedAt.toDate
+          ? data.updatedAt.toDate()
+          : new Date(data.updatedAt),
       } as ExamSchedule;
     }
     return null;
@@ -74,15 +89,23 @@ export class ExamScheduleManager {
   async getAllSchedules(): Promise<ExamSchedule[]> {
     const schedulesCollection = collection(db, "examSchedules");
     const snapshot = await getDocs(schedulesCollection);
-    
-    return snapshot.docs.map(doc => {
+
+    return snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         ...data,
         id: doc.id,
-        scheduledDate: data.scheduledDate ? (data.scheduledDate.toDate ? data.scheduledDate.toDate() : new Date(data.scheduledDate)) : null,
-        createdAt: data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt)
+        scheduledDate: data.scheduledDate
+          ? data.scheduledDate.toDate
+            ? data.scheduledDate.toDate()
+            : new Date(data.scheduledDate)
+          : null,
+        createdAt: data.createdAt.toDate
+          ? data.createdAt.toDate()
+          : new Date(data.createdAt),
+        updatedAt: data.updatedAt.toDate
+          ? data.updatedAt.toDate()
+          : new Date(data.updatedAt),
       } as ExamSchedule;
     });
   }
@@ -90,11 +113,20 @@ export class ExamScheduleManager {
   // Update exam schedule (admin only)
   async updateSchedule(
     scheduleId: string,
-    updates: Partial<Pick<ExamSchedule, 'scheduledDate' | 'isActive' | 'duration' | 'totalQuestions' | 'passingScore'>>
+    updates: Partial<
+      Pick<
+        ExamSchedule,
+        | "scheduledDate"
+        | "isActive"
+        | "duration"
+        | "totalQuestions"
+        | "passingScore"
+      >
+    >
   ): Promise<void> {
     await updateDoc(doc(db, "examSchedules", scheduleId), {
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   }
 
@@ -102,7 +134,7 @@ export class ExamScheduleManager {
   async isExamAvailable(examType: string, paper: string): Promise<boolean> {
     const scheduleId = `${examType}_${paper}`;
     const schedule = await this.getSchedule(scheduleId);
-    
+
     if (!schedule || !schedule.isActive || !schedule.scheduledDate) {
       return false;
     }
@@ -115,7 +147,7 @@ export class ExamScheduleManager {
   async getExamStatusMessage(examType: string, paper: string): Promise<string> {
     const scheduleId = `${examType}_${paper}`;
     const schedule = await this.getSchedule(scheduleId);
-    
+
     if (!schedule) {
       return "Exam schedule not found";
     }
