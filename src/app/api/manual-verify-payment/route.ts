@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Manually granting access for: ${transactionId}, user: ${userId}`);
+    console.log(
+      `Manually granting access for: ${transactionId}, user: ${userId}`
+    );
 
     // For now, just return success for testing
     const expiryDate = new Date();

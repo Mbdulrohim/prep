@@ -641,6 +641,87 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* RM Exam Schedule */}
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  RM Exam Schedule
+                </h3>
+                <div className="space-y-4">
+                  {/* Add schedule info */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-semibold text-purple-900 mb-2">
+                      📅 Exam Schedule (Coming Soon)
+                    </h4>
+                    <p className="text-sm text-purple-700">
+                      <strong>Paper 1:</strong> TBA - Written examination<br />
+                      <strong>Paper 2:</strong> TBA - Practical assessment
+                    </p>
+                    <p className="text-xs text-purple-600 mt-2">
+                      ⚠️ RM exam schedule will be announced soon. Stay tuned for updates!
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                            <FileText className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-600">
+                              RM Paper 1 - Theory
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              150 questions • 180 mins
+                            </p>
+                            <p className="text-xs text-purple-600 mt-1">
+                              Day 1 - Coming Soon
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-gray-400">
+                          <span className="text-sm">Not Available</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                            <FileText className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-600">
+                              RM Paper 2 - Practical
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              100 questions • 150 mins
+                            </p>
+                            <p className="text-xs text-purple-600 mt-1">
+                              Day 2 - Coming Soon
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-gray-400">
+                          <span className="text-sm">Not Available</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center py-4">
+                    <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
+                      <Clock className="h-4 w-4 mr-2" />
+                      RM exams will be available soon
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Quick Actions */}

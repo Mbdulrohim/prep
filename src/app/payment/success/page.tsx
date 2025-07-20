@@ -72,8 +72,10 @@ export default function PaymentSuccessPage() {
           );
         } else {
           // Try manual verification as fallback
-          console.log("Standard verification failed, trying manual verification...");
-          
+          console.log(
+            "Standard verification failed, trying manual verification..."
+          );
+
           const manualResponse = await fetch("/api/manual-verify-payment", {
             method: "POST",
             headers: {

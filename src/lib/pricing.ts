@@ -105,8 +105,8 @@ export const PRICING_CONFIG = {
   finalPrice: 1000,
   mockExamCount: 3,
   showDiscount: true,
-  promotionStartDate: new Date("2025-08-01"), // August 1st, 2025
-  promotionDurationDays: 50,
+  promotionStartDate: new Date("2025-07-20"), // July 20th, 2025 (today)
+  promotionDurationDays: 15,
 };
 
 export function getPromotionTimeLeft() {
