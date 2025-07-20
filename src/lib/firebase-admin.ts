@@ -10,8 +10,8 @@ import { getFirestore } from "firebase-admin/firestore";
 
 // For production, we'll use the default credentials
 // For now, let's use a simpler approach that works with your current setup
-let adminApp: App;
-let adminDb: any;
+let adminApp: App | null = null;
+let adminDb: any = null;
 
 try {
   // Check if admin app already exists
@@ -28,6 +28,7 @@ try {
 } catch (error) {
   console.error("Firebase Admin initialization error:", error);
   // Fallback to client SDK for now
+  adminApp = null;
   adminDb = null;
 }
 
