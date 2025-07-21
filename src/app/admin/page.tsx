@@ -668,6 +668,98 @@ export default function AdminDashboard() {
     }
   };
 
+  // Special function for RN exams (2-day consecutive)
+  const handleScheduleRNExam = async (examId: string) => {
+    if (!user?.uid) {
+      console.error('No user authenticated');
+      return;
+    }
+    
+    console.log('Authenticated user:', { uid: user.uid, email: user.email });
+    
+    const schedule = examSchedules[examId];
+    if (!schedule?.startDate) {
+      alert("Please set the exam start date and time for Day 1");
+      return;
+    }
+
+    const day1StartDate = new Date(schedule.startDate);
+    
+    if (day1StartDate <= new Date()) {
+      alert("Exam start time must be in the future");
+      return;
+    }
+
+    // Calculate Day 2 (next day at same time)
+    const day2StartDate = new Date(day1StartDate);
+    day2StartDate.setDate(day2StartDate.getDate() + 1);
+
+    setSchedulingLoading(true);
+    try {
+      const { examScheduleManager } = await import("@/lib/examSchedule");
+      
+      console.log('Scheduling RN exams (2 days):', { 
+        day1: day1StartDate, 
+        day2: day2StartDate 
+      });
+      
+      // Initialize if needed
+      await examScheduleManager.initializeDefaultSchedules();
+      console.log('Default schedules initialized');
+      
+      // Schedule Day 1 (RN Paper 1)
+      await examScheduleManager.updateSchedule('RN_paper1', {
+        scheduledDate: day1StartDate,
+        isActive: true,
+        duration: 150,
+        totalQuestions: 250,
+      });
+      
+      // Schedule Day 2 (RN Paper 2) 
+      await examScheduleManager.updateSchedule('RN_paper2', {
+        scheduledDate: day2StartDate,
+        isActive: true,
+        duration: 150,
+        totalQuestions: 250,
+      });
+      
+      console.log('Both RN papers scheduled successfully');
+
+      // Update local state for both papers
+      setExamSchedules(prev => ({
+        ...prev,
+        'rn-paper-1': { 
+          ...prev['rn-paper-1'], 
+          isScheduled: true,
+          endDate: new Date(day1StartDate.getTime() + 150 * 60 * 1000).toISOString().slice(0, 16)
+        },
+        'rn-paper-2': { 
+          startDate: day2StartDate.toISOString().slice(0, 16),
+          isScheduled: true,
+          endDate: new Date(day2StartDate.getTime() + 150 * 60 * 1000).toISOString().slice(0, 16)
+        }
+      }));
+
+      showToast({
+        type: "success",
+        title: "RN Exam Scheduled",
+        message: `Day 1: ${day1StartDate.toLocaleString()}\nDay 2: ${day2StartDate.toLocaleString()}`,
+      });
+      
+      console.log('RN exams scheduled successfully (2 days)');
+    } catch (error) {
+      console.error("Error scheduling RN exam:", error);
+      console.error("Error details:", error instanceof Error ? error.message : 'Unknown error');
+      showToast({
+        type: "error",
+        title: "Scheduling Failed",
+        message: `Failed to schedule RN exam: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
   const handleScheduleInputChange = (examId: string, field: 'startDate', value: string) => {
     setExamSchedules(prev => ({
       ...prev,
@@ -901,12 +993,13 @@ export default function AdminDashboard() {
                   {/* RN Paper 1 */}
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-blue-600">RN Paper 1</h3>
+                      <h3 className="font-semibold text-blue-600">RN Paper 1 (Day 1)</h3>
                       <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
                         {examSchedules['rn-paper-1']?.isScheduled ? 'Scheduled' : 'Not Scheduled'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    <p className="text-xs text-blue-600 mb-4">📅 Scheduling this will automatically set Paper 2 for the next day</p>
                     
                     <div className="space-y-3">
                       <div>
@@ -927,35 +1020,36 @@ export default function AdminDashboard() {
                       </div>
                       
                       <button 
-                        onClick={() => handleScheduleExam('rn-paper-1')}
+                        onClick={() => handleScheduleRNExam('rn-paper-1')}
                         disabled={schedulingLoading}
                         className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
-                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
+                        {schedulingLoading ? 'Scheduling Both Days...' : 'Schedule RN Exam (2 Days)'}
                       </button>
                     </div>
                   </div>
 
                   {/* RN Paper 2 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-blue-600">RN Paper 2</h3>
-                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
-                        Not Scheduled
+                      <h3 className="font-semibold text-blue-600">RN Paper 2 (Day 2)</h3>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded">
+                        {examSchedules['rn-paper-2']?.isScheduled ? 'Auto-Scheduled' : 'Pending Day 1'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">250 Questions • 150 Minutes</p>
+                    <p className="text-xs text-blue-600 mb-4">📅 Automatically scheduled for the day after Paper 1</p>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-3 opacity-75">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Start Date & Time (150 minutes duration)
+                          Auto-calculated (Day 2 at same time)
                         </label>
                         <input
                           type="datetime-local"
                           value={examSchedules['rn-paper-2']?.startDate || ''}
-                          onChange={(e) => handleScheduleInputChange('rn-paper-2', 'startDate', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-gray-100"
                         />
                         {examSchedules['rn-paper-2']?.endDate && (
                           <p className="text-xs text-gray-600 mt-1">
@@ -965,11 +1059,10 @@ export default function AdminDashboard() {
                       </div>
                       
                       <button 
-                        onClick={() => handleScheduleExam('rn-paper-2')}
-                        disabled={schedulingLoading}
-                        className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        disabled
+                        className="w-full bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed"
                       >
-                        {schedulingLoading ? 'Scheduling...' : 'Schedule Exam'}
+                        Automatically Scheduled with Paper 1
                       </button>
                     </div>
                   </div>

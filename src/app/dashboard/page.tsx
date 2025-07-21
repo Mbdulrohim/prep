@@ -60,6 +60,9 @@ export default function DashboardPage() {
     useState<"flutterwave">("flutterwave");
   const [rnExams, setRnExams] = useState<ExamData[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
+  const [examAvailability, setExamAvailability] = useState<{
+    [key: string]: { isAvailable: boolean; reason?: string; scheduleInfo?: any }
+  }>({});
   const [userAccess, setUserAccess] = useState<any>(null);
   const [accessLoading, setAccessLoading] = useState(true);
 
@@ -71,45 +74,47 @@ export default function DashboardPage() {
   }, [user, userProfile, refreshData]);
 
   // Check user access to exams with enhanced debugging
-  const checkUserAccess = async () => {
-    if (!user) return;
+    const checkUserAccess = async () => {
+    if (!user?.uid) return;
 
-    setAccessLoading(true);
     try {
-      console.log("Checking user access for:", user.uid);
-      const userAccessDoc = await getDoc(doc(db, "userAccess", user.uid));
-
-      if (userAccessDoc.exists()) {
-        const accessData = userAccessDoc.data();
-        console.log("User access data found:", accessData);
-
-        // Check if access is still valid
-        const now = new Date();
-        const expiryDate = accessData.expiryDate?.toDate() || new Date(0);
-        const isActive =
-          accessData.isActive &&
-          now < expiryDate &&
-          !accessData.isRestricted &&
-          accessData.hasAccess;
-
-        console.log("Access validation:", {
-          isActive: accessData.isActive,
-          hasAccess: accessData.hasAccess,
-          isExpired: now >= expiryDate,
-          isRestricted: accessData.isRestricted,
-          finalAccessStatus: isActive,
-        });
-
-        setUserAccess({ ...accessData, hasValidAccess: isActive });
-      } else {
-        console.log("No user access document found");
-        setUserAccess(null);
-      }
+      setAccessLoading(true);
+      const { UserAccessManager } = await import("@/lib/userAccess");
+      const accessManager = new UserAccessManager();
+      const access = await accessManager.getUserAccess(user.uid);
+      setUserAccess(access);
     } catch (error) {
       console.error("Error checking user access:", error);
-      setUserAccess(null);
     } finally {
       setAccessLoading(false);
+    }
+  };
+
+  const checkExamAvailability = async () => {
+    try {
+      const { getExamAvailabilityStatus } = await import("@/lib/examData");
+      
+      // Check availability for all exam types
+      const examIds = ['rn-paper-1', 'rn-paper-2', 'rm-paper-1', 'rm-paper-2', 'rphn-paper-1', 'rphn-paper-2'];
+      const availabilityPromises = examIds.map(async (examId) => {
+        const availability = await getExamAvailabilityStatus(examId);
+        return { examId, ...availability };
+      });
+
+      const results = await Promise.all(availabilityPromises);
+      const availabilityMap = results.reduce((acc, result) => {
+        acc[result.examId] = {
+          isAvailable: result.isAvailable,
+          reason: result.reason,
+          scheduleInfo: result.scheduleInfo
+        };
+        return acc;
+      }, {} as typeof examAvailability);
+
+      setExamAvailability(availabilityMap);
+      console.log('Exam availability:', availabilityMap);
+    } catch (error) {
+      console.error("Error checking exam availability:", error);
     }
   };
 
