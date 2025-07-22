@@ -1,8 +1,24 @@
+/*
+ * Medical Exam Preparation Platform
+ *
+ * Original Author: Mbdulrohim (https://github.com/Mbdulrohim)
+ * Repository: https://github.com/Mbdulrohim/prep
+ *
+ * If you use this code, please:
+ * - ⭐ Star the repository
+ * - 🙏 Give proper attribution
+ * - 📝 Include credits in your implementation
+ *
+ * DISCLAIMER: This project is NOT affiliated with any government agency
+ * or official medical board. It's an independent educational tool.
+ */
+
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Analytics } from "@vercel/analytics/next";
+import { Footer } from "@/components/layout/Footer";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 
@@ -75,9 +91,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${nunito.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${nunito.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

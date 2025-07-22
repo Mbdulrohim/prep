@@ -1,6 +1,25 @@
 {
   "name": "prep",
   "version": "0.1.0",
+  "description": "Medical Exam Preparation Platform - A comprehensive Next.js application for medical exam preparation",
+  "author": {
+    "name": "Mbdulrohim",
+    "url": "https://github.com/Mbdulrohim"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mbdulrohim/prep.git"
+  },
+  "homepage": "https://github.com/Mbdulrohim/prep",
+  "license": "MIT",
+  "keywords": [
+    "medical-exam",
+    "exam-preparation",
+    "next.js",
+    "firebase",
+    "educational-tool",
+    "open-source"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
