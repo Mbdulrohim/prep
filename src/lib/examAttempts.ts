@@ -410,14 +410,42 @@ class ExamAttemptManager {
         return null;
       }
 
-      const attempt = attemptDoc.data() as ExamAttempt;
+      const data = attemptDoc.data();
 
-      // Verify ownership and completion
-      if (attempt.userId !== userId || !attempt.completed) {
+      // Verify ownership
+      if (data.userId !== userId) {
         return null;
       }
 
-      return attempt;
+      // Convert Firestore timestamps to Date objects
+      return {
+        id: attemptDoc.id,
+        userId: data.userId,
+        userEmail: data.userEmail,
+        userName: data.userName,
+        userUniversity: data.userUniversity,
+        examId: data.examId,
+        examCategory: data.examCategory,
+        paper: data.paper,
+        assignedQuestions: data.assignedQuestions || [],
+        userAnswers: data.userAnswers || [],
+        flaggedQuestions: data.flaggedQuestions || [],
+        startTime: data.startTime.toDate(),
+        endTime: data.endTime ? data.endTime.toDate() : undefined,
+        timeSpent: data.timeSpent || 0,
+        completed: data.completed || false,
+        submitted: data.submitted || false,
+        score: data.score || 0,
+        percentage: data.percentage || 0,
+        correctAnswers: data.correctAnswers || 0,
+        wrongAnswers: data.wrongAnswers || 0,
+        unanswered: data.unanswered || 0,
+        missedQuestions: data.missedQuestions || [],
+        canReview: data.canReview || false,
+        reviewedQuestions: data.reviewedQuestions || [],
+        createdAt: data.createdAt.toDate(),
+        updatedAt: data.updatedAt.toDate(),
+      };
     } catch (error) {
       console.error("Error getting exam attempt for review:", error);
       return null;
@@ -453,6 +481,156 @@ class ExamAttemptManager {
       return true;
     } catch (error) {
       console.error("Error marking question as reviewed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Create a new exam attempt record
+   */
+  async createExamAttempt(attemptData: Partial<ExamAttempt>): Promise<string> {
+    try {
+      const attemptId = `attempt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const attempt: ExamAttempt = {
+        id: attemptId,
+        userId: attemptData.userId!,
+        userEmail: attemptData.userEmail!,
+        userName: attemptData.userName!,
+        userUniversity: attemptData.userUniversity!,
+        examId: attemptData.examId!,
+        examCategory: attemptData.examCategory!,
+        paper: attemptData.paper!,
+        assignedQuestions: attemptData.assignedQuestions || [],
+        userAnswers: attemptData.userAnswers || [],
+        flaggedQuestions: attemptData.flaggedQuestions || [],
+        startTime: attemptData.startTime || new Date(),
+        timeSpent: attemptData.timeSpent || 0,
+        completed: false,
+        submitted: false,
+        score: 0,
+        percentage: 0,
+        correctAnswers: 0,
+        wrongAnswers: 0,
+        unanswered: attemptData.assignedQuestions?.length || 0,
+        missedQuestions: [],
+        canReview: false,
+        reviewedQuestions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await setDoc(doc(db, "examAttempts", attemptId), attempt);
+      console.log('Created exam attempt:', attemptId);
+      
+      return attemptId;
+    } catch (error) {
+      console.error("Error creating exam attempt:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update exam progress during the exam
+   */
+  async updateExamProgress(attemptId: string, progressData: {
+    userAnswers?: (number | null)[];
+    flaggedQuestions?: number[];
+    timeSpent?: number;
+    updatedAt?: Date;
+  }): Promise<boolean> {
+    try {
+      const updateData: any = {
+        ...progressData,
+        updatedAt: progressData.updatedAt || new Date(),
+      };
+
+      // Calculate unanswered count
+      if (progressData.userAnswers) {
+        updateData.unanswered = progressData.userAnswers.filter(answer => answer === null).length;
+      }
+
+      await updateDoc(doc(db, "examAttempts", attemptId), updateData);
+      return true;
+    } catch (error) {
+      console.error("Error updating exam progress:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Complete and finalize exam attempt
+   */
+  async completeExamAttempt(attemptId: string, finalData: {
+    score: number;
+    percentage: number;
+    correctAnswers: number;
+    wrongAnswers: number;
+    unanswered: number;
+    timeSpent: number;
+    answers: (number | null)[];
+    flaggedQuestions: number[];
+    endTime: Date;
+    completed: boolean;
+    submitted: boolean;
+    isAutoSubmit?: boolean;
+  }): Promise<boolean> {
+    try {
+      // Get the attempt data first
+      const attemptRef = doc(db, "examAttempts", attemptId);
+      const attemptDoc = await getDoc(attemptRef);
+      
+      if (!attemptDoc.exists()) {
+        throw new Error("Attempt not found");
+      }
+      
+      const attemptData = attemptDoc.data();
+      
+      const updateData = {
+        ...finalData,
+        userAnswers: finalData.answers,
+        canReview: true,
+        endTime: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        missedQuestions: finalData.answers
+          .map((answer, index) => answer === null ? index : null)
+          .filter(index => index !== null),
+      };
+
+      // Update the exam attempt
+      await updateDoc(attemptRef, updateData);
+      
+      // Also create an exam result for leaderboard compatibility
+      const examResultData = {
+        userId: attemptData.userId,
+        userEmail: attemptData.userEmail,
+        userName: attemptData.userName,
+        userUniversity: attemptData.userUniversity,
+        examId: attemptData.examId,
+        examCategory: attemptData.examCategory,
+        paper: attemptData.paper,
+        score: finalData.score,
+        percentage: finalData.percentage,
+        correctAnswers: finalData.correctAnswers,
+        wrongAnswers: finalData.wrongAnswers,
+        unanswered: finalData.unanswered,
+        timeSpent: finalData.timeSpent,
+        totalQuestions: attemptData.assignedQuestions?.length || 0,
+        isAutoSubmit: finalData.isAutoSubmit || false,
+        attemptId: attemptId,
+        completedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      };
+      
+      // Create exam result document for leaderboard
+      const examResultRef = doc(collection(db, "examResults"));
+      await setDoc(examResultRef, examResultData);
+      
+      console.log('Completed exam attempt and created result for leaderboard:', attemptId);
+      
+      return true;
+    } catch (error) {
+      console.error("Error completing exam attempt:", error);
       return false;
     }
   }

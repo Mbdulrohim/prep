@@ -1,13 +1,14 @@
 // src/components/exam/ExamProvider.tsx
 "use client";
 
-import React, { useState, useEffect, ReactNode } from "react";
-import { useParams } from "next/navigation";
+import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { fetchQuestionsForExam, fetchAllExams, ExamData } from "@/lib/examData";
 import { ExamContext, Question, ExamContextType } from "@/context/ExamContext";
 
 export function ExamProvider({ children }: { children: ReactNode }) {
   const params = useParams();
+  const router = useRouter();
   const examId = params.examId as string;
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -16,10 +17,55 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [examDetails, setExamDetails] = useState<ExamData | null>(null);
+  const [timerStarted, setTimerStarted] = useState(false);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Timer function
+  const startTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    setTimerStarted(true);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        const newTime = prev - 1;
+        
+        // Auto-submit when time runs out
+        if (newTime <= 0) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+          // Navigate to results page when time is up
+          router.push(`/exam/${examId}/results`);
+          return 0;
+        }
+        
+        return newTime;
+      });
+    }, 1000);
+  }, [examId, router]);
+
+  // Cleanup timer
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   // Function to load and reset exam state based on examId
   const resetExam = async (id: string) => {
     setLoadingQuestions(true);
+    setTimerStarted(false);
+    
+    // Clear existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
     try {
       const allExams = await fetchAllExams();
       const details = allExams.find((e) => e.id === id);
@@ -35,6 +81,11 @@ export function ExamProvider({ children }: { children: ReactNode }) {
         setUserAnswers(Array(initialQuestions.length).fill(null));
         setCurrentQuestionIndex(0);
         setTimeLeft(details.durationMinutes * 60);
+        
+        // Start timer after questions are loaded
+        setTimeout(() => {
+          startTimer();
+        }, 1000);
       } else {
         console.error(`Exam details not found for ID: ${id}`);
       }

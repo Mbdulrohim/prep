@@ -9,6 +9,7 @@ import { DocumentUpload } from "@/components/admin/DocumentUpload";
 import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
 import { ParsedQuestion } from "@/lib/documentParser";
 import { examAttemptManager } from "@/lib/examAttempts";
+import { useRealTimeAdminData } from "@/hooks/useRealTimeData";
 import { db } from "@/lib/firebase";
 import { feedbackManager, type Feedback } from "@/lib/feedback";
 import {
@@ -144,6 +145,14 @@ export default function AdminDashboard() {
 
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+  
+  // Real-time admin data
+  const {
+    adminStats: realTimeAdminStats,
+    liveUsers,
+    liveFeedback,
+    loading: realTimeLoading,
+  } = useRealTimeAdminData();
 
   useEffect(() => {
     if (isAdmin) {
@@ -908,72 +917,112 @@ export default function AdminDashboard() {
               {/* Stats Grid */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center">
-                    <Users className="h-8 w-8 text-blue-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-blue-600 font-medium">
-                        Total Users
-                      </p>
-                      <p className="text-2xl font-bold text-blue-900">
-                        {stats.totalUsers}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="h-8 w-8 text-blue-600" />
+                      <div className="ml-4">
+                        <p className="text-sm text-blue-600 font-medium">
+                          Total Users
+                        </p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {realTimeAdminStats?.totalUsers || stats.totalUsers}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && realTimeAdminStats && (
+                      <div className="text-xs text-blue-600 flex items-center">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center">
-                    <Database className="h-8 w-8 text-green-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-green-600 font-medium">
-                        Total Questions
-                      </p>
-                      <p className="text-2xl font-bold text-green-900">
-                        {stats.totalQuestions}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Database className="h-8 w-8 text-green-600" />
+                      <div className="ml-4">
+                        <p className="text-sm text-green-600 font-medium">
+                          Total Questions
+                        </p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {realTimeAdminStats?.totalQuestions || stats.totalQuestions}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && realTimeAdminStats && (
+                      <div className="text-xs text-green-600 flex items-center">
+                        <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center">
-                    <Target className="h-8 w-8 text-purple-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-purple-600 font-medium">
-                        Total Attempts
-                      </p>
-                      <p className="text-2xl font-bold text-purple-900">
-                        {stats.totalAttempts}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Target className="h-8 w-8 text-purple-600" />
+                      <div className="ml-4">
+                        <p className="text-sm text-purple-600 font-medium">
+                          Total Attempts
+                        </p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {realTimeAdminStats?.totalAttempts || stats.totalAttempts}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && realTimeAdminStats && (
+                      <div className="text-xs text-purple-600 flex items-center">
+                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center">
-                    <Award className="h-8 w-8 text-yellow-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-yellow-600 font-medium">
-                        Average Score
-                      </p>
-                      <p className="text-2xl font-bold text-yellow-900">
-                        {stats.averageScore.toFixed(1)}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Award className="h-8 w-8 text-yellow-600" />
+                      <div className="ml-4">
+                        <p className="text-sm text-yellow-600 font-medium">
+                          Average Score
+                        </p>
+                        <p className="text-2xl font-bold text-yellow-900">
+                          {realTimeAdminStats?.averageScore?.toFixed(1) || stats.averageScore.toFixed(1)}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && realTimeAdminStats && (
+                      <div className="text-xs text-yellow-600 flex items-center">
+                        <div className="w-2 h-2 bg-yellow-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center">
-                    <TrendingUp className="h-8 w-8 text-indigo-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-indigo-600 font-medium">
-                        Active Users
-                      </p>
-                      <p className="text-2xl font-bold text-indigo-900">
-                        {stats.activeUsers}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <TrendingUp className="h-8 w-8 text-indigo-600" />
+                      <div className="ml-4">
+                        <p className="text-sm text-indigo-600 font-medium">
+                          Active Users
+                        </p>
+                        <p className="text-2xl font-bold text-indigo-900">
+                          {realTimeAdminStats?.activeUsers || stats.activeUsers}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && realTimeAdminStats && (
+                      <div className="text-xs text-indigo-600 flex items-center">
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1844,63 +1893,92 @@ export default function AdminDashboard() {
               {/* Feedback Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <MessageCircle className="h-8 w-8 text-blue-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-blue-600">
-                        Total Feedback
-                      </p>
-                      <p className="text-2xl font-bold text-blue-900">
-                        {feedbackList.length}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <MessageCircle className="h-8 w-8 text-blue-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-blue-600">
+                          Total Feedback
+                        </p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {liveFeedback ? liveFeedback.length : feedbackList.length}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && liveFeedback && (
+                      <div className="text-xs text-blue-600 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <Clock className="h-8 w-8 text-yellow-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-yellow-600">New</p>
-                      <p className="text-2xl font-bold text-yellow-900">
-                        {feedbackList.filter((f) => f.status === "new").length}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Clock className="h-8 w-8 text-yellow-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-yellow-600">New</p>
+                        <p className="text-2xl font-bold text-yellow-900">
+                          {(liveFeedback || feedbackList).filter((f) => f.status === "new").length}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && liveFeedback && (
+                      <div className="text-xs text-yellow-600 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-yellow-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-green-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <UserCheck className="h-8 w-8 text-green-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-green-600">
-                        Resolved
-                      </p>
-                      <p className="text-2xl font-bold text-green-900">
-                        {
-                          feedbackList.filter((f) => f.status === "resolved")
-                            .length
-                        }
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <UserCheck className="h-8 w-8 text-green-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-green-600">
+                          Resolved
+                        </p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {(liveFeedback || feedbackList).filter((f) => f.status === "resolved").length}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && liveFeedback && (
+                      <div className="text-xs text-green-600 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <TrendingUp className="h-8 w-8 text-purple-600" />
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-purple-600">
-                        Avg Rating
-                      </p>
-                      <p className="text-2xl font-bold text-purple-900">
-                        {feedbackList.length > 0
-                          ? (
-                              feedbackList.reduce(
-                                (sum, f) => sum + (f.rating || 0),
-                                0
-                              ) / feedbackList.length
-                            ).toFixed(1)
-                          : "0.0"}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <TrendingUp className="h-8 w-8 text-purple-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-purple-600">
+                          Avg Rating
+                        </p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {(liveFeedback || feedbackList).length > 0
+                            ? (
+                                (liveFeedback || feedbackList).reduce(
+                                  (sum, f) => sum + (f.rating || 0),
+                                  0
+                                ) / (liveFeedback || feedbackList).length
+                              ).toFixed(1)
+                            : "0.0"}
+                        </p>
+                      </div>
                     </div>
+                    {!realTimeLoading && liveFeedback && (
+                      <div className="text-xs text-purple-600 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

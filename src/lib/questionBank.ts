@@ -29,6 +29,40 @@ export interface Question {
   };
 }
 
+// Shuffle utility functions
+export function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+export function shuffleQuestions(questions: Question[], count: number): Question[] {
+  if (!questions || questions.length === 0) {
+    return [];
+  }
+  
+  const shuffled = shuffleArray(questions);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+export function shuffleQuestionOptions(question: Question): Question {
+  const originalOptions = [...question.options];
+  const shuffledOptions = shuffleArray(originalOptions);
+  
+  // Find the new index of the correct answer
+  const correctOption = originalOptions[question.correctAnswer];
+  const newCorrectIndex = shuffledOptions.indexOf(correctOption);
+  
+  return {
+    ...question,
+    options: shuffledOptions,
+    correctAnswer: newCorrectIndex,
+  };
+}
+
 export interface UserExamAttempt {
   id: string;
   userId: string;

@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { useState, useEffect } from "react";
 import { useUserStats } from "@/hooks/useUserStats";
+import { useRealTimeData } from "@/hooks/useRealTimeData";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,16 @@ export default function DashboardPage() {
     error,
     refreshData,
   } = useUserStats();
+  
+  // Real-time data hook
+  const {
+    globalStats,
+    userStats: realTimeUserStats,
+    leaderboard: realTimeLeaderboard,
+    recentAttempts,
+    loading: realTimeLoading,
+    error: realTimeError,
+  } = useRealTimeData();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -551,8 +562,14 @@ export default function DashboardPage() {
                       Exams Completed
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {stats?.totalExamsCompleted || 0}
+                      {realTimeUserStats?.stats.totalExams || stats?.totalExamsCompleted || 0}
                     </p>
+                    {!realTimeLoading && realTimeUserStats && (
+                      <div className="inline-flex items-center text-xs text-green-600">
+                        <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
+                      </div>
+                    )}
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <CheckCircle className="h-6 w-6 text-green-600" />
@@ -567,8 +584,14 @@ export default function DashboardPage() {
                       Average Score
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {stats?.averageScore || 0}%
+                      {Math.round(realTimeUserStats?.stats.averageScore || stats?.averageScore || 0)}%
                     </p>
+                    {!realTimeLoading && realTimeUserStats && (
+                      <div className="inline-flex items-center text-xs text-blue-600">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
+                      </div>
+                    )}
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-blue-600" />
@@ -582,9 +605,15 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-gray-600">
                       Study Streak
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats?.currentStreak || 0} days
+                                        <p className="text-2xl font-bold text-gray-900">
+                      {realTimeUserStats?.stats.currentStreak || stats?.currentStreak || 0} days
                     </p>
+                    {!realTimeLoading && realTimeUserStats && (
+                      <div className="inline-flex items-center text-xs text-orange-600">
+                        <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
+                      </div>
+                    )}
                   </div>
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <Zap className="h-6 w-6 text-orange-600" />
@@ -994,6 +1023,12 @@ export default function DashboardPage() {
                   >
                     <Award className="h-4 w-4 mr-2" />
                     View Leaderboard
+                    {!realTimeLoading && realTimeLeaderboard && realTimeLeaderboard.length > 0 && (
+                      <div className="ml-auto flex items-center text-xs text-green-600">
+                        <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                        Live
+                      </div>
+                    )}
                   </Button>
                   <Button
                     onClick={() => setShowFeedback(true)}
@@ -1076,9 +1111,17 @@ export default function DashboardPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
-                University Leaderboard
-              </h2>
+              <div className="flex items-center">
+                <h2 className="text-xl font-bold text-gray-900 mr-3">
+                  University Leaderboard
+                </h2>
+                {!realTimeLoading && realTimeLeaderboard && realTimeLeaderboard.length > 0 && (
+                  <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                    <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                    Live Rankings
+                  </div>
+                )}
+              </div>
               <Button
                 onClick={() => setShowLeaderboard(false)}
                 variant="outline"

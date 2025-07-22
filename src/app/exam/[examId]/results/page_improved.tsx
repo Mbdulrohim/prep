@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useExam } from "@/context/ExamContext";
-import { ExamProvider } from "@/components/exam/ExamProvider";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -22,7 +20,7 @@ import {
 } from "lucide-react";
 import { examAttemptManager, ExamAttempt } from "@/lib/examAttempts";
 
-function ExamResultsContent() {
+export default function ExamResultsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -31,68 +29,16 @@ function ExamResultsContent() {
   const examId = params.examId as string;
   const attemptId = searchParams.get('attemptId');
   
-  // Use exam context to get questions and answers
-  const { questions, userAnswers, examDetails } = useExam();
-  
   const [examAttempt, setExamAttempt] = useState<ExamAttempt | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showReview, setShowReview] = useState(false);
-  const [calculatedResults, setCalculatedResults] = useState<{
-    score: number;
-    percentage: number;
-    correctAnswers: number;
-    wrongAnswers: number;
-    unanswered: number;
-    totalQuestions: number;
-  } | null>(null);
 
-  // Calculate results from current exam data
   useEffect(() => {
-    if (questions.length > 0 && userAnswers.length > 0) {
-      calculateResults();
-    }
-  }, [questions, userAnswers]);
-
-  const calculateResults = () => {
-    let correctAnswers = 0;
-    let wrongAnswers = 0;
-    let unanswered = 0;
-    
-    questions.forEach((question, index) => {
-      const userAnswer = userAnswers[index];
-      
-      if (userAnswer === null || userAnswer === undefined) {
-        unanswered++;
-      } else if (userAnswer === question.correctAnswer) {
-        correctAnswers++;
-      } else {
-        wrongAnswers++;
-      }
-    });
-    
-    const totalQuestions = questions.length;
-    const score = correctAnswers;
-    const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-    
-    setCalculatedResults({
-      score,
-      percentage,
-      correctAnswers,
-      wrongAnswers,
-      unanswered,
-      totalQuestions
-    });
-    
-    setLoading(false);
-  };
-
-  // Fallback: try to load from database if we don't have context data
-  useEffect(() => {
-    if (user && attemptId && (!questions.length || !calculatedResults)) {
+    if (user && attemptId) {
       loadExamResults();
     }
-  }, [user, attemptId, questions.length, calculatedResults]);
+  }, [user, attemptId]);
 
   const loadExamResults = async () => {
     if (!user?.uid || !attemptId) return;
@@ -167,7 +113,7 @@ function ExamResultsContent() {
     );
   }
 
-  if (error || (!calculatedResults && !examAttempt)) {
+  if (error || !examAttempt) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -187,17 +133,7 @@ function ExamResultsContent() {
     );
   }
 
-  // Use calculated results or fallback to exam attempt data
-  const results = calculatedResults || {
-    score: examAttempt?.score || 0,
-    percentage: examAttempt?.percentage || 0,
-    correctAnswers: examAttempt?.correctAnswers || 0,
-    wrongAnswers: examAttempt?.wrongAnswers || 0,
-    unanswered: examAttempt?.unanswered || 0,
-    totalQuestions: (examAttempt?.assignedQuestions?.length || questions.length || 0)
-  };
-
-  const passed = isPassing(results.percentage);
+  const passed = isPassing(examAttempt.percentage);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,15 +157,15 @@ function ExamResultsContent() {
                 </h1>
               </div>
               <p className="text-lg opacity-90">
-                {examDetails?.category || examAttempt?.examCategory || 'Exam'} - {passed ? 'Passed' : 'Not Passed'}
+                {examAttempt.examCategory} Exam - {passed ? 'Passed' : 'Not Passed'}
               </p>
             </div>
             <div className="text-right">
               <div className="text-4xl font-bold mb-2">
-                {results.percentage}%
+                {examAttempt.percentage}%
               </div>
               <div className="text-lg">
-                Grade: {getGradeLetter(results.percentage)}
+                Grade: {getGradeLetter(examAttempt.percentage)}
               </div>
             </div>
           </div>
@@ -240,7 +176,7 @@ function ExamResultsContent() {
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
             <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-3" />
             <div className="text-2xl font-bold text-green-600 mb-1">
-              {results.correctAnswers}
+              {examAttempt.correctAnswers}
             </div>
             <div className="text-sm text-gray-600">Correct</div>
           </div>
@@ -248,7 +184,7 @@ function ExamResultsContent() {
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
             <XCircle className="h-8 w-8 text-red-500 mx-auto mb-3" />
             <div className="text-2xl font-bold text-red-600 mb-1">
-              {results.wrongAnswers}
+              {examAttempt.wrongAnswers}
             </div>
             <div className="text-sm text-gray-600">Wrong</div>
           </div>
@@ -256,7 +192,7 @@ function ExamResultsContent() {
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
             <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto mb-3" />
             <div className="text-2xl font-bold text-yellow-600 mb-1">
-              {results.unanswered}
+              {examAttempt.unanswered}
             </div>
             <div className="text-sm text-gray-600">Unanswered</div>
           </div>
@@ -264,7 +200,7 @@ function ExamResultsContent() {
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
             <Clock className="h-8 w-8 text-blue-500 mx-auto mb-3" />
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {examAttempt ? formatTime(examAttempt.timeSpent || 0) : 'N/A'}
+              {formatTime(examAttempt.timeSpent)}
             </div>
             <div className="text-sm text-gray-600">Time Spent</div>
           </div>
@@ -278,31 +214,31 @@ function ExamResultsContent() {
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Overall Score</span>
-                <span className={`font-semibold ${getGradeColor(results.percentage)}`}>
-                  {results.score}/{results.totalQuestions}
+                <span className={`font-semibold ${getGradeColor(examAttempt.percentage)}`}>
+                  {examAttempt.score}/{examAttempt.assignedQuestions.length}
                 </span>
               </div>
-              <Progress value={results.percentage} className="h-3" />
+              <Progress value={examAttempt.percentage} className="h-3" />
             </div>
             
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <div className="text-green-600 font-medium">
-                  Correct: {((results.correctAnswers / results.totalQuestions) * 100).toFixed(1)}%
+                  Correct: {((examAttempt.correctAnswers / examAttempt.assignedQuestions.length) * 100).toFixed(1)}%
                 </div>
-                <Progress value={(results.correctAnswers / results.totalQuestions) * 100} className="h-2" />
+                <Progress value={(examAttempt.correctAnswers / examAttempt.assignedQuestions.length) * 100} className="h-2" />
               </div>
               <div>
                 <div className="text-red-600 font-medium">
-                  Wrong: {((results.wrongAnswers / results.totalQuestions) * 100).toFixed(1)}%
+                  Wrong: {((examAttempt.wrongAnswers / examAttempt.assignedQuestions.length) * 100).toFixed(1)}%
                 </div>
-                <Progress value={(results.wrongAnswers / results.totalQuestions) * 100} className="h-2" />
+                <Progress value={(examAttempt.wrongAnswers / examAttempt.assignedQuestions.length) * 100} className="h-2" />
               </div>
               <div>
                 <div className="text-yellow-600 font-medium">
-                  Unanswered: {((results.unanswered / results.totalQuestions) * 100).toFixed(1)}%
+                  Unanswered: {((examAttempt.unanswered / examAttempt.assignedQuestions.length) * 100).toFixed(1)}%
                 </div>
-                <Progress value={(results.unanswered / results.totalQuestions) * 100} className="h-2" />
+                <Progress value={(examAttempt.unanswered / examAttempt.assignedQuestions.length) * 100} className="h-2" />
               </div>
             </div>
           </div>
@@ -326,8 +262,8 @@ function ExamResultsContent() {
               </h3>
               <p className={`text-sm ${passed ? 'text-green-700' : 'text-red-700'}`}>
                 {passed 
-                  ? `Congratulations! You achieved ${results.percentage}% which meets the 70% passing requirement.`
-                  : `You scored ${results.percentage}% but need 70% to pass. You can retake this exam.`
+                  ? `Congratulations! You achieved ${examAttempt.percentage}% which meets the 70% passing requirement.`
+                  : `You scored ${examAttempt.percentage}% but need 70% to pass. You can retake this exam.`
                 }
               </p>
             </div>
@@ -342,15 +278,15 @@ function ExamResultsContent() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Exam ID:</span>
-                <span className="font-medium">{examId.toUpperCase()}</span>
+                <span className="font-medium">{examAttempt.examId.toUpperCase()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Questions:</span>
-                <span className="font-medium">{results.totalQuestions}</span>
+                <span className="font-medium">{examAttempt.assignedQuestions.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Flagged Questions:</span>
-                <span className="font-medium">{examAttempt?.flaggedQuestions?.length || 0}</span>
+                <span className="font-medium">{examAttempt.flaggedQuestions.length}</span>
               </div>
             </div>
             
@@ -358,18 +294,18 @@ function ExamResultsContent() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Start Time:</span>
                 <span className="font-medium">
-                  {examAttempt ? new Date(examAttempt.startTime).toLocaleString() : 'N/A'}
+                  {new Date(examAttempt.startTime).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">End Time:</span>
                 <span className="font-medium">
-                  {examAttempt?.endTime ? new Date(examAttempt.endTime).toLocaleString() : 'Just completed'}
+                  {examAttempt.endTime ? new Date(examAttempt.endTime).toLocaleString() : 'Not completed'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Duration:</span>
-                <span className="font-medium">{examAttempt ? formatTime(examAttempt.timeSpent || 0) : 'N/A'}</span>
+                <span className="font-medium">{formatTime(examAttempt.timeSpent)}</span>
               </div>
             </div>
           </div>
@@ -421,14 +357,5 @@ function ExamResultsContent() {
         </div>
       )}
     </div>
-  );
-}
-
-// Wrap with ExamProvider and export
-export default function ExamResultsPage() {
-  return (
-    <ExamProvider>
-      <ExamResultsContent />
-    </ExamProvider>
   );
 }
