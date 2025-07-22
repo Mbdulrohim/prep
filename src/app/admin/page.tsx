@@ -179,6 +179,12 @@ export default function AdminDashboard() {
 
   const loadUsers = async () => {
     try {
+      // Check if database is available
+      if (!db) {
+        console.warn("Database not available");
+        return;
+      }
+
       // Load user access data
       const accessQuery = query(
         collection(db, "userAccess"),

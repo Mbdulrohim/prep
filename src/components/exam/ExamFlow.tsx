@@ -7,6 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useExam } from "@/context/ExamContext";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
+import { examAttemptManager } from "@/lib/examAttempts";
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import {
   Clock,
   Flag,
@@ -36,6 +39,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
   } = useExam();
 
   const [showWarning, setShowWarning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "saved" | "saving" | "error"
   >("saved");
@@ -114,9 +118,65 @@ export function ExamFlow({ examId }: ExamFlowProps) {
     setShowWarning(true);
   };
 
-  const confirmSubmit = () => {
-    // Calculate results and navigate to results page
-    router.push(`/exam/${examId}/results`);
+  const confirmSubmit = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Calculate results
+      let correctAnswers = 0;
+      let wrongAnswers = 0;
+      let unanswered = 0;
+      
+      questions.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        if (userAnswer === null || userAnswer === undefined) {
+          unanswered++;
+        } else if (userAnswer === question.correctAnswer) {
+          correctAnswers++;
+        } else {
+          wrongAnswers++;
+        }
+      });
+      
+      const score = correctAnswers;
+      const percentage = Math.round((correctAnswers / questions.length) * 100);
+      const endTime = new Date();
+      const timeSpent = (examDetails?.durationMinutes || 150) * 60 - timeLeft;
+      
+      // Save results to Firestore
+      const attemptId = `${user.uid}_${examId}_${Date.now()}`;
+      const examAttemptData = {
+        id: attemptId,
+        userId: user.uid,
+        examId,
+        questions,
+        userAnswers,
+        score,
+        percentage,
+        correctAnswers,
+        wrongAnswers,
+        unanswered,
+        timeSpent,
+        completed: true,
+        submitted: true,
+        endTime,
+        startTime: new Date(Date.now() - timeSpent * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      // Save to Firestore
+      await setDoc(doc(db, "examAttempts", attemptId), examAttemptData);
+      
+      // Navigate to results with attempt ID
+      router.push(`/exam/${examId}/results?attemptId=${attemptId}`);
+      
+    } catch (error) {
+      console.error('Error submitting exam:', error);
+      setIsSubmitting(false);
+    }
   };
 
   // Get answered questions count

@@ -47,14 +47,21 @@ function ExamResultsContent() {
     totalQuestions: number;
   } | null>(null);
 
-  // Calculate results from current exam data
+  // Calculate results from current exam data IMMEDIATELY
   useEffect(() => {
     if (questions.length > 0 && userAnswers.length > 0) {
+      console.log('Calculating results from exam context...');
       calculateResults();
+    } else if (user && attemptId) {
+      // Only load from database if we don't have context data
+      console.log('Loading results from database...');
+      loadExamResults();
     }
-  }, [questions, userAnswers]);
+  }, [questions, userAnswers, user, attemptId]);
 
   const calculateResults = () => {
+    console.log('Calculating results with:', { questions: questions.length, answers: userAnswers.length });
+    
     let correctAnswers = 0;
     let wrongAnswers = 0;
     let unanswered = 0;
@@ -75,24 +82,20 @@ function ExamResultsContent() {
     const score = correctAnswers;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
     
-    setCalculatedResults({
+    const results = {
       score,
       percentage,
       correctAnswers,
       wrongAnswers,
       unanswered,
       totalQuestions
-    });
+    };
     
+    console.log('Results calculated:', results);
+    
+    setCalculatedResults(results);
     setLoading(false);
   };
-
-  // Fallback: try to load from database if we don't have context data
-  useEffect(() => {
-    if (user && attemptId && (!questions.length || !calculatedResults)) {
-      loadExamResults();
-    }
-  }, [user, attemptId, questions.length, calculatedResults]);
 
   const loadExamResults = async () => {
     if (!user?.uid || !attemptId) return;
