@@ -85,7 +85,7 @@ export function PreExamModal({
     }
 
     setError("");
-    
+
     // Add a small delay to ensure form submission is processed properly
     setTimeout(() => {
       onStartExam({ name: name.trim(), university: university.trim() });

@@ -155,7 +155,7 @@ export class ExamScheduleManager {
       // Convert examId to scheduleId format
       let examType = "";
       let paper = "";
-      
+
       if (examId.includes("rn")) {
         examType = "RN";
       } else if (examId.includes("rm")) {
@@ -163,20 +163,21 @@ export class ExamScheduleManager {
       } else if (examId.includes("rphn")) {
         examType = "RPHN";
       }
-      
+
       if (examId.includes("paper-1")) {
         paper = "paper1";
       } else if (examId.includes("paper-2")) {
         paper = "paper2";
       }
-      
+
       const scheduleId = `${examType}_${paper}`;
       const schedule = await this.getSchedule(scheduleId);
 
       if (!schedule) {
         return {
           isAvailable: false,
-          reason: "Exam schedule not found. Please contact admin to set up exam schedule.",
+          reason:
+            "Exam schedule not found. Please contact admin to set up exam schedule.",
         };
       }
 
@@ -190,7 +191,8 @@ export class ExamScheduleManager {
       if (!schedule.scheduledDate) {
         return {
           isAvailable: false,
-          reason: "Exam date not set yet. Admin must set exam schedule before it becomes available.",
+          reason:
+            "Exam date not set yet. Admin must set exam schedule before it becomes available.",
         };
       }
 

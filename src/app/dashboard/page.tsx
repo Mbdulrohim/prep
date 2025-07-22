@@ -32,6 +32,7 @@ import { useState, useEffect } from "react";
 import { useUserStats } from "@/hooks/useUserStats";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchAllExams, ExamData } from "@/lib/examData";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -45,6 +46,7 @@ const ADMIN_EMAILS = [
 
 export default function DashboardPage() {
   const { user, userProfile, updateUserProfile, signInWithGoogle } = useAuth();
+  const router = useRouter();
   const {
     stats,
     examProgress,
@@ -61,7 +63,11 @@ export default function DashboardPage() {
   const [rnExams, setRnExams] = useState<ExamData[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
   const [examAvailability, setExamAvailability] = useState<{
-    [key: string]: { isAvailable: boolean; reason?: string; scheduleInfo?: any }
+    [key: string]: {
+      isAvailable: boolean;
+      reason?: string;
+      scheduleInfo?: any;
+    };
   }>({});
   const [userAccess, setUserAccess] = useState<any>(null);
   const [accessLoading, setAccessLoading] = useState(true);
@@ -70,11 +76,12 @@ export default function DashboardPage() {
     if (user && userProfile) {
       refreshData();
       checkUserAccess();
+      checkExamAvailability();
     }
   }, [user, userProfile, refreshData]);
 
   // Check user access to exams with enhanced debugging
-    const checkUserAccess = async () => {
+  const checkUserAccess = async () => {
     if (!user?.uid) return;
 
     try {
@@ -92,12 +99,22 @@ export default function DashboardPage() {
 
   const checkExamAvailability = async () => {
     try {
+      console.log("Checking exam availability...");
       const { getExamAvailabilityStatus } = await import("@/lib/examData");
-      
+
       // Check availability for all exam types
-      const examIds = ['rn-paper-1', 'rn-paper-2', 'rm-paper-1', 'rm-paper-2', 'rphn-paper-1', 'rphn-paper-2'];
+      const examIds = [
+        "rn-paper-1",
+        "rn-paper-2",
+        "rm-paper-1",
+        "rm-paper-2",
+        "rphn-paper-1",
+        "rphn-paper-2",
+      ];
       const availabilityPromises = examIds.map(async (examId) => {
+        console.log(`Checking availability for: ${examId}`);
         const availability = await getExamAvailabilityStatus(examId);
+        console.log(`Availability result for ${examId}:`, availability);
         return { examId, ...availability };
       });
 
@@ -106,13 +123,13 @@ export default function DashboardPage() {
         acc[result.examId] = {
           isAvailable: result.isAvailable,
           reason: result.reason,
-          scheduleInfo: result.scheduleInfo
+          scheduleInfo: result.scheduleInfo,
         };
         return acc;
       }, {} as typeof examAvailability);
 
       setExamAvailability(availabilityMap);
-      console.log('Exam availability:', availabilityMap);
+      console.log("Final exam availability map:", availabilityMap);
     } catch (error) {
       console.error("Error checking exam availability:", error);
     }
@@ -588,36 +605,103 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Schedule warning */}
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                      <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        📅 Schedule Not Set
-                      </h4>
-                      <p className="text-sm text-orange-700">
-                        <strong>Admin Notice:</strong> RN exam dates have not been scheduled yet.<br />
-                        Please contact administration to set exam schedule before exams become available.
-                      </p>
-                      <p className="text-xs text-orange-600 mt-2">
-                        ⚠️ Both papers require admin scheduling and must be taken during scheduled periods
-                      </p>
+                    {/* Schedule warning or success */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1">
+                        {!examAvailability["rn-paper-1"]?.isAvailable &&
+                        !examAvailability["rn-paper-2"]?.isAvailable ? (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                              <AlertTriangle className="h-4 w-4 mr-2" />
+                              📅 Schedule Not Set
+                            </h4>
+                            <p className="text-sm text-orange-700">
+                              <strong>Admin Notice:</strong> RN exam dates have
+                              not been scheduled yet.
+                              <br />
+                              Please contact administration to set exam schedule
+                              before exams become available.
+                            </p>
+                            <p className="text-xs text-orange-600 mt-2">
+                              ⚠️ Both papers require admin scheduling and must
+                              be taken during scheduled periods
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                              <CheckCircle className="h-4 w-4 mr-2" />✅ RN
+                              Exams Scheduled
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              RN exams are now available according to admin
+                              schedule. You can start taking exams during the
+                              scheduled periods.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        onClick={checkExamAvailability}
+                        variant="outline"
+                        size="sm"
+                        className="ml-4"
+                      >
+                        🔄 Refresh Status
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
-                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-600 font-medium">Schedule Required</span>
-                        </div>
+                      {/* RN Paper 1 */}
+                      <div
+                        className={`p-4 rounded-lg border border-gray-200 relative ${
+                          examAvailability["rn-paper-1"]?.isAvailable
+                            ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                            : "bg-gray-50 opacity-60"
+                        }`}
+                      >
+                        {!examAvailability["rn-paper-1"]?.isAvailable && (
+                          <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                            <span className="text-gray-600 font-medium">
+                              {examAvailability["rn-paper-1"]?.reason ||
+                                "Schedule Required"}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                              <FileText className="h-5 w-5 text-gray-400" />
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                examAvailability["rn-paper-1"]?.isAvailable
+                                  ? "bg-blue-100"
+                                  : "bg-gray-200"
+                              }`}
+                            >
+                              <FileText
+                                className={`h-5 w-5 ${
+                                  examAvailability["rn-paper-1"]?.isAvailable
+                                    ? "text-blue-600"
+                                    : "text-gray-400"
+                                }`}
+                              />
                             </div>
                             <div>
-                              <h4 className="font-medium text-gray-600">
+                              <h4
+                                className={`font-medium ${
+                                  examAvailability["rn-paper-1"]?.isAvailable
+                                    ? "text-gray-900"
+                                    : "text-gray-600"
+                                }`}
+                              >
                                 RN Paper 1
                               </h4>
-                              <p className="text-sm text-gray-500">
+                              <p
+                                className={`text-sm ${
+                                  examAvailability["rn-paper-1"]?.isAvailable
+                                    ? "text-gray-700"
+                                    : "text-gray-500"
+                                }`}
+                              >
                                 250 questions • 150 mins
                               </p>
                               <p className="text-xs text-blue-600 mt-1">
@@ -625,23 +709,67 @@ export default function DashboardPage() {
                               </p>
                             </div>
                           </div>
+                          {examAvailability["rn-paper-1"]?.isAvailable && (
+                            <Button
+                              onClick={() => router.push("/exam/rn-paper-1")}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Start Exam
+                            </Button>
+                          )}
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
-                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-600 font-medium">Schedule Required</span>
-                        </div>
+                      {/* RN Paper 2 */}
+                      <div
+                        className={`p-4 rounded-lg border border-gray-200 relative ${
+                          examAvailability["rn-paper-2"]?.isAvailable
+                            ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                            : "bg-gray-50 opacity-60"
+                        }`}
+                      >
+                        {!examAvailability["rn-paper-2"]?.isAvailable && (
+                          <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                            <span className="text-gray-600 font-medium">
+                              {examAvailability["rn-paper-2"]?.reason ||
+                                "Schedule Required"}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                              <FileText className="h-5 w-5 text-gray-400" />
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                examAvailability["rn-paper-2"]?.isAvailable
+                                  ? "bg-blue-100"
+                                  : "bg-gray-200"
+                              }`}
+                            >
+                              <FileText
+                                className={`h-5 w-5 ${
+                                  examAvailability["rn-paper-2"]?.isAvailable
+                                    ? "text-blue-600"
+                                    : "text-gray-400"
+                                }`}
+                              />
                             </div>
                             <div>
-                              <h4 className="font-medium text-gray-600">
+                              <h4
+                                className={`font-medium ${
+                                  examAvailability["rn-paper-2"]?.isAvailable
+                                    ? "text-gray-900"
+                                    : "text-gray-600"
+                                }`}
+                              >
                                 RN Paper 2
                               </h4>
-                              <p className="text-sm text-gray-500">
+                              <p
+                                className={`text-sm ${
+                                  examAvailability["rn-paper-2"]?.isAvailable
+                                    ? "text-gray-700"
+                                    : "text-gray-500"
+                                }`}
+                              >
                                 250 questions • 150 mins
                               </p>
                               <p className="text-xs text-blue-600 mt-1">
@@ -649,6 +777,14 @@ export default function DashboardPage() {
                               </p>
                             </div>
                           </div>
+                          {examAvailability["rn-paper-2"]?.isAvailable && (
+                            <Button
+                              onClick={() => router.push("/exam/rn-paper-2")}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Start Exam
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -678,18 +814,24 @@ export default function DashboardPage() {
                       📅 Schedule Not Set
                     </h4>
                     <p className="text-sm text-orange-700">
-                      <strong>Admin Notice:</strong> RM exam dates have not been scheduled yet.<br />
-                      Please contact administration to set exam schedule before exams become available.
+                      <strong>Admin Notice:</strong> RM exam dates have not been
+                      scheduled yet.
+                      <br />
+                      Please contact administration to set exam schedule before
+                      exams become available.
                     </p>
                     <p className="text-xs text-orange-600 mt-2">
-                      ⚠️ RM exams are 250 questions each with 150 minutes duration. Both papers require admin scheduling.
+                      ⚠️ RM exams are 250 questions each with 150 minutes
+                      duration. Both papers require admin scheduling.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
                       <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">Schedule Required</span>
+                        <span className="text-gray-600 font-medium">
+                          Schedule Required
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -713,7 +855,9 @@ export default function DashboardPage() {
 
                     <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
                       <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">Schedule Required</span>
+                        <span className="text-gray-600 font-medium">
+                          Schedule Required
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -759,18 +903,24 @@ export default function DashboardPage() {
                       🚧 Coming Soon
                     </h4>
                     <p className="text-sm text-purple-700">
-                      <strong>RPHN Exams:</strong> Currently under development.<br />
-                      This exam category will be available in a future update with full CBT support.
+                      <strong>RPHN Exams:</strong> Currently under development.
+                      <br />
+                      This exam category will be available in a future update
+                      with full CBT support.
                     </p>
                     <p className="text-xs text-purple-600 mt-2">
-                      ⏳ RPHN (Registered Public Health Nurse) certification exams will follow the same 250-question, 150-minute format.
+                      ⏳ RPHN (Registered Public Health Nurse) certification
+                      exams will follow the same 250-question, 150-minute
+                      format.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
                       <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-700 font-medium">Coming Soon</span>
+                        <span className="text-purple-700 font-medium">
+                          Coming Soon
+                        </span>
                       </div>
                       <div className="flex items-center justify-between blur-sm">
                         <div className="flex items-center">
@@ -794,7 +944,9 @@ export default function DashboardPage() {
 
                     <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
                       <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-700 font-medium">Coming Soon</span>
+                        <span className="text-purple-700 font-medium">
+                          Coming Soon
+                        </span>
                       </div>
                       <div className="flex items-center justify-between blur-sm">
                         <div className="flex items-center">

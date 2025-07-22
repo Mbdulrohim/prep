@@ -469,7 +469,7 @@ export async function getExamAvailabilityStatus(examId: string): Promise<{
     // Import dynamically to avoid circular dependency
     const { examScheduleManager } = await import("./examSchedule");
     const availability = await examScheduleManager.getExamAvailability(examId);
-    
+
     return {
       isAvailable: availability.isAvailable,
       reason: availability.reason,

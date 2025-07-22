@@ -90,10 +90,9 @@ export default function ExamPage() {
     try {
       setStudentDetails(details);
       setShowPreExamModal(false);
-      
+
       // Start loading questions immediately after closing modal
       // The exam attempt will be created when questions are ready
-      
     } catch (error) {
       console.error("Error starting exam:", error);
       setError("Failed to start exam. Please try again.");
