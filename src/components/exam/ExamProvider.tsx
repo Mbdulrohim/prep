@@ -37,15 +37,80 @@ export function ExamProvider({ children }: { children: ReactNode }) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
           }
-          // Navigate to results page when time is up
-          router.push(`/exam/${examId}/results`);
+          
+          // Auto-submit the exam
+          handleAutoSubmit();
+          
           return 0;
         }
         
         return newTime;
       });
     }, 1000);
-  }, [examId, router]);
+  }, [examId, router, questions, userAnswers, examDetails]);
+
+  // Auto-submit function for when time runs out
+  const handleAutoSubmit = useCallback(async () => {
+    if (!examId || questions.length === 0) return;
+    
+    try {
+      // Calculate results
+      let correctAnswers = 0;
+      let wrongAnswers = 0;
+      let unanswered = 0;
+      
+      questions.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        if (userAnswer === null || userAnswer === undefined) {
+          unanswered++;
+        } else if (userAnswer === question.correctAnswer) {
+          correctAnswers++;
+        } else {
+          wrongAnswers++;
+        }
+      });
+      
+      const score = correctAnswers;
+      const percentage = Math.round((correctAnswers / questions.length) * 100);
+      const endTime = new Date();
+      const timeSpent = (examDetails?.durationMinutes || 150) * 60;
+      
+      // Create auto-submit results
+      const autoSubmitResults = {
+        id: `auto_${examId}_${Date.now()}`,
+        userId: 'auto-submit',
+        examId,
+        examTitle: examDetails?.title || 'Exam',
+        questions,
+        userAnswers,
+        score,
+        percentage,
+        correctAnswers,
+        wrongAnswers,
+        unanswered,
+        totalQuestions: questions.length,
+        timeSpent,
+        completed: true,
+        submitted: true,
+        autoSubmitted: true,
+        endTime,
+        startTime: new Date(Date.now() - timeSpent * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      // Store in localStorage for immediate display
+      localStorage.setItem('lastExamResults', JSON.stringify(autoSubmitResults));
+      
+      // Navigate to results
+      router.push(`/exam/${examId}/results?immediate=true&autoSubmit=true`);
+      
+    } catch (error) {
+      console.error('Error auto-submitting exam:', error);
+      // Still navigate to results even if save fails
+      router.push(`/exam/${examId}/results`);
+    }
+  }, [examId, questions, userAnswers, examDetails, router]);
 
   // Cleanup timer
   useEffect(() => {

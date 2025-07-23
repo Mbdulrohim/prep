@@ -145,12 +145,12 @@ export function ExamFlow({ examId }: ExamFlowProps) {
       const endTime = new Date();
       const timeSpent = (examDetails?.durationMinutes || 150) * 60 - timeLeft;
       
-      // Save results to Firestore
-      const attemptId = `${user.uid}_${examId}_${Date.now()}`;
-      const examAttemptData = {
-        id: attemptId,
+      // Create exam results data
+      const examResults = {
+        id: `${user.uid}_${examId}_${Date.now()}`,
         userId: user.uid,
         examId,
+        examTitle: examDetails?.title || 'Exam',
         questions,
         userAnswers,
         score,
@@ -158,6 +158,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
         correctAnswers,
         wrongAnswers,
         unanswered,
+        totalQuestions: questions.length,
         timeSpent,
         completed: true,
         submitted: true,
@@ -167,11 +168,15 @@ export function ExamFlow({ examId }: ExamFlowProps) {
         updatedAt: new Date(),
       };
       
-      // Save to Firestore
-      await setDoc(doc(db, "examAttempts", attemptId), examAttemptData);
+      // Store results in localStorage for immediate display
+      localStorage.setItem('lastExamResults', JSON.stringify(examResults));
       
-      // Navigate to results with attempt ID
-      router.push(`/exam/${examId}/results?attemptId=${attemptId}`);
+      // Save to Firestore in background
+      const attemptId = examResults.id;
+      await setDoc(doc(db, "examAttempts", attemptId), examResults);
+      
+      // Navigate to results immediately with stored data
+      router.push(`/exam/${examId}/results?attemptId=${attemptId}&immediate=true`);
       
     } catch (error) {
       console.error('Error submitting exam:', error);
