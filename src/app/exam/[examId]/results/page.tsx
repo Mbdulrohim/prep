@@ -95,7 +95,7 @@ export default function ExamResultsPage() {
             correctAnswers: attempt.correctAnswers,
             wrongAnswers: attempt.wrongAnswers,
             unanswered: attempt.unanswered,
-            totalQuestions: attempt.questions?.length || (attempt.correctAnswers + attempt.wrongAnswers + attempt.unanswered),
+            totalQuestions: attempt.correctAnswers + attempt.wrongAnswers + attempt.unanswered,
             timeSpent: attempt.timeSpent,
             questions: (attempt as any).questions,
             userAnswers: (attempt as any).userAnswers,

@@ -31,11 +31,11 @@ class AIHelper {
 
   private initializeOpenAI() {
     try {
-      // Only initialize if API key is available
-      if (process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
+      // Only initialize if API key is available (server-side only for security)
+      if (process.env.OPENAI_API_KEY) {
         this.openai = new OpenAI({
-          apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-          dangerouslyAllowBrowser: true, // Note: In production, use server-side API
+          apiKey: process.env.OPENAI_API_KEY,
+          // Note: This should only be used server-side in production
         });
         this.initialized = true;
       }
