@@ -15,6 +15,7 @@ import {
   AlertCircle,
   RotateCcw,
   ArrowRight,
+  ArrowLeft,
   BookOpen,
 } from "lucide-react";
 import { examAttemptManager, ExamAttempt } from "@/lib/examAttempts";
@@ -53,6 +54,13 @@ export default function ExamResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showReview, setShowReview] = useState(false);
+  
+  // Pagination state for question review
+  const [currentQuestionPage, setCurrentQuestionPage] = useState(0);
+  const [loadingAI, setLoadingAI] = useState<number | null>(null);
+  const [aiExplanations, setAiExplanations] = useState<{[key: number]: string}>({});
+  
+  const questionsPerPage = 1; // Show one question at a time for better focus
 
   useEffect(() => {
     loadResults();
@@ -145,6 +153,76 @@ export default function ExamResultsPage() {
 
   const isPassing = (percentage: number): boolean => {
     return percentage >= 70;
+  };
+
+  // Get AI explanation for a specific question
+  const getAIExplanation = async (questionIndex: number) => {
+    if (!results?.questions || !results?.userAnswers) return;
+    
+    const question = results.questions[questionIndex];
+    const userAnswer = results.userAnswers[questionIndex];
+    const isCorrect = userAnswer === question.correctAnswer;
+    
+    if (aiExplanations[questionIndex]) {
+      return; // Already have explanation
+    }
+    
+    setLoadingAI(questionIndex);
+    
+    try {
+      // Call AI explanation API
+      const response = await fetch('/api/ai-explanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: question.question,
+          options: question.options,
+          correctAnswer: question.correctAnswer,
+          userAnswer: userAnswer,
+          isCorrect: isCorrect
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAiExplanations(prev => ({
+          ...prev,
+          [questionIndex]: data.explanation
+        }));
+      } else {
+        // Fallback explanation
+        const correctOptionText = question.options[question.correctAnswer];
+        const userAnswerText = userAnswer !== null ? question.options[userAnswer] : 'No answer selected';
+        
+        let explanation = `**Correct Answer:** ${correctOptionText}\n\n`;
+        
+        if (isCorrect) {
+          explanation += "✅ **Well done!** You selected the correct answer.\n\n";
+        } else {
+          explanation += `❌ **Your Answer:** ${userAnswerText}\n\n`;
+          explanation += "**Why this is incorrect:** This option doesn't fully address the question requirements.\n\n";
+        }
+        
+        explanation += "**Key Learning Point:** Review the fundamental concepts related to this topic for better understanding.";
+        
+        setAiExplanations(prev => ({
+          ...prev,
+          [questionIndex]: explanation
+        }));
+      }
+    } catch (error) {
+      console.error('Error getting AI explanation:', error);
+      // Provide basic explanation as fallback
+      const correctOptionText = question.options[question.correctAnswer];
+      const explanation = `**Correct Answer:** ${correctOptionText}\n\nFor detailed explanations, please review your study materials or consult with your instructor.`;
+      
+      setAiExplanations(prev => ({
+        ...prev,
+        [questionIndex]: explanation
+      }));
+    } finally {
+      setLoadingAI(null);
+    }
   };
 
   if (loading) {
@@ -353,75 +431,203 @@ export default function ExamResultsPage() {
           </Button>
         </div>
 
-        {/* Question Review */}
+        {/* Question Review with Pagination */}
         {showReview && results.questions && results.userAnswers && (
           <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Question Review
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Question Review
+              </h3>
+              <div className="text-sm text-gray-500">
+                Question {currentQuestionPage + 1} of {results.questions.length}
+              </div>
+            </div>
             
-            <div className="space-y-6">
-              {results.questions.map((question: any, index: number) => {
-                const userAnswer = results.userAnswers![index];
-                const isCorrect = userAnswer === question.correctAnswer;
-                const isUnanswered = userAnswer === null || userAnswer === undefined;
-                
-                return (
+            {/* Current Question Display */}
+            {(() => {
+              const questionIndex = currentQuestionPage;
+              const question = results.questions[questionIndex];
+              const userAnswer = results.userAnswers[questionIndex];
+              const isCorrect = userAnswer === question.correctAnswer;
+              const isUnanswered = userAnswer === null || userAnswer === undefined;
+              
+              return (
+                <div className="space-y-6">
                   <div 
-                    key={index}
-                    className={`p-4 rounded-lg border ${
+                    className={`p-6 rounded-lg border-2 ${
                       isUnanswered 
-                        ? 'border-yellow-200 bg-yellow-50'
+                        ? 'border-yellow-300 bg-yellow-50'
                         : isCorrect 
-                        ? 'border-green-200 bg-green-50'
-                        : 'border-red-200 bg-red-50'
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-red-300 bg-red-50'
                     }`}
                   >
-                    <div className="flex items-start space-x-3 mb-3">
+                    {/* Question Header */}
+                    <div className="flex items-start space-x-3 mb-4">
                       {isUnanswered ? (
-                        <AlertCircle className="h-5 w-5 text-yellow-600 mt-1" />
+                        <AlertCircle className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
                       ) : isCorrect ? (
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
+                        <CheckCircle className="h-6 w-6 text-green-600 mt-1 flex-shrink-0" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-red-600 mt-1" />
+                        <XCircle className="h-6 w-6 text-red-600 mt-1 flex-shrink-0" />
                       )}
                       
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-2">
-                          Question {index + 1}
-                        </h4>
-                        <p className="text-gray-700 mb-3">{question.question}</p>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-lg font-medium text-gray-900">
+                            Question {questionIndex + 1}
+                          </h4>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            isUnanswered 
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : isCorrect 
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {isUnanswered ? 'Unanswered' : isCorrect ? 'Correct' : 'Incorrect'}
+                          </span>
+                        </div>
                         
-                        <div className="space-y-2">
+                        <p className="text-gray-800 text-base mb-4 leading-relaxed">
+                          {question.question}
+                        </p>
+                        
+                        {/* Answer Options */}
+                        <div className="space-y-3 mb-4">
                           {question.options.map((option: string, optionIndex: number) => (
                             <div 
                               key={optionIndex}
-                              className={`p-2 rounded text-sm ${
+                              className={`p-3 rounded-lg border text-sm ${
                                 optionIndex === question.correctAnswer
-                                  ? 'bg-green-100 text-green-800 font-medium'
+                                  ? 'bg-green-100 border-green-300 text-green-900 font-medium'
                                   : optionIndex === userAnswer && !isCorrect
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-50 text-gray-700'
+                                  ? 'bg-red-100 border-red-300 text-red-900'
+                                  : optionIndex === userAnswer && isCorrect
+                                  ? 'bg-green-100 border-green-300 text-green-900 font-medium'
+                                  : 'bg-gray-50 border-gray-200 text-gray-700'
                               }`}
                             >
-                              {option}
-                              {optionIndex === question.correctAnswer && ' ✓ (Correct)'}
-                              {optionIndex === userAnswer && optionIndex !== question.correctAnswer && ' ✗ (Your answer)'}
+                              <div className="flex items-center justify-between">
+                                <span className="flex-1">{option}</span>
+                                <div className="flex items-center space-x-2 ml-3">
+                                  {optionIndex === question.correctAnswer && (
+                                    <span className="text-green-600 font-medium">✓ Correct</span>
+                                  )}
+                                  {optionIndex === userAnswer && optionIndex !== question.correctAnswer && (
+                                    <span className="text-red-600 font-medium">✗ Your choice</span>
+                                  )}
+                                  {optionIndex === userAnswer && optionIndex === question.correctAnswer && (
+                                    <span className="text-green-600 font-medium">✓ Your choice</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
                         
+                        {/* Status Message */}
                         {isUnanswered && (
-                          <p className="text-yellow-700 text-sm mt-2">
-                            You did not answer this question.
-                          </p>
+                          <div className="p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                            <p className="text-yellow-800 text-sm font-medium">
+                              ⚠️ You did not answer this question. Make sure to answer all questions in future exams!
+                            </p>
+                          </div>
                         )}
+                        
+                        {/* AI Explanation Section */}
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-medium text-gray-900">AI Explanation</h5>
+                            {!aiExplanations[questionIndex] && (
+                              <Button
+                                onClick={() => getAIExplanation(questionIndex)}
+                                disabled={loadingAI === questionIndex}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {loadingAI === questionIndex ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-blue-600 mr-2"></div>
+                                    Getting explanation...
+                                  </>
+                                ) : (
+                                  'Get AI Explanation'
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {aiExplanations[questionIndex] ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="prose prose-sm text-blue-900 whitespace-pre-line">
+                                {aiExplanations[questionIndex]}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <p className="text-gray-600 text-sm italic">
+                                Click "Get AI Explanation" to understand why this answer is correct and learn more about the topic.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  {/* Navigation Controls */}
+                  <div className="flex items-center justify-between pt-4">
+                    <Button
+                      onClick={() => setCurrentQuestionPage(prev => Math.max(0, prev - 1))}
+                      disabled={currentQuestionPage === 0}
+                      variant="outline"
+                      className="flex items-center"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
+                    </Button>
+                    
+                    {/* Question Progress Dots */}
+                    <div className="flex items-center space-x-2">
+                      {results.questions.map((_, index) => {
+                        const qUserAnswer = results.userAnswers![index];
+                        const qIsCorrect = qUserAnswer === results.questions![index].correctAnswer;
+                        const qIsUnanswered = qUserAnswer === null || qUserAnswer === undefined;
+                        
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentQuestionPage(index)}
+                            className={`w-8 h-8 rounded-full text-xs font-medium border-2 transition-all ${
+                              index === currentQuestionPage
+                                ? 'border-blue-500 bg-blue-500 text-white'
+                                : qIsUnanswered
+                                ? 'border-yellow-300 bg-yellow-100 text-yellow-800 hover:border-yellow-400'
+                                : qIsCorrect
+                                ? 'border-green-300 bg-green-100 text-green-800 hover:border-green-400'
+                                : 'border-red-300 bg-red-100 text-red-800 hover:border-red-400'
+                            }`}
+                          >
+                            {index + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <Button
+                      onClick={() => setCurrentQuestionPage(prev => Math.min(results.questions!.length - 1, prev + 1))}
+                      disabled={currentQuestionPage === results.questions.length - 1}
+                      variant="outline"
+                      className="flex items-center"
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
