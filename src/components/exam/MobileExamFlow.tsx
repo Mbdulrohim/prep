@@ -117,6 +117,85 @@ export function MobileExamFlow({
     }
   }, [preventNavigation]);
 
+  // Keyboard shortcuts for exam navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Prevent keyboard shortcuts if user is typing in an input or textarea
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Prevent default behavior for our keyboard shortcuts
+      const key = event.key.toLowerCase();
+      
+      switch (key) {
+        case 'a':
+          event.preventDefault();
+          handleAnswerSelect(0);
+          break;
+        case 'b':
+          event.preventDefault();
+          handleAnswerSelect(1);
+          break;
+        case 'c':
+          event.preventDefault();
+          handleAnswerSelect(2);
+          break;
+        case 'd':
+          event.preventDefault();
+          handleAnswerSelect(3);
+          break;
+        case 'p':
+          event.preventDefault();
+          if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
+          }
+          break;
+        case 'n':
+          event.preventDefault();
+          if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+          }
+          break;
+        case 'f':
+          event.preventDefault();
+          toggleQuestionFlag();
+          break;
+        case 'enter':
+          event.preventDefault();
+          if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+          }
+          break;
+        case ' ':
+          // Space bar to toggle navigator
+          event.preventDefault();
+          setShowQuestionNav(!showQuestionNav);
+          break;
+        case 'arrowleft':
+          event.preventDefault();
+          if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
+          }
+          break;
+        case 'arrowright':
+          event.preventDefault();
+          if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+          }
+          break;
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentQuestionIndex, showQuestionNav, questions.length]);
+
   const initializeExam = async () => {
     try {
       console.log("Initializing exam with data:", examData);

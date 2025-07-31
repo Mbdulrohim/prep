@@ -21,6 +21,7 @@ import {
   SkipForward,
   ChevronUp,
   ChevronDown,
+  X,
 } from "lucide-react";
 
 interface NewExamFlowProps {
@@ -46,7 +47,8 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "saved" | "saving" | "error"
   >("saved");
-  const [isNavigatorCollapsed, setIsNavigatorCollapsed] = useState(false);
+  const [isNavigatorCollapsed, setIsNavigatorCollapsed] = useState(true);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -82,6 +84,90 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
 
     return () => clearInterval(autoSaveTimer);
   }, [userAnswers]);
+
+  // Keyboard shortcuts for exam navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Prevent keyboard shortcuts if user is typing in an input or textarea
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Prevent default behavior for our keyboard shortcuts
+      const key = event.key.toLowerCase();
+      
+      switch (key) {
+        case 'a':
+          event.preventDefault();
+          handleAnswerSelect(0);
+          break;
+        case 'b':
+          event.preventDefault();
+          handleAnswerSelect(1);
+          break;
+        case 'c':
+          event.preventDefault();
+          handleAnswerSelect(2);
+          break;
+        case 'd':
+          event.preventDefault();
+          handleAnswerSelect(3);
+          break;
+        case 'p':
+          event.preventDefault();
+          if (currentQuestionIndex > 0) {
+            goToQuestion(currentQuestionIndex - 1);
+          }
+          break;
+        case 'n':
+          event.preventDefault();
+          if (currentQuestionIndex < totalQuestions - 1) {
+            goToQuestion(currentQuestionIndex + 1);
+          }
+          break;
+        case 'f':
+          event.preventDefault();
+          toggleFlag();
+          break;
+        case 'enter':
+          event.preventDefault();
+          if (currentQuestionIndex < totalQuestions - 1) {
+            goToQuestion(currentQuestionIndex + 1);
+          }
+          break;
+        case 'h':
+        case '?':
+          event.preventDefault();
+          setShowKeyboardHelp(!showKeyboardHelp);
+          break;
+        case ' ':
+          // Space bar to toggle navigator
+          event.preventDefault();
+          setIsNavigatorCollapsed(!isNavigatorCollapsed);
+          break;
+        case 'arrowleft':
+          event.preventDefault();
+          if (currentQuestionIndex > 0) {
+            goToQuestion(currentQuestionIndex - 1);
+          }
+          break;
+        case 'arrowright':
+          event.preventDefault();
+          if (currentQuestionIndex < totalQuestions - 1) {
+            goToQuestion(currentQuestionIndex + 1);
+          }
+          break;
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentQuestionIndex, totalQuestions, isNavigatorCollapsed]);
 
   // Handle answer selection
   const handleAnswerSelect = (optionIndex: number) => {
@@ -305,13 +391,59 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
 
       {/* Main Question Area */}
       <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+        {/* Keyboard Shortcuts Help */}
+        {showKeyboardHelp && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-blue-900">Keyboard Shortcuts</h3>
+              <Button
+                onClick={() => setShowKeyboardHelp(false)}
+                variant="outline"
+                size="sm"
+                className="text-blue-700 border-blue-300 hover:bg-blue-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+              <div>
+                <h4 className="font-medium text-blue-900 mb-2">Answer Options</h4>
+                <div className="space-y-1 text-blue-800">
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">A</kbd> Select option A</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">B</kbd> Select option B</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">C</kbd> Select option C</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">D</kbd> Select option D</div>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium text-blue-900 mb-2">Navigation</h4>
+                <div className="space-y-1 text-blue-800">
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">P</kbd> Previous question</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">N</kbd> Next question</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">←</kbd> Previous question</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">→</kbd> Next question</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">Enter</kbd> Next question</div>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium text-blue-900 mb-2">Other Actions</h4>
+                <div className="space-y-1 text-blue-800">
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">F</kbd> Toggle flag</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">Space</kbd> Toggle navigator</div>
+                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">H</kbd> or <kbd className="px-2 py-1 bg-white rounded text-xs">?</kbd> Toggle help</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
           {/* Question Header */}
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-sm font-medium text-gray-500">
-                  Question {currentQuestionIndex + 1}
+                  Question {currentQuestionIndex + 1} of {totalQuestions}
                 </span>
                 {currentQuestion.flagged && (
                   <Flag className="h-4 w-4 text-yellow-500 fill-current" />
@@ -319,36 +451,48 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
               </div>
             </div>
 
-            <Button
-              onClick={toggleFlag}
-              variant="outline"
-              size="sm"
-              className={`
-                ${
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
+                variant="outline"
+                size="sm"
+                className="text-gray-600 border-gray-300 text-xs sm:text-sm"
+                title="Keyboard shortcuts (H or ?)"
+              >
+                <span className="hidden sm:inline">Help</span>
+                <span className="sm:hidden">?</span>
+              </Button>
+              <Button
+                onClick={toggleFlag}
+                variant="outline"
+                size="sm"
+                className={`text-xs sm:text-sm ${
                   currentQuestion.flagged
                     ? "border-yellow-500 text-yellow-600"
                     : "border-gray-300"
-                }
-              `}
-            >
-              <Flag
-                className={`h-4 w-4 mr-1 ${
-                  currentQuestion.flagged ? "fill-current" : ""
                 }`}
-              />
-              {currentQuestion.flagged ? "Unflag" : "Flag"}
-            </Button>
+              >
+                <Flag
+                  className={`h-4 w-4 ${
+                    currentQuestion.flagged ? "fill-current mr-1" : "mr-1"
+                  }`}
+                />
+                <span className="hidden sm:inline">
+                  {currentQuestion.flagged ? "Unflag" : "Flag"}
+                </span>
+              </Button>
+            </div>
           </div>
 
           {/* Question Text */}
-          <div className="mb-8">
-            <p className="text-lg text-gray-900 leading-relaxed">
+          <div className="mb-6 sm:mb-8">
+            <p className="text-base sm:text-lg text-gray-900 leading-relaxed">
               {currentQuestion.text}
             </p>
           </div>
 
           {/* Answer Options */}
-          <div className="space-y-4 mb-8">
+          <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
             {currentQuestion.options.map((option, index) => {
               const isSelected = userAnswers[currentQuestionIndex] === index;
               const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
@@ -358,7 +502,7 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   className={`
-                    w-full p-4 text-left rounded-lg border-2 transition-all
+                    w-full p-3 sm:p-4 text-left rounded-lg border-2 transition-all
                     ${
                       isSelected
                         ? "border-blue-500 bg-blue-50"
@@ -369,7 +513,7 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                   <div className="flex items-start space-x-3">
                     <div
                       className={`
-                      w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium
+                      w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium flex-shrink-0
                       ${
                         isSelected
                           ? "border-blue-500 bg-blue-500 text-white"
@@ -379,7 +523,7 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                     >
                       {optionLabel}
                     </div>
-                    <span className="text-gray-900">{option}</span>
+                    <span className="text-gray-900 text-sm sm:text-base leading-relaxed">{option}</span>
                   </div>
                 </button>
               );
@@ -387,26 +531,33 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
             <Button
               onClick={() => goToQuestion(currentQuestionIndex - 1)}
               disabled={currentQuestionIndex === 0}
               variant="outline"
+              className="w-full sm:w-auto"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              <span className="hidden xs:inline">Previous</span>
+              <span className="xs:hidden">Prev</span>
             </Button>
 
-            <div className="flex space-x-3">
+            <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto justify-center">
               {currentQuestionIndex === totalQuestions - 1 ? (
-                <Button onClick={handleSubmitExam} className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  onClick={handleSubmitExam} 
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto px-6"
+                >
                   Submit Exam
                 </Button>
               ) : (
                 <Button
                   onClick={() => goToQuestion(currentQuestionIndex + 1)}
+                  className="w-full sm:w-auto"
                 >
-                  Next
+                  <span className="hidden xs:inline">Next</span>
+                  <span className="xs:hidden">Next</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
@@ -419,10 +570,10 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
       <div className="bg-white border-t border-gray-200 sticky bottom-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Navigator Header - Always Visible */}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <div className="flex items-center space-x-4">
-              <h3 className="font-medium text-gray-900">Question Navigator</h3>
-              <div className="flex items-center space-x-4 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-100 gap-2 sm:gap-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 sm:gap-0">
+              <h3 className="font-medium text-gray-900 text-sm sm:text-base">Question Navigator</h3>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 border-2 border-green-500 bg-green-100 rounded"></div>
                   <span className="text-gray-600">Answered ({answeredCount})</span>
@@ -442,7 +593,7 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
               onClick={() => setIsNavigatorCollapsed(!isNavigatorCollapsed)}
               variant="outline"
               size="sm"
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 text-xs sm:text-sm"
             >
               {isNavigatorCollapsed ? (
                 <>
@@ -460,8 +611,8 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
 
           {/* Navigator Content - Collapsible */}
           {!isNavigatorCollapsed && (
-            <div className="py-4">
-              <div className="flex flex-wrap gap-2">
+            <div className="py-3 sm:py-4">
+              <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 xl:grid-cols-20 gap-2">
                 {questions.map((question, index) => {
                   const isAnswered = userAnswers[index] !== null;
                   const isCurrent = index === currentQuestionIndex;
@@ -472,7 +623,7 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                       key={index}
                       onClick={() => goToQuestion(index)}
                       className={`
-                        w-10 h-10 text-sm font-medium rounded-lg border-2 transition-all
+                        w-8 h-8 sm:w-10 sm:h-10 text-xs sm:text-sm font-medium rounded-lg border-2 transition-all
                         ${
                           isCurrent
                             ? "border-blue-500 bg-blue-500 text-white"
