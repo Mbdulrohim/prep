@@ -384,14 +384,21 @@ class ExamAttemptManager {
    */
   async getUserExamAttempts(userId: string): Promise<ExamAttempt[]> {
     try {
+      // First get all attempts for the user (without orderBy to avoid index requirement)
       const q = query(
         collection(db, "examAttempts"),
-        where("userId", "==", userId),
-        orderBy("createdAt", "desc")
+        where("userId", "==", userId)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => doc.data() as ExamAttempt);
+      const attempts = querySnapshot.docs.map((doc) => doc.data() as ExamAttempt);
+      
+      // Sort on the client side by createdAt descending
+      return attempts.sort((a, b) => {
+        const aDate = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const bDate = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        return bDate.getTime() - aDate.getTime();
+      });
     } catch (error) {
       console.error("Error getting user exam attempts:", error);
       return [];

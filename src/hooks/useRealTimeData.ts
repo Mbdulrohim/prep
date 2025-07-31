@@ -184,10 +184,10 @@ export function useRealTimeData() {
   const setupUserStatsListener = useCallback(() => {
     if (!user?.uid) return null;
 
+    // Remove orderBy to avoid index requirement - sort on client side
     const userAttemptsQuery = query(
       collection(db, "examAttempts"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(userAttemptsQuery, (snapshot) => {
@@ -226,6 +226,13 @@ export function useRealTimeData() {
               bestScore = attempt.score;
             }
           }
+        });
+
+        // Sort attempts by startTime descending (client-side to avoid index requirement)
+        attempts.sort((a, b) => {
+          const aDate = a.startTime instanceof Date ? a.startTime : new Date(a.startTime);
+          const bDate = b.startTime instanceof Date ? b.startTime : new Date(b.startTime);
+          return bDate.getTime() - aDate.getTime();
         });
 
         const recentActivity: RealTimeActivity[] = attempts
