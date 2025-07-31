@@ -183,71 +183,35 @@ Keep it encouraging and educational.
    */
   private getFallbackHelp(request: AIHelpRequest): AIHelpResponse {
     return {
-      success: true,
-      explanation: `The correct answer is "${request.correctAnswer}". ${request.explanation}`,
-      keyPoints: this.getDefaultKeyPoints(request),
-      studyTips: this.getDefaultStudyTips(request),
-      relatedTopics: this.getDefaultRelatedTopics(request),
+      success: false,
+      explanation: `❌ **AI Service Unavailable**\n\nOpenAI API is not configured or accessible. Please contact your administrator to enable AI explanations.\n\n**Database Explanation:** ${
+        request.explanation || "No explanation available in database."
+      }`,
+      keyPoints: [],
+      studyTips: [],
+      relatedTopics: [],
     };
   }
 
   /**
-   * Get default key points based on category and topic
+   * Get default key points - now returns empty array to avoid static content
    */
   private getDefaultKeyPoints(request: AIHelpRequest): string[] {
-    const defaultPoints = {
-      RN: [
-        "Focus on patient safety and evidence-based practice",
-        "Consider the nursing process: assess, diagnose, plan, implement, evaluate",
-        "Remember to prioritize immediate life-threatening conditions",
-      ],
-      RM: [
-        "Consider maternal and fetal wellbeing equally",
-        "Focus on normal physiological processes vs complications",
-        "Remember emergency protocols for obstetric situations",
-      ],
-      RPHN: [
-        "Think population health vs individual care",
-        "Consider prevention and health promotion strategies",
-        "Focus on community assessment and intervention",
-      ],
-    };
-
-    return (
-      defaultPoints[request.category as keyof typeof defaultPoints] ||
-      defaultPoints["RN"]
-    );
+    return [];
   }
 
   /**
-   * Get default study tips
+   * Get default study tips - now returns empty array to avoid static content
    */
   private getDefaultStudyTips(request: AIHelpRequest): string[] {
-    return [
-      `Review textbook chapters on ${request.topic}`,
-      "Practice similar questions to reinforce learning",
-      "Create concept maps linking related topics",
-      "Discuss with study group or instructor",
-    ];
+    return [];
   }
 
   /**
-   * Get default related topics
+   * Get default related topics - now returns empty array to avoid static content
    */
   private getDefaultRelatedTopics(request: AIHelpRequest): string[] {
-    const relatedTopicsMap = {
-      "Basic Patient Care": ["Safety Measures", "Infection Control"],
-      Pharmacology: ["Drug Interactions", "Dosage Calculations"],
-      Assessment: ["Physical Examination", "Health History"],
-      "Emergency Care": ["First Aid", "Crisis Intervention"],
-    };
-
-    return (
-      relatedTopicsMap[request.topic as keyof typeof relatedTopicsMap] || [
-        "Evidence-Based Practice",
-        "Professional Standards",
-      ]
-    );
+    return [];
   }
 
   /**

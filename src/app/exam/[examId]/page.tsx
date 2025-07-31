@@ -5,11 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useExam } from "@/context/ExamContext";
 import { Header } from "@/components/layout/Header";
-import { ExamFlow } from "@/components/exam/ExamFlow";
-import { PreExamModal, StudentDetails } from "@/components/exam/PreExamModal";
+import { NewExamFlow } from "@/components/exam/NewExamFlow";
+import {
+  SimpleExamConfirmation,
+  StudentDetails,
+} from "@/components/exam/SimpleExamConfirmation";
 import { examAttemptManager } from "@/lib/examAttempts";
 import { Button } from "@/components/ui/Button";
-import { AlertCircle, BookOpen, CheckCircle } from "lucide-react";
+import { AlertCircle, BookOpen, CheckCircle, Clock, Users } from "lucide-react";
 
 export default function ExamPage() {
   const { user, userProfile } = useAuth();
@@ -19,7 +22,7 @@ export default function ExamPage() {
 
   const { loadingQuestions, examDetails, resetExam } = useExam();
 
-  const [showPreExamModal, setShowPreExamModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [studentDetails, setStudentDetails] = useState<StudentDetails>({
     name: "",
     university: "",
@@ -66,7 +69,7 @@ export default function ExamPage() {
           );
         }
       } else {
-        setShowPreExamModal(true);
+        setShowConfirmationModal(true);
       }
     } catch (error) {
       console.error("Error checking exam eligibility:", error);
@@ -89,7 +92,7 @@ export default function ExamPage() {
 
     try {
       setStudentDetails(details);
-      setShowPreExamModal(false);
+      setShowConfirmationModal(false);
 
       // Start loading questions immediately after closing modal
       // The exam attempt will be created when questions are ready
@@ -100,7 +103,7 @@ export default function ExamPage() {
   };
 
   const handleViewResults = () => {
-    router.push(`/exam/${examId}/results`);
+    router.push(`/exam/${examId}/results?attemptId=${examAttempt.id}`);
   };
 
   const handleBackToDashboard = () => {
@@ -139,25 +142,94 @@ export default function ExamPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center max-w-md">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+        <div className="flex items-center justify-center min-h-[80vh] p-4">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+            <div className="text-center mb-8">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Access Required
+              </h2>
+              <p className="text-gray-600 mb-6">{error}</p>
+
+              {examDetails && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6 text-left">
+                  <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    {examDetails.title}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+                    <div className="flex items-center justify-between">
+                      <span>Questions:</span>
+                      <span className="font-medium">
+                        {examDetails.questionsCount}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Duration:</span>
+                      <span className="font-medium flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {examDetails.durationMinutes} minutes
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Difficulty:</span>
+                      <span className="font-medium">
+                        {examDetails.difficulty}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Category:</span>
+                      <span className="font-medium">
+                        {examDetails.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <h4 className="font-medium text-blue-900 mb-2">
+                      Covered Topics:
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {examDetails.topics.slice(0, 6).map((topic, index) => (
+                        <span
+                          key={index}
+                          className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                      {examDetails.topics.length > 6 && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          +{examDetails.topics.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-blue-200">
+                    <p className="text-xs text-blue-700">
+                      💡 This is a comprehensive {examDetails.questionsCount}
+                      -question exam designed to test your knowledge across
+                      multiple nursing domains.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Access Required
-            </h1>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <div className="space-y-3">
-              <Button onClick={handleBackToDashboard} className="w-full">
-                Go to Dashboard
-              </Button>
+
+            <div className="flex flex-col space-y-3">
               <Button
-                variant="outline"
                 onClick={() => router.push("/dashboard")}
                 className="w-full"
               >
-                Purchase Exam Access
+                Back to Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="w-full"
+              >
+                Retry Access Check
               </Button>
             </div>
           </div>
@@ -186,14 +258,14 @@ export default function ExamPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Score:</span>
                 <span className="font-bold text-lg text-green-600">
-                  {examAttempt.score}/{examAttempt.totalQuestions}
+                  {examAttempt.score}/{examAttempt.assignedQuestions.length}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Percentage:</span>
                 <span className="font-medium">
                   {Math.round(
-                    (examAttempt.score / examAttempt.totalQuestions) * 100
+                    (examAttempt.score / examAttempt.assignedQuestions.length) * 100
                   )}
                   %
                 </span>
@@ -201,15 +273,15 @@ export default function ExamPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Completed:</span>
                 <span className="text-sm">
-                  {examAttempt.submittedAt &&
-                    new Date(examAttempt.submittedAt).toLocaleDateString()}
+                  {examAttempt.endTime &&
+                    new Date(examAttempt.endTime).toLocaleDateString()}
                 </span>
               </div>
             </div>
             <div className="space-y-3">
               <Button onClick={handleViewResults} className="w-full">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Review Questions
+                View Results
               </Button>
               <Button
                 variant="outline"
@@ -229,32 +301,32 @@ export default function ExamPage() {
   }
 
   // Show exam interface for eligible users
-  if (showPreExamModal) {
+  if (showConfirmationModal) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <PreExamModal
-          onStartExam={handleStartExam}
-          examDetails={examDetails}
-          userProfile={userProfile}
-        />
-      </div>
+      <SimpleExamConfirmation
+        onStartExam={handleStartExam}
+        onCancel={() => router.push("/dashboard")}
+        examDetails={examDetails}
+        userProfile={userProfile}
+      />
     );
   }
 
   // Show the actual exam
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       {loadingQuestions ? (
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-lg text-slate-700">Loading exam questions...</p>
+        <>
+          <Header />
+          <div className="flex items-center justify-center min-h-[80vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-lg text-slate-700">Loading exam questions...</p>
+            </div>
           </div>
-        </div>
+        </>
       ) : (
-        <ExamFlow examId={examId} />
+        <NewExamFlow examId={examId} />
       )}
     </div>
   );

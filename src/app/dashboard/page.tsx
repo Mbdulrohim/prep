@@ -7,6 +7,7 @@ import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
+import { ExamHistory } from "@/components/dashboard/ExamHistory";
 import {
   CreditCard,
   BarChart,
@@ -25,18 +26,23 @@ import {
   Zap,
   LogIn,
   AlertTriangle,
+  Eye,
+  BookOpen,
+  Calendar,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { useState, useEffect } from "react";
 import { useUserStats } from "@/hooks/useUserStats";
 import { useRealTimeData } from "@/hooks/useRealTimeData";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchAllExams, ExamData } from "@/lib/examData";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { examAttemptManager, ExamAttempt } from "@/lib/examAttempts";
 
 // Admin access control
 const ADMIN_EMAILS = [
@@ -73,6 +79,8 @@ export default function DashboardPage() {
     useState<"flutterwave">("flutterwave");
   const [rnExams, setRnExams] = useState<ExamData[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
+  const [userAttempts, setUserAttempts] = useState<ExamAttempt[]>([]);
+  const [attemptsLoading, setAttemptsLoading] = useState(true);
   const [examAvailability, setExamAvailability] = useState<{
     [key: string]: {
       isAvailable: boolean;
@@ -88,6 +96,7 @@ export default function DashboardPage() {
       refreshData();
       checkUserAccess();
       checkExamAvailability();
+      loadUserAttempts();
     }
   }, [user, userProfile, refreshData]);
 
@@ -163,8 +172,9 @@ export default function DashboardPage() {
       if (result.success) {
         // Update local state
         await checkUserAccess();
-        // Also refresh user stats
+        // Also refresh user stats and attempts
         refreshData();
+        loadUserAttempts();
       }
     } catch (error) {
       console.error("Error refreshing user access:", error);
@@ -192,11 +202,34 @@ export default function DashboardPage() {
     loadRnExams();
   }, []);
 
+  // Load user exam attempts
+  const loadUserAttempts = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      setAttemptsLoading(true);
+      const attempts = await examAttemptManager.getUserExamAttempts(user.uid);
+      setUserAttempts(attempts);
+    } catch (error) {
+      console.error("Failed to load user attempts:", error);
+    } finally {
+      setAttemptsLoading(false);
+    }
+  };
+
+  // Load user attempts when user is available
+  useEffect(() => {
+    if (user?.uid) {
+      loadUserAttempts();
+    }
+  }, [user?.uid]);
+
   const handleProfileSave = async (name: string, university: string) => {
     setProfileLoading(true);
     try {
       await updateUserProfile(name, university);
       refreshData();
+      loadUserAttempts();
       checkUserAccess();
     } catch (error) {
       console.error("Failed to update profile:", error);
@@ -562,14 +595,12 @@ export default function DashboardPage() {
                       Exams Completed
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {realTimeUserStats?.stats.totalExams || stats?.totalExamsCompleted || 0}
+                      {userAttempts.filter(attempt => attempt.completed).length}
                     </p>
-                    {!realTimeLoading && realTimeUserStats && (
-                      <div className="inline-flex items-center text-xs text-green-600">
-                        <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
-                        Live Data
-                      </div>
-                    )}
+                    <div className="inline-flex items-center text-xs text-green-600">
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                      Live Data
+                    </div>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <CheckCircle className="h-6 w-6 text-green-600" />
@@ -584,14 +615,14 @@ export default function DashboardPage() {
                       Average Score
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {Math.round(realTimeUserStats?.stats.averageScore || stats?.averageScore || 0)}%
+                      {userAttempts.length > 0 
+                        ? Math.round(userAttempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0) / userAttempts.length)
+                        : 0}%
                     </p>
-                    {!realTimeLoading && realTimeUserStats && (
-                      <div className="inline-flex items-center text-xs text-blue-600">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
-                        Live Data
-                      </div>
-                    )}
+                    <div className="inline-flex items-center text-xs text-blue-600">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
+                      Live Data
+                    </div>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-blue-600" />
@@ -603,27 +634,27 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      Study Streak
+                      Best Score
                     </p>
-                                        <p className="text-2xl font-bold text-gray-900">
-                      {realTimeUserStats?.stats.currentStreak || stats?.currentStreak || 0} days
+                    <p className="text-2xl font-bold text-gray-900">
+                      {userAttempts.length > 0 
+                        ? Math.max(...userAttempts.map(attempt => attempt.percentage || 0))
+                        : 0}%
                     </p>
-                    {!realTimeLoading && realTimeUserStats && (
-                      <div className="inline-flex items-center text-xs text-orange-600">
-                        <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-1"></div>
-                        Live Data
-                      </div>
-                    )}
+                    <div className="inline-flex items-center text-xs text-orange-600">
+                      <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-1"></div>
+                      Live Data
+                    </div>
                   </div>
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Zap className="h-6 w-6 text-orange-600" />
+                    <Trophy className="h-6 w-6 text-orange-600" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Available Exams */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3" id="available-exams">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
                   RN Exam Schedule
@@ -1040,6 +1071,13 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Taken Exams Section */}
+              <ExamHistory 
+                attempts={userAttempts} 
+                loading={attemptsLoading}
+                onRefresh={loadUserAttempts}
+              />
 
               {/* Recent Activity */}
               {recentActivity && recentActivity.length > 0 && (

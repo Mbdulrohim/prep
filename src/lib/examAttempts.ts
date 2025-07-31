@@ -45,15 +45,17 @@ export interface ExamAttempt {
 }
 
 export interface Question {
-  id: string;
+  id: string | number;
   text: string;
   options: string[];
   correctAnswer: number;
   explanation: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  topics: string[];
-  category: string;
-  paper: string;
+  examId?: string;
+  category?: string;
+  difficulty?: string;
+  topics?: string[];
+  paper?: string;
+  flagged?: boolean;
 }
 
 export interface UserAccess {

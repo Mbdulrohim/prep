@@ -85,7 +85,7 @@ Original Repository: https://github.com/Mbdulrohim/prep
    Fill in your actual values in `.env.local`:
    - Firebase configuration
    - Payment gateway credentials
-   - OpenAI API key (optional)
+   - OpenAI API key (optional - for AI explanations)
 
 4. **Firebase Setup**
    - Create a Firebase project
