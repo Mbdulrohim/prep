@@ -29,7 +29,7 @@ interface NewExamFlowProps {
 }
 
 export function NewExamFlow({ examId }: NewExamFlowProps) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const {
     questions,
@@ -236,11 +236,12 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
         id: `${user.uid}_${examId}_${Date.now()}`,
         userId: user.uid,
         userEmail: user.email || "",
-        userName: user.displayName || user.email?.split("@")[0] || "Student",
-        userUniversity: "Unknown", // You might want to get this from user profile
+        userName: userProfile?.displayName || user.displayName || user.email?.split("@")[0] || "Student",
+        userUniversity: userProfile?.university || "Not specified",
+        universityId: userProfile?.university || "not-specified", // Add standardized university ID for ranking
         examId,
-        examCategory: "RN", // You might want to determine this dynamically
-        paper: "paper-1", // You might want to determine this dynamically
+        examCategory: examId.includes("rn") ? "RN" : examId.includes("rm") ? "RM" : "RPHN", // Dynamic category detection
+        paper: examId.includes("paper-2") ? "paper-2" : "paper-1", // Dynamic paper detection
         assignedQuestions: questions, // Using assignedQuestions instead of questions
         userAnswers,
         flaggedQuestions: questions.map((q, index) => q.flagged ? index : -1).filter(i => i !== -1),

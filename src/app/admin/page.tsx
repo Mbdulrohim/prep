@@ -12,6 +12,7 @@ import { examAttemptManager } from "@/lib/examAttempts";
 import { useRealTimeAdminData } from "@/hooks/useRealTimeData";
 import { db } from "@/lib/firebase";
 import { feedbackManager, type Feedback } from "@/lib/feedback";
+import { universityRankingManager } from "@/lib/universityRankings";
 import {
   collection,
   getDocs,
@@ -49,6 +50,7 @@ import {
   Calendar,
   Filter,
   Key,
+  Star,
 } from "lucide-react";
 
 // Admin access control
@@ -294,67 +296,33 @@ export default function AdminDashboard() {
 
   const loadUniversityRankings = async () => {
     try {
-      const attemptsQuery = query(
-        collection(db, "examAttempts"),
-        where("completed", "==", true)
+      const newRankings = await universityRankingManager.calculateUniversityRankings();
+      
+      // Convert new ranking format to the format expected by the admin panel
+      const convertedRankings: UniversityRanking[] = await Promise.all(
+        newRankings.map(async (ranking) => {
+          // Get top performers for this university
+          const topPerformers = await universityRankingManager.getTopPerformersByUniversity(ranking.universityId);
+          const topPerformer = topPerformers[0] || { name: "No data", score: 0 };
+          
+          // Get category breakdown for this university
+          const categoryBreakdown = await universityRankingManager.getCategoryBreakdownByUniversity(ranking.universityId);
+          
+          return {
+            university: ranking.universityName,
+            totalStudents: ranking.totalStudents,
+            averageScore: ranking.averageScore,
+            totalAttempts: ranking.totalAttempts,
+            topStudent: {
+              name: topPerformer.name,
+              score: topPerformer.score
+            },
+            categories: categoryBreakdown
+          };
+        })
       );
-      const snapshot = await getDocs(attemptsQuery);
-
-      const universityData = new Map<
-        string,
-        {
-          students: Set<string>;
-          totalScore: number;
-          totalAttempts: number;
-          topScore: number;
-          topStudent: string;
-          categories: { RN: number; RM: number; RPHN: number };
-        }
-      >();
-
-      snapshot.docs.forEach((doc) => {
-        const attempt = doc.data();
-        const university = attempt.userUniversity || "Unknown";
-
-        if (!universityData.has(university)) {
-          universityData.set(university, {
-            students: new Set(),
-            totalScore: 0,
-            totalAttempts: 0,
-            topScore: 0,
-            topStudent: "",
-            categories: { RN: 0, RM: 0, RPHN: 0 },
-          });
-        }
-
-        const data = universityData.get(university)!;
-        data.students.add(attempt.userId);
-        data.totalScore += attempt.score || 0;
-        data.totalAttempts++;
-        data.categories[attempt.examCategory as keyof typeof data.categories]++;
-
-        if ((attempt.score || 0) > data.topScore) {
-          data.topScore = attempt.score || 0;
-          data.topStudent = attempt.userName || "Unknown";
-        }
-      });
-
-      const rankings: UniversityRanking[] = Array.from(universityData.entries())
-        .map(([university, data]) => ({
-          university,
-          totalStudents: data.students.size,
-          averageScore:
-            data.totalAttempts > 0 ? data.totalScore / data.totalAttempts : 0,
-          totalAttempts: data.totalAttempts,
-          topStudent: {
-            name: data.topStudent,
-            score: data.topScore,
-          },
-          categories: data.categories,
-        }))
-        .sort((a, b) => b.averageScore - a.averageScore);
-
-      setRankings(rankings);
+      
+      setRankings(convertedRankings);
     } catch (error) {
       console.error("Error loading university rankings:", error);
     }
@@ -366,6 +334,20 @@ export default function AdminDashboard() {
       setFeedbackList(feedback);
     } catch (error) {
       console.error("Error loading feedback:", error);
+    }
+  };
+
+  const updateFeedbackStatus = async (
+    feedbackId: string,
+    status: "new" | "in-review" | "resolved" | "dismissed"
+  ) => {
+    try {
+      await feedbackManager.updateFeedbackStatus(feedbackId, status);
+      // Refresh feedback list
+      await loadFeedback();
+      console.log(`Feedback ${feedbackId} status updated to ${status}`);
+    } catch (error) {
+      console.error("Error updating feedback status:", error);
     }
   };
 
@@ -1991,7 +1973,7 @@ export default function AdminDashboard() {
 
               {/* Feedback List */}
               <div className="space-y-4">
-                {feedbackList.length === 0 ? (
+                {(liveFeedback || feedbackList).length === 0 ? (
                   <div className="text-center py-12">
                     <MessageCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -2002,19 +1984,30 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 ) : (
-                  feedbackList.map((feedback) => (
+                  (liveFeedback || feedbackList).map((feedback) => (
                     <div
                       key={feedback.id}
-                      className="border border-gray-200 rounded-lg p-4"
+                      className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
                     >
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="font-medium text-gray-900">
-                              {feedback.userEmail || "Anonymous"}
-                            </span>
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="font-medium text-gray-900">
+                              {feedback.userName || "Anonymous User"}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {feedback.userEmail}
+                            </div>
+                            {feedback.university && feedback.university !== "Not specified" && (
+                              <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                {feedback.university}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 mb-3">
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-3 py-1 text-xs font-medium rounded-full ${
                                 feedback.type === "bug"
                                   ? "bg-red-100 text-red-800"
                                   : feedback.type === "feature"
@@ -2028,10 +2021,10 @@ export default function AdminDashboard() {
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              {feedback.type}
+                              {feedback.type.charAt(0).toUpperCase() + feedback.type.slice(1)}
                             </span>
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-3 py-1 text-xs font-medium rounded-full ${
                                 feedback.status === "new"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : feedback.status === "in-review"
@@ -2043,26 +2036,116 @@ export default function AdminDashboard() {
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              {feedback.status}
+                              {feedback.status === "in-review" ? "In Review" : feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                            </span>
+                            <span
+                              className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                feedback.priority === "urgent"
+                                  ? "bg-red-100 text-red-800"
+                                  : feedback.priority === "high"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : feedback.priority === "medium"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {feedback.priority.charAt(0).toUpperCase() + feedback.priority.slice(1)} Priority
                             </span>
                             {feedback.rating && (
-                              <div className="flex items-center">
-                                <span className="text-sm text-gray-500 mr-1">
-                                  Rating:
-                                </span>
-                                <span className="text-sm font-medium">
+                              <div className="flex items-center bg-blue-50 px-2 py-1 rounded">
+                                <Star className="h-3 w-3 text-yellow-500 fill-current mr-1" />
+                                <span className="text-xs font-medium text-blue-800">
                                   {feedback.rating}/5
                                 </span>
                               </div>
                             )}
                           </div>
-                          <p className="text-gray-700 mb-2">
+
+                          {feedback.subject && (
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              {feedback.subject}
+                            </h4>
+                          )}
+                          
+                          <div className="text-gray-700 mb-3 whitespace-pre-wrap">
                             {feedback.message}
-                          </p>
-                          <div className="text-sm text-gray-500">
-                            {feedback.createdAt?.toLocaleDateString()}{" "}
-                            {feedback.createdAt?.toLocaleTimeString()}
                           </div>
+
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center space-x-4">
+                              <div>
+                                Category: <span className="font-medium">{feedback.category}</span>
+                              </div>
+                              <div>
+                                {new Date(feedback.createdAt).toLocaleDateString()} at{" "}
+                                {new Date(feedback.createdAt).toLocaleTimeString()}
+                              </div>
+                              {feedback.examId && (
+                                <div className="text-blue-600">
+                                  Exam: {feedback.examId}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Admin Response */}
+                          {feedback.adminResponse && (
+                            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex items-start">
+                                <div className="flex-shrink-0">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <MessageCircle className="h-4 w-4 text-blue-600" />
+                                  </div>
+                                </div>
+                                <div className="ml-3 flex-1">
+                                  <div className="text-sm font-medium text-blue-900 mb-1">
+                                    Admin Response
+                                  </div>
+                                  <div className="text-sm text-blue-800">
+                                    {feedback.adminResponse}
+                                  </div>
+                                  {feedback.respondedAt && (
+                                    <div className="text-xs text-blue-600 mt-1">
+                                      Responded on {new Date(feedback.respondedAt).toLocaleDateString()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Admin Actions */}
+                        <div className="flex flex-col space-y-2 ml-4">
+                          {feedback.status === "new" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateFeedbackStatus(feedback.id, "in-review")}
+                              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                            >
+                              Start Review
+                            </Button>
+                          )}
+                          {feedback.status !== "resolved" && (
+                            <Button
+                              size="sm"
+                              onClick={() => updateFeedbackStatus(feedback.id, "resolved")}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Mark Resolved
+                            </Button>
+                          )}
+                          {feedback.status !== "dismissed" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateFeedbackStatus(feedback.id, "dismissed")}
+                              className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                            >
+                              Dismiss
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

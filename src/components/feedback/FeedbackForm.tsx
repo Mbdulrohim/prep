@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { feedbackManager } from "@/lib/feedback";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Star, Send, X } from "lucide-react";
+import { Star, Send, X, AlertTriangle } from "lucide-react";
 
 interface FeedbackFormProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export function FeedbackForm({
   const { user, userProfile } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
@@ -80,24 +81,37 @@ export function FeedbackForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !userProfile) return;
+    if (!user || !userProfile) {
+      setError("Please sign in to submit feedback");
+      return;
+    }
+
+    if (!formData.subject.trim() || !formData.message.trim()) {
+      setError("Please fill in both subject and message fields");
+      return;
+    }
 
     setSubmitting(true);
+    setError(null);
+    
     try {
-      await feedbackManager.submitFeedback({
+      const feedbackId = await feedbackManager.submitFeedback({
         userId: user.uid,
         userEmail: user.email || "",
         userName: userProfile.displayName || user.email || "Anonymous",
         university: userProfile.university || "Not specified",
         type: formData.type as any,
         category: formData.category,
-        subject: formData.subject,
-        message: formData.message,
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
         rating: rating > 0 ? rating : undefined,
         examId,
       });
 
+      console.log("Feedback submitted successfully:", feedbackId);
       setSubmitted(true);
+      
+      // Reset form and close after delay
       setTimeout(() => {
         onClose();
         setSubmitted(false);
@@ -108,9 +122,11 @@ export function FeedbackForm({
           message: "",
         });
         setRating(0);
+        setError(null);
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting feedback:", error);
+      setError(error.message || "Failed to submit feedback. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -120,6 +136,7 @@ export function FeedbackForm({
     if (!submitting) {
       onClose();
       setSubmitted(false);
+      setError(null);
       setFormData({
         type: initialType,
         category: "other",
@@ -284,6 +301,16 @@ export function FeedbackForm({
                   <strong>Exam ID:</strong> {examId}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+              <span className="text-sm text-red-800">{error}</span>
             </div>
           </div>
         )}
