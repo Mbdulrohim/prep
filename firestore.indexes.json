@@ -15,66 +15,6 @@
       ]
     },
     {
-      "collectionGroup": "examAttempts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "examAttempts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "completed",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "examAttempts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "submitted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "examAttempts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "completed",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "submitted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "examResults",
       "queryScope": "COLLECTION",
       "fields": [
@@ -85,28 +25,6 @@
         {
           "fieldPath": "completedAt",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "questions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "category",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "isActive",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "paper",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
         }
       ]
     }

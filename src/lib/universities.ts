@@ -123,14 +123,6 @@ class UniversityManager {
       verified: true,
       addedBy: "admin",
     },
-    {
-      name: "University of Ilorin",
-      shortName: "UNILORIN",
-      location: "Ilorin",
-      type: "federal",
-      verified: true,
-      addedBy: "admin",
-    },
 
     // State Universities
     {
