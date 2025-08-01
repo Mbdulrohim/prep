@@ -134,7 +134,7 @@ export function useUserStats() {
           attemptsCount: attemptsForExam.length,
           isUnlocked: true, // Add unlock logic later
           lastAttempt:
-            attemptsForExam.length > 0
+            attemptsForExam.length > 0 && attemptsForExam[0].completedAt && typeof attemptsForExam[0].completedAt.toDate === 'function'
               ? attemptsForExam[0].completedAt.toDate()
               : null,
         });
@@ -148,7 +148,9 @@ export function useUserStats() {
           id: a.id,
           type: "exam" as const,
           description: `Completed ${a.examType} exam`,
-          timestamp: a.completedAt.toDate(),
+          timestamp: a.completedAt && typeof a.completedAt.toDate === 'function' 
+            ? a.completedAt.toDate() 
+            : new Date(),
           score: a.score,
           examName: a.examType,
         }))

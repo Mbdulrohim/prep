@@ -87,7 +87,27 @@ export function ExamHistory({ attempts, loading, onRefresh }: ExamHistoryProps) 
       {attempts.length > 0 ? (
         <div className="space-y-4">
           {displayAttempts.map((attempt) => {
-            const completedAt = attempt.endTime ? new Date(attempt.endTime) : null;
+            // Safe date conversion handling Firestore timestamps
+            let completedAt = null;
+            if (attempt.endTime) {
+              try {
+                if (typeof attempt.endTime === 'object' && 'toDate' in attempt.endTime) {
+                  // Firestore timestamp
+                  completedAt = (attempt.endTime as any).toDate();
+                } else {
+                  // Regular date string/object
+                  completedAt = new Date(attempt.endTime);
+                }
+                // Validate the date
+                if (isNaN(completedAt.getTime())) {
+                  completedAt = null;
+                }
+              } catch (error) {
+                console.warn('Invalid date in exam attempt:', error);
+                completedAt = null;
+              }
+            }
+            
             const score = attempt.score || 0;
             const total = attempt.assignedQuestions?.length || 50;
             const percentage = attempt.percentage || 0;
@@ -107,7 +127,10 @@ export function ExamHistory({ attempts, loading, onRefresh }: ExamHistoryProps) 
                         <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                           <span className="flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {completedAt ? format(completedAt, 'MMM dd, yyyy') : 'In Progress'}
+                            {completedAt && completedAt instanceof Date && !isNaN(completedAt.getTime()) 
+                              ? format(completedAt, 'MMM dd, yyyy') 
+                              : 'In Progress'
+                            }
                           </span>
                           <span className="flex items-center">
                             <Clock className="h-3 w-3 mr-1" />

@@ -1048,6 +1048,16 @@ export default function DashboardPage() {
                 </h3>
                 <div className="space-y-3">
                   <Button
+                    onClick={() => router.push("/weekly-assessment")}
+                    className="w-full justify-start bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Weekly Assessment
+                    <span className="ml-auto bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                      New
+                    </span>
+                  </Button>
+                  <Button
                     onClick={() => setShowLeaderboard(true)}
                     variant="outline"
                     className="w-full justify-start"
@@ -1094,9 +1104,12 @@ export default function DashboardPage() {
                             {activity.description}
                           </p>
                           <p className="text-gray-500 text-xs">
-                            {formatDistanceToNow(new Date(activity.timestamp), {
-                              addSuffix: true,
-                            })}
+                            {activity.timestamp && activity.timestamp instanceof Date
+                              ? formatDistanceToNow(activity.timestamp, {
+                                  addSuffix: true,
+                                })
+                              : "Recently"
+                            }
                           </p>
                         </div>
                       </div>

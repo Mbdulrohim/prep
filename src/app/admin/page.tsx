@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/Button";
 import { Alert, useToast } from "@/components/ui/Alert";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
 import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
+import { WeeklyAssessmentCreator } from "@/components/admin/WeeklyAssessmentCreator";
 import { ParsedQuestion } from "@/lib/documentParser";
 import { examAttemptManager } from "@/lib/examAttempts";
+import { weeklyAssessmentManager } from "@/lib/weeklyAssessments";
 import { useRealTimeAdminData } from "@/hooks/useRealTimeData";
 import { db } from "@/lib/firebase";
 import { feedbackManager, type Feedback } from "@/lib/feedback";
@@ -51,6 +53,8 @@ import {
   Filter,
   Key,
   Star,
+  X,
+  CheckCircle,
 } from "lucide-react";
 
 // Admin access control
@@ -116,6 +120,7 @@ export default function AdminDashboard() {
     | "feedback"
     | "universities"
     | "access-codes"
+    | "weekly-assessments"
   >("overview");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -145,6 +150,13 @@ export default function AdminDashboard() {
   }>({});
   const [schedulingLoading, setSchedulingLoading] = useState(false);
 
+  // Weekly Assessment state
+  const [currentWeeklyAssessment, setCurrentWeeklyAssessment] = useState<any>(null);
+  const [previousWeeklyAssessments, setPreviousWeeklyAssessments] = useState<any[]>([]);
+  const [weeklyAssessmentStats, setWeeklyAssessmentStats] = useState<any>({});
+  const [showCreateWeeklyAssessment, setShowCreateWeeklyAssessment] = useState(false);
+  const [showWeeklyAssessmentStats, setShowWeeklyAssessmentStats] = useState(false);
+
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
   
@@ -171,6 +183,7 @@ export default function AdminDashboard() {
         loadStats(),
         loadUniversityRankings(),
         loadFeedback(),
+        loadWeeklyAssessments(),
       ]);
     } catch (error) {
       console.error("Error loading admin data:", error);
@@ -334,6 +347,18 @@ export default function AdminDashboard() {
       setFeedbackList(feedback);
     } catch (error) {
       console.error("Error loading feedback:", error);
+    }
+  };
+
+  const loadWeeklyAssessments = async () => {
+    try {
+      const current = await weeklyAssessmentManager.getCurrentWeeklyAssessment();
+      const previous = await weeklyAssessmentManager.getPreviousWeeklyAssessments();
+      
+      setCurrentWeeklyAssessment(current);
+      setPreviousWeeklyAssessments(previous);
+    } catch (error) {
+      console.error("Error loading weekly assessments:", error);
     }
   };
 
@@ -806,6 +831,79 @@ export default function AdminDashboard() {
     }));
   };
 
+  // Weekly Assessment functions
+  const deactivateCurrentAssessment = async () => {
+    if (!confirm("Are you sure you want to deactivate the current weekly assessment? Students will no longer be able to take it.")) {
+      return;
+    }
+
+    try {
+      await weeklyAssessmentManager.deactivateCurrentAssessment();
+      setCurrentWeeklyAssessment(null);
+      await loadWeeklyAssessments(); // Refresh the data
+      showToast({
+        type: "success",
+        title: "Assessment Deactivated",
+        message: "The current weekly assessment has been deactivated successfully.",
+      });
+    } catch (error) {
+      console.error("Error deactivating assessment:", error);
+      showToast({
+        type: "error",
+        title: "Deactivation Failed",
+        message: "Failed to deactivate the assessment. Please try again.",
+      });
+    }
+  };
+
+  const viewAssessmentStats = async (assessmentId: string) => {
+    try {
+      const stats = await weeklyAssessmentManager.getWeeklyAssessmentStats(assessmentId);
+      setWeeklyAssessmentStats(stats);
+      setShowWeeklyAssessmentStats(true);
+    } catch (error) {
+      console.error("Error loading assessment stats:", error);
+      showToast({
+        type: "error",
+        title: "Stats Loading Failed",
+        message: "Failed to load assessment statistics. Please try again.",
+      });
+    }
+  };
+
+  const reactivateAssessment = async (assessmentId: string) => {
+    if (!confirm("Are you sure you want to reactivate this assessment? This will deactivate the current active assessment if any.")) {
+      return;
+    }
+
+    try {
+      await weeklyAssessmentManager.reactivateAssessment(assessmentId);
+      await loadWeeklyAssessments(); // Refresh the data
+      showToast({
+        type: "success",
+        title: "Assessment Reactivated",
+        message: "The assessment has been reactivated successfully.",
+      });
+    } catch (error) {
+      console.error("Error reactivating assessment:", error);
+      showToast({
+        type: "error",
+        title: "Reactivation Failed",
+        message: "Failed to reactivate the assessment. Please try again.",
+      });
+    }
+  };
+
+  const handleWeeklyAssessmentCreated = async (assessmentId: string) => {
+    setShowCreateWeeklyAssessment(false);
+    await loadWeeklyAssessments(); // Refresh the data
+    showToast({
+      type: "success",
+      title: "Assessment Created",
+      message: "Weekly assessment has been created and activated successfully.",
+    });
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -848,6 +946,7 @@ export default function AdminDashboard() {
     { id: "questions", label: "Manage Questions", icon: Database },
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
+    { id: "weekly-assessments", label: "Weekly Assessments", icon: Calendar },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -2238,6 +2337,156 @@ export default function AdminDashboard() {
               <AccessCodeManager createdBy={user?.email || "admin"} />
             </div>
           )}
+
+          {/* Weekly Assessments Tab */}
+          {activeTab === "weekly-assessments" && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Weekly Assessment Management
+                  </h2>
+                  <p className="text-gray-600">
+                    Create and manage weekly assessments for students. Each assessment has 150 questions and a 90-minute time limit.
+                  </p>
+                </div>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setShowCreateWeeklyAssessment(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Assessment
+                </Button>
+              </div>
+
+              {/* Current Weekly Assessment */}
+              {currentWeeklyAssessment ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-900">
+                        Current Weekly Assessment
+                      </h3>
+                      <p className="text-blue-700 font-medium">
+                        {currentWeeklyAssessment.title}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-blue-600">Created:</p>
+                      <p className="text-sm font-medium text-blue-900">
+                        {new Date(currentWeeklyAssessment.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-sm text-gray-600">Questions</p>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentWeeklyAssessment.questions.length}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-sm text-gray-600">Time Limit</p>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentWeeklyAssessment.timeLimit} mins
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-sm text-gray-600">Attempts</p>
+                      <p className="text-xl font-bold text-gray-900">
+                        {weeklyAssessmentStats.totalAttempts || 0}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowWeeklyAssessmentStats(true)}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Statistics
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={deactivateCurrentAssessment}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Deactivate
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 mb-6 text-center">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Active Weekly Assessment
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Create a new weekly assessment to get started. Students will be able to take the assessment once it's published.
+                  </p>
+                  <Button
+                    onClick={() => setShowCreateWeeklyAssessment(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Create Your First Assessment
+                  </Button>
+                </div>
+              )}
+
+              {/* Previous Assessments */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Previous Assessments
+                </h3>
+                {previousWeeklyAssessments.length > 0 ? (
+                  <div className="space-y-4">
+                    {previousWeeklyAssessments.map((assessment) => (
+                      <div key={assessment.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">
+                              {assessment.title}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Created: {new Date(assessment.createdAt).toLocaleDateString()} • 
+                              {assessment.questions.length} questions • {assessment.timeLimit} minutes
+                            </p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => viewAssessmentStats(assessment.id)}
+                            >
+                              <BarChart3 className="h-4 w-4 mr-1" />
+                              Stats
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => reactivateAssessment(assessment.id)}
+                              className="text-green-600 border-green-300 hover:bg-green-50"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Reactivate
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-gray-600">No previous assessments</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2261,6 +2510,16 @@ export default function AdminDashboard() {
             setShowAddQuestion(false);
           }}
           onCancel={() => setShowAddQuestion(false)}
+        />
+      )}
+
+      {/* Weekly Assessment Creator Modal */}
+      {showCreateWeeklyAssessment && (
+        <WeeklyAssessmentCreator
+          isOpen={showCreateWeeklyAssessment}
+          onClose={() => setShowCreateWeeklyAssessment(false)}
+          onSuccess={handleWeeklyAssessmentCreated}
+          createdBy={user?.email || "admin"}
         />
       )}
 

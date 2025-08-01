@@ -100,6 +100,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Weekly assessments - only admins can manage, authenticated users can read
+    match /weeklyAssessments/{assessmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Weekly assessment attempts - users can manage their own attempts, admins can read all
+    match /weeklyAssessmentAttempts/{attemptId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;
