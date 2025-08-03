@@ -8,6 +8,8 @@ import { Alert, useToast } from "@/components/ui/Alert";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
 import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
 import { WeeklyAssessmentCreator } from "@/components/admin/WeeklyAssessmentCreator";
+import { AdvancedWeeklyAssessmentManager } from "@/components/admin/AdvancedWeeklyAssessmentManager";
+import StandaloneWeeklyAssessmentAdmin from "../../components/admin/StandaloneWeeklyAssessmentAdmin";
 import { ParsedQuestion } from "@/lib/documentParser";
 import { examAttemptManager } from "@/lib/examAttempts";
 import { weeklyAssessmentManager } from "@/lib/weeklyAssessments";
@@ -55,6 +57,7 @@ import {
   Star,
   X,
   CheckCircle,
+  ToggleRight,
 } from "lucide-react";
 
 // Admin access control
@@ -121,6 +124,7 @@ export default function AdminDashboard() {
     | "universities"
     | "access-codes"
     | "weekly-assessments"
+    | "standalone-weekly-assessments"
   >("overview");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -155,6 +159,7 @@ export default function AdminDashboard() {
   const [previousWeeklyAssessments, setPreviousWeeklyAssessments] = useState<any[]>([]);
   const [weeklyAssessmentStats, setWeeklyAssessmentStats] = useState<any>({});
   const [showCreateWeeklyAssessment, setShowCreateWeeklyAssessment] = useState(false);
+  const [showAdvancedWeeklyManager, setShowAdvancedWeeklyManager] = useState(false);
   const [showWeeklyAssessmentStats, setShowWeeklyAssessmentStats] = useState(false);
 
   // Check if user is admin
@@ -947,6 +952,7 @@ export default function AdminDashboard() {
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
     { id: "weekly-assessments", label: "Weekly Assessments", icon: Calendar },
+    { id: "standalone-weekly-assessments", label: "Standalone Weekly", icon: Target },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -2347,16 +2353,58 @@ export default function AdminDashboard() {
                     Weekly Assessment Management
                   </h2>
                   <p className="text-gray-600">
-                    Create and manage weekly assessments for students. Each assessment has 150 questions and a 90-minute time limit.
+                    Create and manage weekly assessments with flexible scheduling and advanced controls.
                   </p>
                 </div>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => setShowCreateWeeklyAssessment(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Assessment
-                </Button>
+                <div className="flex space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAdvancedWeeklyManager(true)}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Advanced Manager
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setShowCreateWeeklyAssessment(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Quick Create
+                  </Button>
+                </div>
+              </div>
+
+              {/* Feature Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center mb-3">
+                    <Calendar className="h-6 w-6 text-blue-600 mr-2" />
+                    <h3 className="font-semibold text-blue-900">Flexible Scheduling</h3>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Set precise start and end times for assessment availability with timezone support.
+                  </p>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center mb-3">
+                    <ToggleRight className="h-6 w-6 text-green-600 mr-2" />
+                    <h3 className="font-semibold text-green-900">Master Toggle</h3>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    Instantly enable or disable assessments with one-click override controls.
+                  </p>
+                </div>
+
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-center mb-3">
+                    <Clock className="h-6 w-6 text-orange-600 mr-2" />
+                    <h3 className="font-semibold text-orange-900">Custom Duration</h3>
+                  </div>
+                  <p className="text-sm text-orange-700">
+                    Set custom time limits and question counts for each assessment.
+                  </p>
+                </div>
               </div>
 
               {/* Current Weekly Assessment */}
@@ -2487,6 +2535,13 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* Standalone Weekly Assessments Tab */}
+          {activeTab === "standalone-weekly-assessments" && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <StandaloneWeeklyAssessmentAdmin user={user} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -2518,6 +2573,16 @@ export default function AdminDashboard() {
         <WeeklyAssessmentCreator
           isOpen={showCreateWeeklyAssessment}
           onClose={() => setShowCreateWeeklyAssessment(false)}
+          onSuccess={handleWeeklyAssessmentCreated}
+          createdBy={user?.email || "admin"}
+        />
+      )}
+
+      {/* Advanced Weekly Assessment Manager Modal */}
+      {showAdvancedWeeklyManager && (
+        <AdvancedWeeklyAssessmentManager
+          isOpen={showAdvancedWeeklyManager}
+          onClose={() => setShowAdvancedWeeklyManager(false)}
           onSuccess={handleWeeklyAssessmentCreated}
           createdBy={user?.email || "admin"}
         />

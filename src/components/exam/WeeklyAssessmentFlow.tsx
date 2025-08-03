@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
+import { Calculator, CalculatorToggle } from "@/components/ui/Calculator";
+import { useCalculator } from "@/hooks/useCalculator";
 import { weeklyAssessmentManager } from "@/lib/weeklyAssessments";
 import { shuffleQuestions } from "@/lib/questionBank";
 import {
@@ -40,6 +42,9 @@ export const WeeklyAssessmentFlow: React.FC<WeeklyAssessmentFlowProps> = ({
 }) => {
   const { user, userProfile } = useAuth();
   const router = useRouter();
+  
+  // Calculator hook
+  const { isCalculatorOpen, openCalculator, closeCalculator, toggleCalculator } = useCalculator();
 
   // Assessment state
   const [questions, setQuestions] = useState<any[]>([]);
@@ -368,6 +373,9 @@ export const WeeklyAssessmentFlow: React.FC<WeeklyAssessmentFlowProps> = ({
                 )}
               </div>
 
+              {/* Calculator Toggle */}
+              <CalculatorToggle onClick={toggleCalculator} />
+
               <Button onClick={handleSubmitAssessment} variant="outline">
                 Submit Assessment
               </Button>
@@ -686,6 +694,13 @@ export const WeeklyAssessmentFlow: React.FC<WeeklyAssessmentFlowProps> = ({
           </div>
         </div>
       )}
+
+      {/* Calculator */}
+      <Calculator 
+        isOpen={isCalculatorOpen} 
+        onClose={closeCalculator}
+        position="floating"
+      />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useExam } from "@/context/ExamContext";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
+import { Calculator, CalculatorToggle } from "@/components/ui/Calculator";
+import { useCalculator } from "@/hooks/useCalculator";
 import { examAttemptManager } from "@/lib/examAttempts";
 import { db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
@@ -41,6 +43,9 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
     loadingQuestions,
     examDetails,
   } = useExam();
+
+  // Calculator hook
+  const { isCalculatorOpen, openCalculator, closeCalculator, toggleCalculator } = useCalculator();
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -369,6 +374,9 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                 )}
               </div>
 
+              {/* Calculator Toggle */}
+              <CalculatorToggle onClick={toggleCalculator} />
+
               <Button onClick={handleSubmitExam} variant="outline">
                 Submit Exam
               </Button>
@@ -689,6 +697,13 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
           </div>
         </div>
       )}
+
+      {/* Calculator */}
+      <Calculator 
+        isOpen={isCalculatorOpen} 
+        onClose={closeCalculator}
+        position="floating"
+      />
     </div>
   );
 }

@@ -255,6 +255,14 @@ export default function WeeklyAssessmentResultsPage() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
+                onClick={() => router.push(`/weekly-assessment/review?attemptId=${results.id}&assessmentId=${results.assessmentId || 'current'}`)}
+                className="bg-green-600 hover:bg-green-700 flex-1"
+              >
+                <Trophy className="h-5 w-5 mr-2" />
+                Review Answers
+              </Button>
+              
+              <Button
                 onClick={() => router.push("/weekly-assessment/leaderboard")}
                 className="bg-purple-600 hover:bg-purple-700 flex-1"
               >

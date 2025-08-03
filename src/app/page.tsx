@@ -18,6 +18,7 @@ import {
   Eye,
   Clock,
   Shield,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -90,8 +91,49 @@ export default function HomePage() {
           {/* Exam Categories - Prominently Displayed */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-center text-slate-800 mb-8">
-              Choose Your Exam Category
+              Choose Your Study Path
             </h2>
+            
+            {/* Weekly Assessment - Featured */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-2xl shadow-xl text-white p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <Calendar className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">Weekly Assessment</h3>
+                      <p className="text-purple-100">
+                        Test your knowledge with our standalone weekly challenge
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">150 Questions</div>
+                    <div className="text-xs text-purple-200">90 Minutes</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                    <div>
+                      <div className="font-bold">Unlimited</div>
+                      <div className="text-purple-200">Attempts</div>
+                    </div>
+                    <div>
+                      <div className="font-bold">AI-Powered</div>
+                      <div className="text-purple-200">Explanations</div>
+                    </div>
+                    <div>
+                      <div className="font-bold">Always</div>
+                      <div className="text-purple-200">Available</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {/* RN Category - Available */}
               <Link href="/category/rn" className="block group">
@@ -369,8 +411,19 @@ export default function HomePage() {
                 10,000+ Practice Questions
               </h3>
               <p className="text-slate-600">
-                Comprehensive question bank covering RN, RM, and RPHN categories
-                with detailed explanations
+                Comprehensive question bank covering RN, RM, and RPHN categories plus weekly assessments
+              </p>
+            </div>
+
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">
+                Weekly Assessments
+              </h3>
+              <p className="text-slate-600">
+                Standalone weekly challenges with AI-powered explanations and unlimited reviews
               </p>
             </div>
 
@@ -435,6 +488,12 @@ export default function HomePage() {
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span className="text-slate-700">
                     Both Paper 1 & Paper 2 included
+                  </span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span className="text-slate-700">
+                    Weekly Assessment challenges
                   </span>
                 </li>
                 <li className="flex items-center space-x-3">

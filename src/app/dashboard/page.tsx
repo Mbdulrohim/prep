@@ -7,7 +7,6 @@ import { CodeRedemptionForm } from "@/components/dashboard/CodeRedemptionForm";
 import { UserProfileSetup } from "@/components/profile/UserProfileSetup";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
-import { ExamHistory } from "@/components/dashboard/ExamHistory";
 import {
   CreditCard,
   BarChart,
@@ -1047,16 +1046,18 @@ export default function DashboardPage() {
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
+                  {/* Weekly Assessment - Featured at Top */}
                   <Button
                     onClick={() => router.push("/weekly-assessment")}
-                    className="w-full justify-start bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full justify-start bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg"
                   >
                     <Calendar className="h-4 w-4 mr-2" />
                     Weekly Assessment
-                    <span className="ml-auto bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                      New
+                    <span className="ml-auto bg-white/20 text-white text-xs px-2 py-1 rounded-full">
+                      Featured
                     </span>
                   </Button>
+                  
                   <Button
                     onClick={() => setShowLeaderboard(true)}
                     variant="outline"
@@ -1082,13 +1083,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Taken Exams Section */}
-              <ExamHistory 
-                attempts={userAttempts} 
-                loading={attemptsLoading}
-                onRefresh={loadUserAttempts}
-              />
-
+              {/* Taken Exams Section - REMOVED */}
+              
               {/* Recent Activity */}
               {recentActivity && recentActivity.length > 0 && (
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">

@@ -1,4 +1,5 @@
 rules_version = '2';
+// Updated: 2025-08-03 - Added standalone weekly assessments support
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -108,6 +109,19 @@ service cloud.firestore {
 
     // Weekly assessment attempts - users can manage their own attempts, admins can read all
     match /weeklyAssessmentAttempts/{attemptId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Standalone weekly assessments - only admins can manage, authenticated users can read
+    match /standaloneWeeklyAssessments/{assessmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Standalone weekly assessment attempts - users can manage their own attempts, admins can read all
+    match /standaloneAssessmentAttempts/{attemptId} {
       allow read: if isAuthenticated() || isAdmin();
       allow create, update: if isAuthenticated();
       allow delete: if isAdmin();

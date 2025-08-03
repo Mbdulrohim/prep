@@ -6,13 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { AlertTriangle } from "lucide-react";
-import { examAttemptManager, ExamAttempt } from "@/lib/examAttempts";
+import { standaloneWeeklyAssessmentManager, StandaloneAssessmentAttempt, StandaloneWeeklyAssessment } from "@/lib/standaloneWeeklyAssessments";
 import UnifiedExamReviewFlow from "@/components/exam/UnifiedExamReviewFlow";
 
 interface ReviewData {
   id: string;
-  examId: string;
-  examTitle: string;
+  assessmentId: string;
+  assessmentTitle: string;
   questions: any[];
   userAnswers: (number | null)[];
   score: number;
@@ -20,14 +20,13 @@ interface ReviewData {
   timeSpent: number;
 }
 
-export default function ExamReviewPage() {
+export default function WeeklyAssessmentReviewPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
 
-  const examId = params.examId as string;
   const attemptId = searchParams.get('attemptId');
+  const assessmentId = searchParams.get('assessmentId');
 
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,33 +34,53 @@ export default function ExamReviewPage() {
 
   useEffect(() => {
     loadReviewData();
-  }, [attemptId, user]);
+  }, [attemptId, assessmentId, user]);
 
   const loadReviewData = async () => {
     try {
       setLoading(true);
 
-      if (!user?.uid || !attemptId) {
-        setError("Invalid review request");
+      if (!user?.uid || !attemptId || !assessmentId) {
+        setError("Invalid review request - missing parameters");
         return;
       }
 
-      const attempt = await examAttemptManager.getExamAttemptForReview(attemptId, user.uid);
+      // First check if the assessment is still available for review
+      const assessmentAvailable = await standaloneWeeklyAssessmentManager.isAssessmentAvailable(assessmentId);
+      
+      // Also check if this is the current active assessment (users can always review current assessment)
+      const currentAssessment = await standaloneWeeklyAssessmentManager.getCurrentStandaloneAssessment();
+      const isCurrentAssessment = currentAssessment?.id === assessmentId;
 
-      if (!attempt) {
-        setError("Exam attempt not found");
+      if (!assessmentAvailable && !isCurrentAssessment) {
+        setError("This assessment is no longer available for review");
+        return;
+      }
+
+      // Get the assessment data
+      const assessment = await standaloneWeeklyAssessmentManager.getStandaloneAssessmentById(assessmentId);
+      if (!assessment) {
+        setError("Assessment not found");
+        return;
+      }
+
+      // Get user's attempt data with security check
+      const userAttempt = await standaloneWeeklyAssessmentManager.getStandaloneAssessmentAttemptForReview(attemptId, user.uid);
+
+      if (!userAttempt) {
+        setError("Assessment attempt not found or access denied");
         return;
       }
 
       setReviewData({
-        id: attempt.id,
-        examId: attempt.examId,
-        examTitle: attempt.examId, // You might want to fetch the actual title
-        questions: attempt.assignedQuestions,
-        userAnswers: attempt.userAnswers,
-        score: attempt.score,
-        totalQuestions: attempt.assignedQuestions.length,
-        timeSpent: attempt.timeSpent || 0,
+        id: userAttempt.id,
+        assessmentId: assessment.id,
+        assessmentTitle: assessment.title,
+        questions: assessment.questions,
+        userAnswers: userAttempt.userAnswers,
+        score: userAttempt.score,
+        totalQuestions: userAttempt.totalQuestions,
+        timeSpent: userAttempt.timeSpent,
       });
 
     } catch (error) {
@@ -94,11 +113,11 @@ export default function ExamReviewPage() {
           <div className="text-center max-w-md">
             <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Error Loading Review
+              Review Unavailable
             </h1>
             <p className="text-gray-600 mb-6">{error}</p>
-            <Button onClick={() => router.push("/dashboard")}>
-              Back to Dashboard
+            <Button onClick={() => router.push("/weekly-assessment")}>
+              Back to Weekly Assessment
             </Button>
           </div>
         </div>
@@ -109,13 +128,13 @@ export default function ExamReviewPage() {
   // Use the unified review component (Golden Standard)
   return (
     <UnifiedExamReviewFlow
-      examTitle={reviewData.examTitle}
+      examTitle={`${reviewData.assessmentTitle} - Review`}
       questions={reviewData.questions}
       userAnswers={reviewData.userAnswers}
       score={reviewData.score}
       totalQuestions={reviewData.totalQuestions}
       timeSpent={reviewData.timeSpent}
-      onBackToDashboard={() => router.push("/dashboard")}
+      onBackToDashboard={() => router.push("/weekly-assessment")}
       showHeader={true}
     />
   );

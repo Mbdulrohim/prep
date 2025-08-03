@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   setDoc,
   updateDoc,
   query,
@@ -15,18 +16,25 @@ import {
 } from "firebase/firestore";
 import { ParsedQuestion } from "./documentParser";
 
-export interface WeeklyAssessment {
+export interface StandaloneWeeklyAssessment {
   id: string;
   title: string;
   questions: ParsedQuestion[];
-  timeLimit: number; // in minutes, fixed at 90
+  timeLimit: number; // in minutes
+  totalQuestions: number;
   isActive: boolean;
   createdAt: Date;
   createdBy: string;
-  totalQuestions: number; // fixed at 150
+  // Simplified scheduling - only availability date
+  availableDate?: Date; // When assessment becomes available (if scheduled)
+  isScheduled: boolean; // Whether this assessment uses scheduled availability
+  masterToggle: boolean; // Override for instant enable/disable
+  // Standalone properties - NO exam category links
+  assessmentType: "weekly-assessment"; // Always this value
+  description?: string; // Optional description for admins
 }
 
-export interface WeeklyAssessmentAttempt {
+export interface StandaloneAssessmentAttempt {
   id: string;
   userId: string;
   userEmail: string;
@@ -51,7 +59,7 @@ export interface WeeklyAssessmentAttempt {
   updatedAt: Date;
 }
 
-export interface WeeklyAssessmentStats {
+export interface StandaloneAssessmentStats {
   assessmentId: string;
   totalAttempts: number;
   averageScore: number;
@@ -76,27 +84,43 @@ class WeeklyAssessmentManager {
   async createWeeklyAssessment(
     title: string,
     questions: ParsedQuestion[],
-    createdBy: string
+    createdBy: string,
+    options?: {
+      timeLimit?: number;
+      totalQuestions?: number;
+      availableDate?: Date;
+      isScheduled?: boolean;
+    }
   ): Promise<string> {
     try {
       // First, deactivate any current active assessment
       await this.deactivateCurrentAssessment();
 
-      // Ensure exactly 150 questions
-      const selectedQuestions = questions.slice(0, 150);
-      
-      const assessment: Omit<WeeklyAssessment, "id"> = {
+      // Use provided options or defaults
+      const timeLimit = options?.timeLimit || 90;
+      const totalQuestions =
+        options?.totalQuestions || Math.min(questions.length, 150);
+      const selectedQuestions = questions.slice(0, totalQuestions);
+
+            const assessment: Omit<StandaloneWeeklyAssessment, "id"> = {
         title,
         questions: selectedQuestions,
-        timeLimit: 90, // Fixed at 90 minutes
-        totalQuestions: 150, // Fixed at 150 questions
+        timeLimit,
+        totalQuestions,
         isActive: true,
+        isScheduled: options?.isScheduled || false,
+        masterToggle: true,
+        availableDate: options?.availableDate,
+        assessmentType: "weekly-assessment",
         createdAt: new Date(),
         createdBy,
       };
 
-      const docRef = await addDoc(collection(db, "weeklyAssessments"), assessment);
-      
+      const docRef = await addDoc(
+        collection(db, "weeklyAssessments"),
+        assessment
+      );
+
       console.log("Weekly assessment created:", docRef.id);
       return docRef.id;
     } catch (error) {
@@ -105,17 +129,54 @@ class WeeklyAssessmentManager {
     }
   }
 
-  // Get the current active weekly assessment
-  async getCurrentWeeklyAssessment(): Promise<WeeklyAssessment | null> {
+  // Get the current active weekly assessment that's available to students
+  async getCurrentWeeklyAssessment(): Promise<StandaloneWeeklyAssessment | null> {
+    try {
+      const q = query(
+        collection(db, "weeklyAssessments"),
+        where("isActive", "==", true),
+        where("masterToggle", "==", true),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        return null;
+      }
+
+      const docData = snapshot.docs[0];
+      const assessment = {
+        id: docData.id,
+        ...docData.data(),
+        createdAt: docData.data().createdAt?.toDate() || new Date(),
+        availableDate: docData.data().availableDate?.toDate(),
+      } as StandaloneWeeklyAssessment;
+
+      // Check if assessment is currently available based on schedule
+      if (assessment.isScheduled) {
+        const now = new Date();
+        if (assessment.availableDate && now < assessment.availableDate) return null;
+      }
+
+      return assessment;
+    } catch (error) {
+      console.error("Error getting current weekly assessment:", error);
+      return null;
+    }
+  }
+
+  // Get the current active assessment for admin purposes (ignores scheduling)
+  async getCurrentWeeklyAssessmentForAdmin(): Promise<StandaloneWeeklyAssessment | null> {
     try {
       const q = query(
         collection(db, "weeklyAssessments"),
         where("isActive", "==", true),
         limit(1)
       );
-      
+
       const snapshot = await getDocs(q);
-      
+
       if (snapshot.empty) {
         return null;
       }
@@ -125,7 +186,8 @@ class WeeklyAssessmentManager {
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
-      } as WeeklyAssessment;
+        availableDate: doc.data().availableDate?.toDate(),
+      } as StandaloneWeeklyAssessment;
     } catch (error) {
       console.error("Error getting current weekly assessment:", error);
       return null;
@@ -133,21 +195,21 @@ class WeeklyAssessmentManager {
   }
 
   // Get all previous weekly assessments
-  async getPreviousWeeklyAssessments(): Promise<WeeklyAssessment[]> {
+  async getPreviousWeeklyAssessments(): Promise<StandaloneWeeklyAssessment[]> {
     try {
       const q = query(
         collection(db, "weeklyAssessments"),
         where("isActive", "==", false),
         orderBy("createdAt", "desc")
       );
-      
+
       const snapshot = await getDocs(q);
-      
-      return snapshot.docs.map(doc => ({
+
+      return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
-      })) as WeeklyAssessment[];
+      })) as StandaloneWeeklyAssessment[];
     } catch (error) {
       console.error("Error getting previous weekly assessments:", error);
       return [];
@@ -160,7 +222,7 @@ class WeeklyAssessmentManager {
       const current = await this.getCurrentWeeklyAssessment();
       if (current) {
         await updateDoc(doc(db, "weeklyAssessments", current.id), {
-          isActive: false
+          isActive: false,
         });
       }
     } catch (error) {
@@ -169,17 +231,131 @@ class WeeklyAssessmentManager {
     }
   }
 
+  // Update assessment schedule
+  async updateAssessmentSchedule(
+    assessmentId: string,
+    scheduleData: {
+      startDate?: Date;
+      endDate?: Date;
+      isScheduled?: boolean;
+      timeLimit?: number;
+      totalQuestions?: number;
+    }
+  ): Promise<void> {
+    try {
+      const updateData: any = {};
+
+      if (scheduleData.startDate !== undefined)
+        updateData.startDate = scheduleData.startDate;
+      if (scheduleData.endDate !== undefined)
+        updateData.endDate = scheduleData.endDate;
+      if (scheduleData.isScheduled !== undefined)
+        updateData.isScheduled = scheduleData.isScheduled;
+      if (scheduleData.timeLimit !== undefined)
+        updateData.timeLimit = scheduleData.timeLimit;
+      if (scheduleData.totalQuestions !== undefined)
+        updateData.totalQuestions = scheduleData.totalQuestions;
+
+      updateData.updatedAt = new Date();
+
+      await updateDoc(doc(db, "weeklyAssessments", assessmentId), updateData);
+      console.log("Assessment schedule updated:", assessmentId);
+    } catch (error) {
+      console.error("Error updating assessment schedule:", error);
+      throw error;
+    }
+  }
+
+  // Toggle master switch for immediate enable/disable
+  async toggleMasterSwitch(
+    assessmentId: string,
+    enabled: boolean
+  ): Promise<void> {
+    try {
+      await updateDoc(doc(db, "weeklyAssessments", assessmentId), {
+        masterToggle: enabled,
+        updatedAt: new Date(),
+      });
+      console.log(`Assessment ${assessmentId} master toggle set to:`, enabled);
+    } catch (error) {
+      console.error("Error toggling master switch:", error);
+      throw error;
+    }
+  }
+
+  // Check if assessment is currently available to students
+  async isAssessmentAvailable(assessmentId: string): Promise<boolean> {
+    try {
+      const assessmentDoc = await getDoc(
+        doc(db, "weeklyAssessments", assessmentId)
+      );
+      if (!assessmentDoc.exists()) return false;
+
+      const assessment = assessmentDoc.data() as StandaloneWeeklyAssessment;
+
+      // Check master toggle first
+      if (!assessment.masterToggle) return false;
+
+      // Check if assessment is active
+      if (!assessment.isActive) return false;
+
+      // If scheduled, check availability date
+      if (assessment.isScheduled) {
+        const now = new Date();
+        if (assessment.availableDate && now < assessment.availableDate) return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error checking assessment availability:", error);
+      return false;
+    }
+  }
+
+  // Get all assessments with their availability status
+  async getAllAssessmentsWithStatus(): Promise<
+    (StandaloneWeeklyAssessment & { isAvailable: boolean })[]
+  > {
+    try {
+      const q = query(
+        collection(db, "weeklyAssessments"),
+        orderBy("createdAt", "desc")
+      );
+
+      const snapshot = await getDocs(q);
+      const assessments = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        availableDate: doc.data().availableDate?.toDate(),
+      })) as StandaloneWeeklyAssessment[];
+
+      // Add availability status to each assessment
+      const assessmentsWithStatus = await Promise.all(
+        assessments.map(async (assessment) => ({
+          ...assessment,
+          isAvailable: await this.isAssessmentAvailable(assessment.id),
+        }))
+      );
+
+      return assessmentsWithStatus;
+    } catch (error) {
+      console.error("Error getting assessments with status:", error);
+      return [];
+    }
+  }
+
   // Reactivate a previous assessment
   async reactivateAssessment(assessmentId: string): Promise<void> {
     try {
       // First deactivate current assessment
       await this.deactivateCurrentAssessment();
-      
+
       // Then activate the selected assessment
       await updateDoc(doc(db, "weeklyAssessments", assessmentId), {
-        isActive: true
+        isActive: true,
       });
-      
+
       console.log("Assessment reactivated:", assessmentId);
     } catch (error) {
       console.error("Error reactivating assessment:", error);
@@ -189,17 +365,20 @@ class WeeklyAssessmentManager {
 
   // Submit a weekly assessment attempt
   async submitWeeklyAssessmentAttempt(
-    attempt: Omit<WeeklyAssessmentAttempt, "id" | "createdAt" | "updatedAt">
+    attempt: Omit<StandaloneAssessmentAttempt, "id" | "createdAt" | "updatedAt">
   ): Promise<string> {
     try {
-      const attemptData: Omit<WeeklyAssessmentAttempt, "id"> = {
+      const attemptData: Omit<StandaloneAssessmentAttempt, "id"> = {
         ...attempt,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      const docRef = await addDoc(collection(db, "weeklyAssessmentAttempts"), attemptData);
-      
+      const docRef = await addDoc(
+        collection(db, "weeklyAssessmentAttempts"),
+        attemptData
+      );
+
       console.log("Weekly assessment attempt submitted:", docRef.id);
       return docRef.id;
     } catch (error) {
@@ -209,7 +388,9 @@ class WeeklyAssessmentManager {
   }
 
   // Get user's attempt for current assessment
-  async getUserAttemptForCurrentAssessment(userId: string): Promise<WeeklyAssessmentAttempt | null> {
+  async getUserAttemptForCurrentAssessment(
+    userId: string
+  ): Promise<StandaloneAssessmentAttempt | null> {
     try {
       const currentAssessment = await this.getCurrentWeeklyAssessment();
       if (!currentAssessment) return null;
@@ -222,7 +403,7 @@ class WeeklyAssessmentManager {
       );
 
       const snapshot = await getDocs(q);
-      
+
       if (snapshot.empty) {
         return null;
       }
@@ -235,7 +416,7 @@ class WeeklyAssessmentManager {
         endTime: doc.data().endTime?.toDate(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      } as WeeklyAssessmentAttempt;
+      } as StandaloneAssessmentAttempt;
     } catch (error) {
       console.error("Error getting user attempt:", error);
       return null;
@@ -243,7 +424,9 @@ class WeeklyAssessmentManager {
   }
 
   // Get weekly assessment stats
-  async getWeeklyAssessmentStats(assessmentId: string): Promise<WeeklyAssessmentStats> {
+  async getWeeklyAssessmentStats(
+    assessmentId: string
+  ): Promise<StandaloneAssessmentStats> {
     try {
       const q = query(
         collection(db, "weeklyAssessmentAttempts"),
@@ -252,7 +435,7 @@ class WeeklyAssessmentManager {
       );
 
       const snapshot = await getDocs(q);
-      const attempts = snapshot.docs.map(doc => doc.data());
+      const attempts = snapshot.docs.map((doc) => doc.data());
 
       if (attempts.length === 0) {
         return {
@@ -268,17 +451,28 @@ class WeeklyAssessmentManager {
       }
 
       const totalAttempts = attempts.length;
-      const totalScore = attempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
-      const totalPercentage = attempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0);
-      const totalTimeSpent = attempts.reduce((sum, attempt) => sum + (attempt.timeSpent || 0), 0);
-      const topScore = Math.max(...attempts.map(attempt => attempt.score || 0));
+      const totalScore = attempts.reduce(
+        (sum, attempt) => sum + (attempt.score || 0),
+        0
+      );
+      const totalPercentage = attempts.reduce(
+        (sum, attempt) => sum + (attempt.percentage || 0),
+        0
+      );
+      const totalTimeSpent = attempts.reduce(
+        (sum, attempt) => sum + (attempt.timeSpent || 0),
+        0
+      );
+      const topScore = Math.max(
+        ...attempts.map((attempt) => attempt.score || 0)
+      );
 
       return {
         assessmentId,
         totalAttempts,
         averageScore: totalScore / totalAttempts,
         averagePercentage: totalPercentage / totalAttempts,
-        averageTimeSpent: (totalTimeSpent / totalAttempts) / 60, // Convert to minutes
+        averageTimeSpent: totalTimeSpent / totalAttempts / 60, // Convert to minutes
         topScore,
         completionRate: 100, // All fetched attempts are completed
         lastUpdated: new Date(),
@@ -290,10 +484,13 @@ class WeeklyAssessmentManager {
   }
 
   // Get weekly assessment leaderboard
-  async getWeeklyAssessmentLeaderboard(assessmentId?: string, limitCount: number = 20): Promise<WeeklyAssessmentAttempt[]> {
+  async getWeeklyAssessmentLeaderboard(
+    assessmentId?: string,
+    limitCount: number = 20
+  ): Promise<StandaloneAssessmentAttempt[]> {
     try {
       let targetAssessmentId = assessmentId;
-      
+
       // If no assessment ID provided, use current assessment
       if (!targetAssessmentId) {
         const currentAssessment = await this.getCurrentWeeklyAssessment();
@@ -311,15 +508,15 @@ class WeeklyAssessmentManager {
       );
 
       const snapshot = await getDocs(q);
-      
-      return snapshot.docs.map(doc => ({
+
+      return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         startTime: doc.data().startTime?.toDate() || new Date(),
         endTime: doc.data().endTime?.toDate(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      })) as WeeklyAssessmentAttempt[];
+      })) as StandaloneAssessmentAttempt[];
     } catch (error) {
       console.error("Error getting weekly assessment leaderboard:", error);
       return [];

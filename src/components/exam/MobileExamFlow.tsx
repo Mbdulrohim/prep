@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
+import { Calculator, CalculatorToggle } from "@/components/ui/Calculator";
+import { useCalculator } from "@/hooks/useCalculator";
 import {
   Clock,
   Flag,
@@ -52,6 +54,9 @@ export function MobileExamFlow({
 }: MobileExamFlowProps) {
   const { user } = useAuth();
   const router = useRouter();
+
+  // Calculator hook
+  const { isCalculatorOpen, openCalculator, closeCalculator, toggleCalculator } = useCalculator();
 
   // Exam state
   const [questions, setQuestions] = useState<any[]>([]);
@@ -502,6 +507,9 @@ export function MobileExamFlow({
               )}
             </div>
 
+            {/* Calculator Toggle */}
+            <CalculatorToggle onClick={toggleCalculator} className="text-xs px-2 py-1" />
+
             <button
               onClick={() => setShowQuestionNav(!showQuestionNav)}
               className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors md:hidden"
@@ -781,6 +789,13 @@ export function MobileExamFlow({
           </div>
         </div>
       )}
+
+      {/* Calculator */}
+      <Calculator 
+        isOpen={isCalculatorOpen} 
+        onClose={closeCalculator}
+        position="floating"
+      />
     </div>
   );
 }
