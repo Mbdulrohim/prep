@@ -45,7 +45,12 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
   } = useExam();
 
   // Calculator hook
-  const { isCalculatorOpen, openCalculator, closeCalculator, toggleCalculator } = useCalculator();
+  const {
+    isCalculatorOpen,
+    openCalculator,
+    closeCalculator,
+    toggleCalculator,
+  } = useCalculator();
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,69 +99,72 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       // Prevent keyboard shortcuts if user is typing in an input or textarea
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
       // Prevent default behavior for our keyboard shortcuts
       const key = event.key.toLowerCase();
-      
+
       switch (key) {
-        case 'a':
+        case "a":
           event.preventDefault();
           handleAnswerSelect(0);
           break;
-        case 'b':
+        case "b":
           event.preventDefault();
           handleAnswerSelect(1);
           break;
-        case 'c':
+        case "c":
           event.preventDefault();
           handleAnswerSelect(2);
           break;
-        case 'd':
+        case "d":
           event.preventDefault();
           handleAnswerSelect(3);
           break;
-        case 'p':
+        case "p":
           event.preventDefault();
           if (currentQuestionIndex > 0) {
             goToQuestion(currentQuestionIndex - 1);
           }
           break;
-        case 'n':
+        case "n":
           event.preventDefault();
           if (currentQuestionIndex < totalQuestions - 1) {
             goToQuestion(currentQuestionIndex + 1);
           }
           break;
-        case 'f':
+        case "f":
           event.preventDefault();
           toggleFlag();
           break;
-        case 'enter':
+        case "enter":
           event.preventDefault();
           if (currentQuestionIndex < totalQuestions - 1) {
             goToQuestion(currentQuestionIndex + 1);
           }
           break;
-        case 'h':
-        case '?':
+        case "h":
+        case "?":
           event.preventDefault();
           setShowKeyboardHelp(!showKeyboardHelp);
           break;
-        case ' ':
+        case " ":
           // Space bar to toggle navigator
           event.preventDefault();
           setIsNavigatorCollapsed(!isNavigatorCollapsed);
           break;
-        case 'arrowleft':
+        case "arrowleft":
           event.preventDefault();
           if (currentQuestionIndex > 0) {
             goToQuestion(currentQuestionIndex - 1);
           }
           break;
-        case 'arrowright':
+        case "arrowright":
           event.preventDefault();
           if (currentQuestionIndex < totalQuestions - 1) {
             goToQuestion(currentQuestionIndex + 1);
@@ -166,11 +174,11 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
     };
 
     // Add event listener
-    document.addEventListener('keydown', handleKeyPress);
+    document.addEventListener("keydown", handleKeyPress);
 
     // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyPress);
+      document.removeEventListener("keydown", handleKeyPress);
     };
   }, [currentQuestionIndex, totalQuestions, isNavigatorCollapsed]);
 
@@ -224,32 +232,47 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
     try {
       // Calculate results
       const correctAnswers = questions.reduce((count, question, index) => {
-        return userAnswers[index] === question.correctAnswer ? count + 1 : count;
+        return userAnswers[index] === question.correctAnswer
+          ? count + 1
+          : count;
       }, 0);
 
       const wrongAnswers = userAnswers.filter(
-        (answer, index) => answer !== null && answer !== questions[index].correctAnswer
+        (answer, index) =>
+          answer !== null && answer !== questions[index].correctAnswer
       ).length;
 
       const unanswered = userAnswers.filter((answer) => answer === null).length;
       const score = correctAnswers;
       const percentage = Math.round((score / questions.length) * 100);
-      const timeSpent = Math.round(((examDetails?.durationMinutes ?? 0) * 60 - timeLeft) || 0);
+      const timeSpent = Math.round(
+        (examDetails?.durationMinutes ?? 0) * 60 - timeLeft || 0
+      );
       const endTime = new Date();
 
       const examResults = {
         id: `${user.uid}_${examId}_${Date.now()}`,
         userId: user.uid,
         userEmail: user.email || "",
-        userName: userProfile?.displayName || user.displayName || user.email?.split("@")[0] || "Student",
+        userName:
+          userProfile?.displayName ||
+          user.displayName ||
+          user.email?.split("@")[0] ||
+          "Student",
         userUniversity: userProfile?.university || "Not specified",
         universityId: userProfile?.university || "not-specified", // Add standardized university ID for ranking
         examId,
-        examCategory: examId.includes("rn") ? "RN" : examId.includes("rm") ? "RM" : "RPHN", // Dynamic category detection
+        examCategory: examId.includes("rn")
+          ? "RN"
+          : examId.includes("rm")
+          ? "RM"
+          : "RPHN", // Dynamic category detection
         paper: examId.includes("paper-2") ? "paper-2" : "paper-1", // Dynamic paper detection
         assignedQuestions: questions, // Using assignedQuestions instead of questions
         userAnswers,
-        flaggedQuestions: questions.map((q, index) => q.flagged ? index : -1).filter(i => i !== -1),
+        flaggedQuestions: questions
+          .map((q, index) => (q.flagged ? index : -1))
+          .filter((i) => i !== -1),
         startTime: new Date(Date.now() - timeSpent * 1000),
         endTime,
         timeSpent,
@@ -260,7 +283,9 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
         correctAnswers,
         wrongAnswers,
         unanswered,
-        missedQuestions: userAnswers.map((answer, index) => answer === null ? index : -1).filter(i => i !== -1),
+        missedQuestions: userAnswers
+          .map((answer, index) => (answer === null ? index : -1))
+          .filter((i) => i !== -1),
         canReview: true,
         reviewedQuestions: [],
         createdAt: new Date(),
@@ -280,7 +305,11 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
       await setDoc(doc(db, "examAttempts", attemptId), examResults);
 
       // Navigate to results page
-      router.push(`/exam/${examId}/results?attemptId=${attemptId}&immediate=true${autoSubmitted ? '&autoSubmit=true' : ''}`);
+      router.push(
+        `/exam/${examId}/results?attemptId=${attemptId}&immediate=true${
+          autoSubmitted ? "&autoSubmit=true" : ""
+        }`
+      );
     } catch (error) {
       console.error("Error submitting exam:", error);
       setIsSubmitting(false);
@@ -404,7 +433,9 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
         {showKeyboardHelp && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-blue-900">Keyboard Shortcuts</h3>
+              <h3 className="text-lg font-semibold text-blue-900">
+                Keyboard Shortcuts
+              </h3>
               <Button
                 onClick={() => setShowKeyboardHelp(false)}
                 variant="outline"
@@ -416,30 +447,76 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
               <div>
-                <h4 className="font-medium text-blue-900 mb-2">Answer Options</h4>
+                <h4 className="font-medium text-blue-900 mb-2">
+                  Answer Options
+                </h4>
                 <div className="space-y-1 text-blue-800">
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">A</kbd> Select option A</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">B</kbd> Select option B</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">C</kbd> Select option C</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">D</kbd> Select option D</div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">A</kbd>{" "}
+                    Select option A
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">B</kbd>{" "}
+                    Select option B
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">C</kbd>{" "}
+                    Select option C
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">D</kbd>{" "}
+                    Select option D
+                  </div>
                 </div>
               </div>
               <div>
                 <h4 className="font-medium text-blue-900 mb-2">Navigation</h4>
                 <div className="space-y-1 text-blue-800">
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">P</kbd> Previous question</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">N</kbd> Next question</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">←</kbd> Previous question</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">→</kbd> Next question</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">Enter</kbd> Next question</div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">P</kbd>{" "}
+                    Previous question
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">N</kbd>{" "}
+                    Next question
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">←</kbd>{" "}
+                    Previous question
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">→</kbd>{" "}
+                    Next question
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">
+                      Enter
+                    </kbd>{" "}
+                    Next question
+                  </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-blue-900 mb-2">Other Actions</h4>
+                <h4 className="font-medium text-blue-900 mb-2">
+                  Other Actions
+                </h4>
                 <div className="space-y-1 text-blue-800">
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">F</kbd> Toggle flag</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">Space</kbd> Toggle navigator</div>
-                  <div><kbd className="px-2 py-1 bg-white rounded text-xs">H</kbd> or <kbd className="px-2 py-1 bg-white rounded text-xs">?</kbd> Toggle help</div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">F</kbd>{" "}
+                    Toggle flag
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">
+                      Space
+                    </kbd>{" "}
+                    Toggle navigator
+                  </div>
+                  <div>
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">H</kbd>{" "}
+                    or{" "}
+                    <kbd className="px-2 py-1 bg-white rounded text-xs">?</kbd>{" "}
+                    Toggle help
+                  </div>
                 </div>
               </div>
             </div>
@@ -532,7 +609,9 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
                     >
                       {optionLabel}
                     </div>
-                    <span className="text-gray-900 text-sm sm:text-base leading-relaxed">{option}</span>
+                    <span className="text-gray-900 text-sm sm:text-base leading-relaxed">
+                      {option}
+                    </span>
                   </div>
                 </button>
               );
@@ -554,8 +633,8 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
 
             <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto justify-center">
               {currentQuestionIndex === totalQuestions - 1 ? (
-                <Button 
-                  onClick={handleSubmitExam} 
+                <Button
+                  onClick={handleSubmitExam}
                   className="bg-green-600 hover:bg-green-700 w-full sm:w-auto px-6"
                 >
                   Submit Exam
@@ -581,23 +660,31 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
           {/* Navigator Header - Always Visible */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-100 gap-2 sm:gap-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 sm:gap-0">
-              <h3 className="font-medium text-gray-900 text-sm sm:text-base">Question Navigator</h3>
+              <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                Question Navigator
+              </h3>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 border-2 border-green-500 bg-green-100 rounded"></div>
-                  <span className="text-gray-600">Answered ({answeredCount})</span>
+                  <span className="text-gray-600">
+                    Answered ({answeredCount})
+                  </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 border-2 border-gray-300 bg-white rounded"></div>
-                  <span className="text-gray-600">Not Answered ({unansweredCount})</span>
+                  <span className="text-gray-600">
+                    Not Answered ({unansweredCount})
+                  </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 border-2 border-yellow-400 bg-yellow-100 rounded ring-1 ring-yellow-400"></div>
-                  <span className="text-gray-600">Flagged ({flaggedCount})</span>
+                  <span className="text-gray-600">
+                    Flagged ({flaggedCount})
+                  </span>
                 </div>
               </div>
             </div>
-            
+
             <Button
               onClick={() => setIsNavigatorCollapsed(!isNavigatorCollapsed)}
               variant="outline"
@@ -686,12 +773,12 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
               >
                 Continue Exam
               </Button>
-              <Button 
-                onClick={confirmSubmit} 
+              <Button
+                onClick={confirmSubmit}
                 className="flex-1 bg-green-600 hover:bg-green-700"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Now'}
+                {isSubmitting ? "Submitting..." : "Submit Now"}
               </Button>
             </div>
           </div>
@@ -699,8 +786,8 @@ export function NewExamFlow({ examId }: NewExamFlowProps) {
       )}
 
       {/* Calculator */}
-      <Calculator 
-        isOpen={isCalculatorOpen} 
+      <Calculator
+        isOpen={isCalculatorOpen}
         onClose={closeCalculator}
         position="floating"
       />
