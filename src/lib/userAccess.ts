@@ -19,6 +19,14 @@ export interface UserAccess {
   examTypes: string[];
   createdAt: Date;
   updatedAt: Date;
+  
+  // Security & access control fields
+  revokedAt?: Date;
+  revokedReason?: string;
+  suspendedAt?: Date;
+  suspensionEndDate?: Date;
+  suspensionReason?: string;
+  restoredAt?: Date;
 }
 
 export interface MockExamAttempt {
@@ -65,15 +73,55 @@ export class UserAccessManager {
     attemptsRemaining: number;
     maxAttempts: number;
     canRetake: boolean;
+    accessStatus: 'active' | 'revoked' | 'suspended' | 'inactive';
+    statusReason?: string;
   }> {
     const access = await this.getUserAccess(userId);
 
-    if (!access || !access.isActive) {
+    if (!access) {
       return {
         hasAccess: false,
         attemptsRemaining: 0,
         maxAttempts: 0,
         canRetake: false,
+        accessStatus: 'inactive',
+        statusReason: 'No access record found',
+      };
+    }
+
+    // Check if account is revoked
+    if (access.revokedAt) {
+      return {
+        hasAccess: false,
+        attemptsRemaining: 0,
+        maxAttempts: access.maxAttempts,
+        canRetake: false,
+        accessStatus: 'revoked',
+        statusReason: access.revokedReason,
+      };
+    }
+
+    // Check if account is suspended
+    if (access.suspendedAt && access.suspensionEndDate && new Date() < access.suspensionEndDate) {
+      return {
+        hasAccess: false,
+        attemptsRemaining: access.remainingAttempts,
+        maxAttempts: access.maxAttempts,
+        canRetake: access.retakeAllowed,
+        accessStatus: 'suspended',
+        statusReason: access.suspensionReason,
+      };
+    }
+
+    // Check if account is inactive
+    if (!access.isActive) {
+      return {
+        hasAccess: false,
+        attemptsRemaining: 0,
+        maxAttempts: access.maxAttempts,
+        canRetake: false,
+        accessStatus: 'inactive',
+        statusReason: 'Account is inactive',
       };
     }
 
@@ -82,6 +130,7 @@ export class UserAccessManager {
       attemptsRemaining: access.remainingAttempts,
       maxAttempts: access.maxAttempts,
       canRetake: access.retakeAllowed,
+      accessStatus: 'active',
     };
   }
 
@@ -102,6 +151,89 @@ export class UserAccessManager {
       return true;
     } catch (error) {
       console.error("Error consuming attempt:", error);
+      return false;
+    }
+  }
+
+  // SECURITY: Critical access control methods
+  async revokeUserAccess(userId: string, reason?: string): Promise<boolean> {
+    try {
+      const accessRef = doc(db, "userAccess", userId);
+      const access = await this.getUserAccess(userId);
+
+      if (!access) {
+        console.warn(`Attempted to revoke access for non-existent user: ${userId}`);
+        return false;
+      }
+
+      await updateDoc(accessRef, {
+        isActive: false,
+        remainingAttempts: 0,
+        revokedAt: new Date(),
+        revokedReason: reason || "Access revoked by admin",
+        updatedAt: new Date(),
+      });
+
+      console.log(`Access revoked for user: ${userId}, reason: ${reason || "Admin action"}`);
+      return true;
+    } catch (error) {
+      console.error("Error revoking user access:", error);
+      return false;
+    }
+  }
+
+  async suspendUserAccess(userId: string, suspensionEndDate: Date, reason?: string): Promise<boolean> {
+    try {
+      const accessRef = doc(db, "userAccess", userId);
+      const access = await this.getUserAccess(userId);
+
+      if (!access) {
+        console.warn(`Attempted to suspend access for non-existent user: ${userId}`);
+        return false;
+      }
+
+      await updateDoc(accessRef, {
+        isActive: false,
+        suspendedAt: new Date(),
+        suspensionEndDate,
+        suspensionReason: reason || "Account suspended by admin",
+        updatedAt: new Date(),
+      });
+
+      console.log(`Access suspended for user: ${userId} until ${suspensionEndDate}, reason: ${reason || "Admin action"}`);
+      return true;
+    } catch (error) {
+      console.error("Error suspending user access:", error);
+      return false;
+    }
+  }
+
+  async restoreUserAccess(userId: string): Promise<boolean> {
+    try {
+      const accessRef = doc(db, "userAccess", userId);
+      const access = await this.getUserAccess(userId);
+
+      if (!access) {
+        console.warn(`Attempted to restore access for non-existent user: ${userId}`);
+        return false;
+      }
+
+      // Clear suspension and revocation flags
+      await updateDoc(accessRef, {
+        isActive: true,
+        suspendedAt: null,
+        suspensionEndDate: null,
+        suspensionReason: null,
+        revokedAt: null,
+        revokedReason: null,
+        restoredAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      console.log(`Access restored for user: ${userId}`);
+      return true;
+    } catch (error) {
+      console.error("Error restoring user access:", error);
       return false;
     }
   }

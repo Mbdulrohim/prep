@@ -952,7 +952,7 @@ export default function AdminDashboard() {
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
     { id: "weekly-assessments", label: "Weekly Assessments", icon: Calendar },
-    { id: "standalone-weekly-assessments", label: "Standalone Weekly", icon: Target },
+    { id: "standalone-weekly-assessments", label: "Weekly Assessment", icon: Target },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },

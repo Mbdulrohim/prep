@@ -354,7 +354,7 @@ export function ExamFlow({ examId }: ExamFlowProps) {
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-sm font-medium text-gray-500">
-                      Question {currentQuestionIndex + 1}
+                      Question {currentQuestionIndex + 1} of {totalQuestions}
                     </span>
                     {currentQuestion.flagged && (
                       <Flag className="h-4 w-4 text-yellow-500 fill-current" />

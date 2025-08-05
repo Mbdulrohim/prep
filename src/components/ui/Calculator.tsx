@@ -49,6 +49,15 @@ export const Calculator: React.FC<CalculatorProps> = ({
   }, [isOpen, display, previousValue, operation, waitingForNewOperand]);
 
   const inputNumber = (num: string) => {
+    // If display shows error, clear it first
+    if (display === "Error") {
+      setDisplay(num);
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForNewOperand(false);
+      return;
+    }
+
     if (waitingForNewOperand) {
       setDisplay(num);
       setWaitingForNewOperand(false);
@@ -74,6 +83,12 @@ export const Calculator: React.FC<CalculatorProps> = ({
   };
 
   const backspace = () => {
+    // If display shows error, clear it
+    if (display === "Error") {
+      clear();
+      return;
+    }
+    
     if (display.length > 1) {
       setDisplay(display.slice(0, -1));
     } else {
@@ -83,6 +98,15 @@ export const Calculator: React.FC<CalculatorProps> = ({
 
   const performOperation = (nextOperation: string) => {
     const inputValue = parseFloat(display);
+    
+    // Handle invalid input
+    if (isNaN(inputValue)) {
+      setDisplay("Error");
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForNewOperand(true);
+      return;
+    }
 
     if (previousValue === null) {
       setPreviousValue(inputValue);
@@ -101,14 +125,32 @@ export const Calculator: React.FC<CalculatorProps> = ({
           result = currentValue * inputValue;
           break;
         case '/':
-          result = inputValue !== 0 ? currentValue / inputValue : 0;
+          if (inputValue === 0) {
+            setDisplay("Error");
+            setPreviousValue(null);
+            setOperation(null);
+            setWaitingForNewOperand(true);
+            return;
+          }
+          result = currentValue / inputValue;
           break;
         default:
           return;
       }
 
-      setDisplay(String(result));
-      setPreviousValue(result);
+      // Handle overflow and precision issues
+      if (!isFinite(result)) {
+        setDisplay("Error");
+        setPreviousValue(null);
+        setOperation(null);
+        setWaitingForNewOperand(true);
+        return;
+      }
+
+      // Round to avoid floating point precision issues
+      const roundedResult = Math.round(result * 1000000000) / 1000000000;
+      setDisplay(String(roundedResult));
+      setPreviousValue(roundedResult);
     }
 
     setWaitingForNewOperand(true);

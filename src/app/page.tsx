@@ -88,51 +88,60 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Exam Categories - Prominently Displayed */}
+          {/* Weekly Assessment - Hero Feature */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-center text-slate-800 mb-8">
-              Choose Your Study Path
-            </h2>
-            
-            {/* Weekly Assessment - Featured */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-2xl shadow-xl text-white p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Calendar className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">Weekly Assessment</h3>
-                      <p className="text-purple-100">
-                        Test your knowledge with our standalone weekly challenge
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">150 Questions</div>
-                    <div className="text-xs text-purple-200">90 Minutes</div>
-                  </div>
-                </div>
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-3xl shadow-2xl text-white p-8 lg:p-12 relative overflow-hidden">
+                {/* Background decorations */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-8 translate-x-8"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-4 -translate-x-4"></div>
                 
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                    <div>
-                      <div className="font-bold">Unlimited</div>
-                      <div className="text-purple-200">Attempts</div>
+                <div className="relative">
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-4">
+                      <Calendar className="h-8 w-8" />
                     </div>
-                    <div>
-                      <div className="font-bold">AI-Powered</div>
-                      <div className="text-purple-200">Explanations</div>
+                    <h2 className="text-3xl lg:text-4xl font-bold mb-3">Weekly Assessment</h2>
+                    <p className="text-xl text-purple-100 mb-2">
+                      Exclusive Nursing Knowledge Challenge
+                    </p>
+                    <p className="text-purple-200 text-lg">
+                      Test your comprehensive nursing knowledge with our expertly curated questions - included with platform access
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold mb-2">150</div>
+                      <div className="text-purple-200">Comprehensive Questions</div>
                     </div>
-                    <div>
-                      <div className="font-bold">Always</div>
-                      <div className="text-purple-200">Available</div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold mb-2">90</div>
+                      <div className="text-purple-200">Minutes Duration</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-2xl p-1 mb-6">
+                      <div className="bg-white text-purple-600 rounded-xl px-6 py-3 font-semibold mr-2">
+                        🔒 Access Required
+                      </div>
+                      <div className="px-6 py-3 text-white">
+                        Available with dashboard access
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Exam Categories */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-center text-slate-800 mb-8">
+              Professional Exam Categories
+            </h2>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {/* RN Category - Available */}
@@ -247,11 +256,11 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4">
-              AI-Powered Learning Experience
+              Comprehensive Learning Experience
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
               Get detailed insights and personalized recommendations with our
-              advanced AI analysis system
+              advanced analysis system
             </p>
           </div>
 
@@ -423,7 +432,7 @@ export default function HomePage() {
                 Weekly Assessments
               </h3>
               <p className="text-slate-600">
-                Standalone weekly challenges with AI-powered explanations and unlimited reviews
+                Weekly challenges with detailed explanations and comprehensive reviews
               </p>
             </div>
 
@@ -499,13 +508,13 @@ export default function HomePage() {
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span className="text-slate-700">
-                    AI-powered detailed analysis
+                    Detailed answer explanations
                   </span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span className="text-slate-700">
-                    Unlimited practice attempts
+                    Multiple practice attempts
                   </span>
                 </li>
                 <li className="flex items-center space-x-3">

@@ -355,7 +355,7 @@ export const UnifiedExamReviewFlow: React.FC<UnifiedExamReviewFlowProps> = ({
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-sm font-medium text-gray-500">
-                      Question {currentQuestionIndex + 1}
+                      Question {currentQuestionIndex + 1} of {totalQuestions}
                     </span>
 
                     {/* Status Indicator */}

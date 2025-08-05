@@ -142,7 +142,7 @@ const StandaloneWeeklyAssessmentAdmin: React.FC<StandaloneWeeklyAssessmentAdminP
       await fetchData();
       setActiveView("overview");
       
-      alert("Standalone weekly assessment created successfully!");
+      alert("Weekly assessment created successfully!");
     } catch (error) {
       console.error("Error creating assessment:", error);
       alert("Error creating assessment. Please try again.");
@@ -373,7 +373,7 @@ const StandaloneWeeklyAssessmentAdmin: React.FC<StandaloneWeeklyAssessmentAdminP
 
       {activeView === "create" && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Create New Standalone Assessment</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Create New Weekly Assessment</h2>
           
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

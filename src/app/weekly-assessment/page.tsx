@@ -97,8 +97,8 @@ const WeeklyAssessmentPage: React.FC = () => {
             ← Back to Dashboard
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Weekly Assessment</h1>
-          <p className="text-gray-600 mt-2">
-            Test your knowledge with our weekly standalone assessment
+                    <p className="text-lg text-purple-100 mb-6">
+            Test your knowledge with our weekly assessment
           </p>
         </div>
 
@@ -219,7 +219,7 @@ const WeeklyAssessmentPage: React.FC = () => {
                 <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-purple-600" />
                   <div>
-                    <div className="font-medium text-purple-900">Standalone</div>
+                    <div className="font-medium text-purple-900">Weekly</div>
                     <div className="text-sm text-purple-700">Assessment Type</div>
                   </div>
                 </div>
@@ -249,7 +249,7 @@ const WeeklyAssessmentPage: React.FC = () => {
                   <li>• Flag questions you want to review later</li>
                   <li>• Use the calculator tool if needed (Ctrl+Shift+C)</li>
                   <li>• Submit your assessment when you're ready or when time runs out</li>
-                  <li>• This is a standalone assessment - independent of exam categories</li>
+                  <li>• This is a weekly assessment - independent of exam categories</li>
                 </ul>
               </div>
 

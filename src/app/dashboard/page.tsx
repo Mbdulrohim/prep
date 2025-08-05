@@ -61,7 +61,7 @@ export default function DashboardPage() {
     error,
     refreshData,
   } = useUserStats();
-  
+
   // Real-time data hook
   const {
     globalStats,
@@ -204,7 +204,7 @@ export default function DashboardPage() {
   // Load user exam attempts
   const loadUserAttempts = async () => {
     if (!user?.uid) return;
-    
+
     try {
       setAttemptsLoading(true);
       const attempts = await examAttemptManager.getUserExamAttempts(user.uid);
@@ -584,266 +584,455 @@ export default function DashboardPage() {
           </div>
         ) : (
           /* Dashboard for Users with Access */
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Stats Overview */}
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Exams Completed
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {userAttempts.filter(attempt => attempt.completed).length}
-                    </p>
-                    <div className="inline-flex items-center text-xs text-green-600">
-                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
-                      Live Data
-                    </div>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
+          <div>
+            {/* Weekly Assessment Hero Section */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl shadow-2xl text-white p-8 relative overflow-hidden">
+                {/* Background pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-4 -translate-x-4"></div>
 
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Average Score
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {userAttempts.length > 0 
-                        ? Math.round(userAttempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0) / userAttempts.length)
-                        : 0}%
-                    </p>
-                    <div className="inline-flex items-center text-xs text-blue-600">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
-                      Live Data
-                    </div>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </div>
+                <div className="relative">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                          <Calendar className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl lg:text-3xl font-bold">
+                            Weekly Assessment
+                          </h2>
+                          <p className="text-purple-100">
+                            Your premier nursing knowledge challenge
+                          </p>
+                        </div>
+                      </div>
 
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Best Score
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {userAttempts.length > 0 
-                        ? Math.max(...userAttempts.map(attempt => attempt.percentage || 0))
-                        : 0}%
-                    </p>
-                    <div className="inline-flex items-center text-xs text-orange-600">
-                      <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-1"></div>
-                      Live Data
+                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
+                        Test your comprehensive nursing knowledge with our
+                        curated weekly assessment. Featuring 150 carefully
+                        selected questions designed to challenge and educate.
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">150</div>
+                          <div className="text-sm text-purple-200">
+                            Questions
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">90</div>
+                          <div className="text-sm text-purple-200">Minutes</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-orange-600" />
+
+                    <div className="flex flex-col space-y-4 lg:w-64">
+                      <Button
+                        onClick={() => router.push("/weekly-assessment")}
+                        className="bg-white text-purple-600 hover:bg-gray-50 font-semibold py-4 text-lg shadow-lg"
+                      >
+                        <Calendar className="h-5 w-5 mr-2" />
+                        Start Assessment
+                      </Button>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <Button
+                          onClick={() =>
+                            router.push("/weekly-assessment/leaderboard")
+                          }
+                          variant="outline"
+                          className="border-white/30 text-white hover:bg-white/10 text-xs py-2"
+                        >
+                          <Award className="h-4 w-4 mr-1" />
+                          Leaderboard
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            router.push("/weekly-assessment/results")
+                          }
+                          variant="outline"
+                          className="border-white/30 text-white hover:bg-white/10 text-xs py-2"
+                        >
+                          <BarChart className="h-4 w-4 mr-1" />
+                          Results
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Available Exams */}
-            <div className="lg:col-span-3" id="available-exams">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  RN Exam Schedule
-                </h3>
-                {examsLoading ? (
-                  <div className="flex justify-center items-center h-32">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Schedule warning or success */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex-1">
-                        {!examAvailability["rn-paper-1"]?.isAvailable &&
-                        !examAvailability["rn-paper-2"]?.isAvailable ? (
-                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                            <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
-                              <AlertTriangle className="h-4 w-4 mr-2" />
-                              📅 Schedule Not Set
-                            </h4>
-                            <p className="text-sm text-orange-700">
-                              <strong>Admin Notice:</strong> RN exam dates have
-                              not been scheduled yet.
-                              <br />
-                              Please contact administration to set exam schedule
-                              before exams become available.
-                            </p>
-                            <p className="text-xs text-orange-600 mt-2">
-                              ⚠️ Both papers require admin scheduling and must
-                              be taken during scheduled periods
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <h4 className="font-semibold text-green-900 mb-2 flex items-center">
-                              <CheckCircle className="h-4 w-4 mr-2" />✅ RN
-                              Exams Scheduled
-                            </h4>
-                            <p className="text-sm text-green-700">
-                              RN exams are now available according to admin
-                              schedule. You can start taking exams during the
-                              scheduled periods.
-                            </p>
-                          </div>
-                        )}
+            <div className="grid lg:grid-cols-4 gap-8">
+              {/* Stats Overview */}
+              <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Exams Completed
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {
+                          userAttempts.filter((attempt) => attempt.completed)
+                            .length
+                        }
+                      </p>
+                      <div className="inline-flex items-center text-xs text-green-600">
+                        <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
                       </div>
-                      <Button
-                        onClick={checkExamAvailability}
-                        variant="outline"
-                        size="sm"
-                        className="ml-4"
-                      >
-                        🔄 Refresh Status
-                      </Button>
                     </div>
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* RN Paper 1 */}
-                      <div
-                        className={`p-4 rounded-lg border border-gray-200 relative ${
-                          examAvailability["rn-paper-1"]?.isAvailable
-                            ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
-                            : "bg-gray-50 opacity-60"
-                        }`}
-                      >
-                        {!examAvailability["rn-paper-1"]?.isAvailable && (
-                          <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-600 font-medium">
-                              {examAvailability["rn-paper-1"]?.reason ||
-                                "Schedule Required"}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
-                                examAvailability["rn-paper-1"]?.isAvailable
-                                  ? "bg-blue-100"
-                                  : "bg-gray-200"
-                              }`}
-                            >
-                              <FileText
-                                className={`h-5 w-5 ${
-                                  examAvailability["rn-paper-1"]?.isAvailable
-                                    ? "text-blue-600"
-                                    : "text-gray-400"
-                                }`}
-                              />
-                            </div>
-                            <div>
-                              <h4
-                                className={`font-medium ${
-                                  examAvailability["rn-paper-1"]?.isAvailable
-                                    ? "text-gray-900"
-                                    : "text-gray-600"
-                                }`}
-                              >
-                                RN Paper 1
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Average Score
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {userAttempts.length > 0
+                          ? Math.round(
+                              userAttempts.reduce(
+                                (sum, attempt) =>
+                                  sum + (attempt.percentage || 0),
+                                0
+                              ) / userAttempts.length
+                            )
+                          : 0}
+                        %
+                      </p>
+                      <div className="inline-flex items-center text-xs text-blue-600">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
+                      </div>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Best Score
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {userAttempts.length > 0
+                          ? Math.max(
+                              ...userAttempts.map(
+                                (attempt) => attempt.percentage || 0
+                              )
+                            )
+                          : 0}
+                        %
+                      </p>
+                      <div className="inline-flex items-center text-xs text-orange-600">
+                        <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-1"></div>
+                        Live Data
+                      </div>
+                    </div>
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Trophy className="h-6 w-6 text-orange-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Available Exams */}
+              <div className="lg:col-span-3" id="available-exams">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                    RN Exam Schedule
+                  </h3>
+                  {examsLoading ? (
+                    <div className="flex justify-center items-center h-32">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Schedule warning or success */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex-1">
+                          {!examAvailability["rn-paper-1"]?.isAvailable &&
+                          !examAvailability["rn-paper-2"]?.isAvailable ? (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                📅 Schedule Not Set
                               </h4>
-                              <p
-                                className={`text-sm ${
-                                  examAvailability["rn-paper-1"]?.isAvailable
-                                    ? "text-gray-700"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                250 questions • 150 mins
+                              <p className="text-sm text-orange-700">
+                                <strong>Admin Notice:</strong> RN exam dates
+                                have not been scheduled yet.
+                                <br />
+                                Please contact administration to set exam
+                                schedule before exams become available.
                               </p>
-                              <p className="text-xs text-blue-600 mt-1">
-                                CBT Format - Comprehensive
+                              <p className="text-xs text-orange-600 mt-2">
+                                ⚠️ Both papers require admin scheduling and must
+                                be taken during scheduled periods
                               </p>
                             </div>
-                          </div>
-                          {examAvailability["rn-paper-1"]?.isAvailable && (
-                            <Button
-                              onClick={() => router.push("/exam/rn-paper-1")}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              Start Exam
-                            </Button>
+                          ) : (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                                <CheckCircle className="h-4 w-4 mr-2" />✅ RN
+                                Exams Scheduled
+                              </h4>
+                              <p className="text-sm text-green-700">
+                                RN exams are now available according to admin
+                                schedule. You can start taking exams during the
+                                scheduled periods.
+                              </p>
+                            </div>
                           )}
+                        </div>
+                        <Button
+                          onClick={checkExamAvailability}
+                          variant="outline"
+                          size="sm"
+                          className="ml-4"
+                        >
+                          🔄 Refresh Status
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* RN Paper 1 */}
+                        <div
+                          className={`p-4 rounded-lg border border-gray-200 relative ${
+                            examAvailability["rn-paper-1"]?.isAvailable
+                              ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                              : "bg-gray-50 opacity-60"
+                          }`}
+                        >
+                          {!examAvailability["rn-paper-1"]?.isAvailable && (
+                            <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-600 font-medium">
+                                {examAvailability["rn-paper-1"]?.reason ||
+                                  "Schedule Required"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                  examAvailability["rn-paper-1"]?.isAvailable
+                                    ? "bg-blue-100"
+                                    : "bg-gray-200"
+                                }`}
+                              >
+                                <FileText
+                                  className={`h-5 w-5 ${
+                                    examAvailability["rn-paper-1"]?.isAvailable
+                                      ? "text-blue-600"
+                                      : "text-gray-400"
+                                  }`}
+                                />
+                              </div>
+                              <div>
+                                <h4
+                                  className={`font-medium ${
+                                    examAvailability["rn-paper-1"]?.isAvailable
+                                      ? "text-gray-900"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  RN Paper 1
+                                </h4>
+                                <p
+                                  className={`text-sm ${
+                                    examAvailability["rn-paper-1"]?.isAvailable
+                                      ? "text-gray-700"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  250 questions • 150 mins
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                  CBT Format - Comprehensive
+                                </p>
+                              </div>
+                            </div>
+                            {examAvailability["rn-paper-1"]?.isAvailable && (
+                              <Button
+                                onClick={() => router.push("/exam/rn-paper-1")}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                Start Exam
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* RN Paper 2 */}
+                        <div
+                          className={`p-4 rounded-lg border border-gray-200 relative ${
+                            examAvailability["rn-paper-2"]?.isAvailable
+                              ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                              : "bg-gray-50 opacity-60"
+                          }`}
+                        >
+                          {!examAvailability["rn-paper-2"]?.isAvailable && (
+                            <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-600 font-medium">
+                                {examAvailability["rn-paper-2"]?.reason ||
+                                  "Schedule Required"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                  examAvailability["rn-paper-2"]?.isAvailable
+                                    ? "bg-blue-100"
+                                    : "bg-gray-200"
+                                }`}
+                              >
+                                <FileText
+                                  className={`h-5 w-5 ${
+                                    examAvailability["rn-paper-2"]?.isAvailable
+                                      ? "text-blue-600"
+                                      : "text-gray-400"
+                                  }`}
+                                />
+                              </div>
+                              <div>
+                                <h4
+                                  className={`font-medium ${
+                                    examAvailability["rn-paper-2"]?.isAvailable
+                                      ? "text-gray-900"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  RN Paper 2
+                                </h4>
+                                <p
+                                  className={`text-sm ${
+                                    examAvailability["rn-paper-2"]?.isAvailable
+                                      ? "text-gray-700"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  250 questions • 150 mins
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                  CBT Format - Advanced
+                                </p>
+                              </div>
+                            </div>
+                            {examAvailability["rn-paper-2"]?.isAvailable && (
+                              <Button
+                                onClick={() => router.push("/exam/rn-paper-2")}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                Start Exam
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      {/* RN Paper 2 */}
-                      <div
-                        className={`p-4 rounded-lg border border-gray-200 relative ${
-                          examAvailability["rn-paper-2"]?.isAvailable
-                            ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
-                            : "bg-gray-50 opacity-60"
-                        }`}
-                      >
-                        {!examAvailability["rn-paper-2"]?.isAvailable && (
-                          <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-600 font-medium">
-                              {examAvailability["rn-paper-2"]?.reason ||
-                                "Schedule Required"}
-                            </span>
-                          </div>
-                        )}
+                      <div className="text-center py-4">
+                        <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
+                          <Clock className="h-4 w-4 mr-2" />
+                          Waiting for admin to set exam schedule
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RM Exam Schedule */}
+              <div className="lg:col-span-3">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                    RM Exam Schedule
+                  </h3>
+                  <div className="space-y-4">
+                    {/* Schedule warning */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        📅 Schedule Not Set
+                      </h4>
+                      <p className="text-sm text-orange-700">
+                        <strong>Admin Notice:</strong> RM exam dates have not
+                        been scheduled yet.
+                        <br />
+                        Please contact administration to set exam schedule
+                        before exams become available.
+                      </p>
+                      <p className="text-xs text-orange-600 mt-2">
+                        ⚠️ RM exams are 250 questions each with 150 minutes
+                        duration. Both papers require admin scheduling.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-600 font-medium">
+                            Schedule Required
+                          </span>
+                        </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <div
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
-                                examAvailability["rn-paper-2"]?.isAvailable
-                                  ? "bg-blue-100"
-                                  : "bg-gray-200"
-                              }`}
-                            >
-                              <FileText
-                                className={`h-5 w-5 ${
-                                  examAvailability["rn-paper-2"]?.isAvailable
-                                    ? "text-blue-600"
-                                    : "text-gray-400"
-                                }`}
-                              />
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-gray-400" />
                             </div>
                             <div>
-                              <h4
-                                className={`font-medium ${
-                                  examAvailability["rn-paper-2"]?.isAvailable
-                                    ? "text-gray-900"
-                                    : "text-gray-600"
-                                }`}
-                              >
-                                RN Paper 2
+                              <h4 className="font-medium text-gray-600">
+                                RM Paper 1
                               </h4>
-                              <p
-                                className={`text-sm ${
-                                  examAvailability["rn-paper-2"]?.isAvailable
-                                    ? "text-gray-700"
-                                    : "text-gray-500"
-                                }`}
-                              >
+                              <p className="text-sm text-gray-500">
                                 250 questions • 150 mins
                               </p>
-                              <p className="text-xs text-blue-600 mt-1">
-                                CBT Format - Advanced
+                              <p className="text-xs text-green-600 mt-1">
+                                CBT Format - Midwifery Fundamentals
                               </p>
                             </div>
                           </div>
-                          {examAvailability["rn-paper-2"]?.isAvailable && (
-                            <Button
-                              onClick={() => router.push("/exam/rn-paper-2")}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              Start Exam
-                            </Button>
-                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
+                        <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-600 font-medium">
+                            Schedule Required
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-600">
+                                RM Paper 2
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                250 questions • 150 mins
+                              </p>
+                              <p className="text-xs text-green-600 mt-1">
+                                CBT Format - Advanced Practice
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -855,264 +1044,177 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* RM Exam Schedule */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  RM Exam Schedule
-                </h3>
-                <div className="space-y-4">
-                  {/* Schedule warning */}
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      📅 Schedule Not Set
-                    </h4>
-                    <p className="text-sm text-orange-700">
-                      <strong>Admin Notice:</strong> RM exam dates have not been
-                      scheduled yet.
-                      <br />
-                      Please contact administration to set exam schedule before
-                      exams become available.
-                    </p>
-                    <p className="text-xs text-orange-600 mt-2">
-                      ⚠️ RM exams are 250 questions each with 150 minutes
-                      duration. Both papers require admin scheduling.
-                    </p>
-                  </div>
+              {/* RPHN Exam Schedule */}
+              <div className="lg:col-span-3">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                    RPHN Exam Schedule
+                  </h3>
+                  <div className="space-y-4">
+                    {/* Coming soon notice */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-purple-900 mb-2">
+                        🚧 Coming Soon
+                      </h4>
+                      <p className="text-sm text-purple-700">
+                        <strong>RPHN Exams:</strong> Currently under
+                        development.
+                        <br />
+                        This exam category will be available in a future update
+                        with full CBT support.
+                      </p>
+                      <p className="text-xs text-purple-600 mt-2">
+                        ⏳ RPHN (Registered Public Health Nurse) certification
+                        exams will follow the same 250-question, 150-minute
+                        format.
+                      </p>
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
-                      <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">
-                          Schedule Required
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                            <FileText className="h-5 w-5 text-gray-400" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
+                        <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
+                          <span className="text-purple-700 font-medium">
+                            Coming Soon
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between blur-sm">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-purple-500" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-purple-700">
+                                RPHN Paper 1
+                              </h4>
+                              <p className="text-sm text-purple-600">
+                                250 questions • 150 mins
+                              </p>
+                              <p className="text-xs text-purple-500 mt-1">
+                                CBT Format - Public Health Fundamentals
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-medium text-gray-600">
-                              RM Paper 1
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              250 questions • 150 mins
-                            </p>
-                            <p className="text-xs text-green-600 mt-1">
-                              CBT Format - Midwifery Fundamentals
-                            </p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
+                        <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
+                          <span className="text-purple-700 font-medium">
+                            Coming Soon
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between blur-sm">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-purple-500" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-purple-700">
+                                RPHN Paper 2
+                              </h4>
+                              <p className="text-sm text-purple-600">
+                                250 questions • 150 mins
+                              </p>
+                              <p className="text-xs text-purple-500 mt-1">
+                                CBT Format - Advanced Public Health
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 opacity-60 relative">
-                      <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">
-                          Schedule Required
-                        </span>
+                    <div className="text-center py-4">
+                      <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
+                        <Star className="h-4 w-4 mr-2" />
+                        RPHN exams coming in future update
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                            <FileText className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-600">
-                              RM Paper 2
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              250 questions • 150 mins
-                            </p>
-                            <p className="text-xs text-green-600 mt-1">
-                              CBT Format - Advanced Practice
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center py-4">
-                    <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm">
-                      <Clock className="h-4 w-4 mr-2" />
-                      Waiting for admin to set exam schedule
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* RPHN Exam Schedule */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  RPHN Exam Schedule
-                </h3>
-                <div className="space-y-4">
-                  {/* Coming soon notice */}
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-semibold text-purple-900 mb-2">
-                      🚧 Coming Soon
-                    </h4>
-                    <p className="text-sm text-purple-700">
-                      <strong>RPHN Exams:</strong> Currently under development.
-                      <br />
-                      This exam category will be available in a future update
-                      with full CBT support.
-                    </p>
-                    <p className="text-xs text-purple-600 mt-2">
-                      ⏳ RPHN (Registered Public Health Nurse) certification
-                      exams will follow the same 250-question, 150-minute
-                      format.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
-                      <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-700 font-medium">
-                          Coming Soon
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between blur-sm">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
-                            <FileText className="h-5 w-5 text-purple-500" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-purple-700">
-                              RPHN Paper 1
-                            </h4>
-                            <p className="text-sm text-purple-600">
-                              250 questions • 150 mins
-                            </p>
-                            <p className="text-xs text-purple-500 mt-1">
-                              CBT Format - Public Health Fundamentals
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
-                      <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-700 font-medium">
-                          Coming Soon
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between blur-sm">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
-                            <FileText className="h-5 w-5 text-purple-500" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-purple-700">
-                              RPHN Paper 2
-                            </h4>
-                            <p className="text-sm text-purple-600">
-                              250 questions • 150 mins
-                            </p>
-                            <p className="text-xs text-purple-500 mt-1">
-                              CBT Format - Advanced Public Health
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center py-4">
-                    <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
-                      <Star className="h-4 w-4 mr-2" />
-                      RPHN exams coming in future update
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Quick Actions */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Quick Actions
-                </h3>
-                <div className="space-y-3">
-                  {/* Weekly Assessment - Featured at Top */}
-                  <Button
-                    onClick={() => router.push("/weekly-assessment")}
-                    className="w-full justify-start bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Weekly Assessment
-                    <span className="ml-auto bg-white/20 text-white text-xs px-2 py-1 rounded-full">
-                      Featured
-                    </span>
-                  </Button>
-                  
-                  <Button
-                    onClick={() => setShowLeaderboard(true)}
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
-                    <Award className="h-4 w-4 mr-2" />
-                    View Leaderboard
-                    {!realTimeLoading && realTimeLeaderboard && realTimeLeaderboard.length > 0 && (
-                      <div className="ml-auto flex items-center text-xs text-green-600">
-                        <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse mr-1"></div>
-                        Live
-                      </div>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => setShowFeedback(true)}
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Send Feedback
-                  </Button>
-                </div>
-              </div>
-
-              {/* Taken Exams Section - REMOVED */}
-              
-              {/* Recent Activity */}
-              {recentActivity && recentActivity.length > 0 && (
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Quick Actions */}
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Recent Activity
+                    Quick Actions
                   </h3>
                   <div className="space-y-3">
-                    {recentActivity.slice(0, 5).map((activity, index) => (
-                      <div key={index} className="flex items-center text-sm">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
-                        <div className="flex-1">
-                          <p className="text-gray-900">
-                            {activity.description}
-                          </p>
-                          <p className="text-gray-500 text-xs">
-                            {activity.timestamp && activity.timestamp instanceof Date
-                              ? formatDistanceToNow(activity.timestamp, {
-                                  addSuffix: true,
-                                })
-                              : "Recently"
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                    {/* Weekly Assessment - Featured at Top */}
+                    <Button
+                      onClick={() => router.push("/weekly-assessment")}
+                      className="w-full justify-start bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Weekly Assessment
+                      <span className="ml-auto bg-white/20 text-white text-xs px-2 py-1 rounded-full">
+                        Featured
+                      </span>
+                    </Button>
+
+                    <Button
+                      onClick={() => setShowLeaderboard(true)}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <Award className="h-4 w-4 mr-2" />
+                      View Leaderboard
+                      {!realTimeLoading &&
+                        realTimeLeaderboard &&
+                        realTimeLeaderboard.length > 0 && (
+                          <div className="ml-auto flex items-center text-xs text-green-600">
+                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                            Live
+                          </div>
+                        )}
+                    </Button>
+                    <Button
+                      onClick={() => setShowFeedback(true)}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Send Feedback
+                    </Button>
                   </div>
                 </div>
-              )}
+
+                {/* Taken Exams Section - REMOVED */}
+
+                {/* Recent Activity */}
+                {recentActivity && recentActivity.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Recent Activity
+                    </h3>
+                    <div className="space-y-3">
+                      {recentActivity.slice(0, 5).map((activity, index) => (
+                        <div key={index} className="flex items-center text-sm">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                          <div className="flex-1">
+                            <p className="text-gray-900">
+                              {activity.description}
+                            </p>
+                            <p className="text-gray-500 text-xs">
+                              {activity.timestamp &&
+                              activity.timestamp instanceof Date
+                                ? formatDistanceToNow(activity.timestamp, {
+                                    addSuffix: true,
+                                  })
+                                : "Recently"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1162,12 +1264,14 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold text-gray-900 mr-3">
                   University Leaderboard
                 </h2>
-                {!realTimeLoading && realTimeLeaderboard && realTimeLeaderboard.length > 0 && (
-                  <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                    <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
-                    Live Rankings
-                  </div>
-                )}
+                {!realTimeLoading &&
+                  realTimeLeaderboard &&
+                  realTimeLeaderboard.length > 0 && (
+                    <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1"></div>
+                      Live Rankings
+                    </div>
+                  )}
               </div>
               <Button
                 onClick={() => setShowLeaderboard(false)}
