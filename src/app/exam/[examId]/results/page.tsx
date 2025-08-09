@@ -141,7 +141,9 @@ export default function ExamResultsPage() {
   };
 
   const handleReviewAnswers = () => {
-    router.push(`/exam/${examId}/review?attemptId=${attemptId}`);
+    if (examAttempt) {
+      router.push(`/exam/${examId}/review?attemptId=${examAttempt.id}`);
+    }
   };
 
   const handleBackToDashboard = () => {
