@@ -491,7 +491,7 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Question Area */}
         <div className="w-full">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
               {/* Question Header */}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
@@ -510,10 +510,15 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
                     onClick={() => setIsNavigatorCollapsed(!isNavigatorCollapsed)}
                     variant="outline"
                     size="sm"
-                    className="border-gray-300"
+                    className="border-gray-300 hidden sm:flex"
                   >
                     <BarChart3 className="h-4 w-4 mr-1" />
-                    {isNavigatorCollapsed ? "Show" : "Hide"} Navigator
+                    <span className="hidden md:inline">
+                      {isNavigatorCollapsed ? "Show" : "Hide"} Navigator
+                    </span>
+                    <span className="md:hidden">
+                      {isNavigatorCollapsed ? "Show" : "Hide"}
+                    </span>
                   </Button>
 
                   <Button
@@ -622,7 +627,7 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
 
         {/* Bottom Question Navigator */}
         {!isNavigatorCollapsed && (
-          <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Question Navigator</h3>
               <Button
@@ -636,7 +641,7 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
             </div>
 
             {/* Responsive question grid */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-6">
               {questions.map((question, index) => {
                 const isAnswered = userAnswers[index] !== null;
                 const isCurrent = index === currentQuestionIndex;
@@ -664,7 +669,8 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
               })}
             </div>
 
-            <div className="flex items-center justify-center space-x-6 text-sm">
+            {/* Legend - Mobile responsive */}
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
                 <span>Answered ({answeredCount})</span>
@@ -678,6 +684,20 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
                 <span>Flagged ({flaggedCount})</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Show Navigator Button when collapsed - Bottom Right */}
+        {isNavigatorCollapsed && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <Button
+              onClick={() => setIsNavigatorCollapsed(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2 shadow-lg"
+              title="Show Navigator (Space)"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Navigator
+            </Button>
           </div>
         )}
       </div>
