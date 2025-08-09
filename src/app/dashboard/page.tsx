@@ -428,7 +428,22 @@ export default function DashboardPage() {
 
   // Check if user has access to any exams - Admin gets unlimited access
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
-  const hasExamAccess = isAdmin || userAccess;
+  
+  // For non-admin users, check if they have valid active access
+  // Since revoked users have their access completely removed, we just check if userAccess exists and is active
+  const hasValidAccess = userAccess && userAccess.isActive;
+    
+  const hasExamAccess = isAdmin || hasValidAccess;
+
+  console.log("🔍 Dashboard Access Check:", {
+    isAdmin,
+    userAccess: userAccess ? {
+      isActive: userAccess.isActive,
+      examCategory: userAccess.examCategory,
+    } : null,
+    hasValidAccess,
+    hasExamAccess
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">

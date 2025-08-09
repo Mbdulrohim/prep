@@ -146,35 +146,20 @@ class ExamAttemptManager {
 
       const userAccess = userAccessDoc.data() as UserAccess;
 
-      // Check if account is revoked
-      if (userAccess.revokedAt) {
-        return { 
-          canStart: false, 
-          reason: `Access has been revoked: ${userAccess.revokedReason || "Contact admin for details"}` 
-        };
-      }
+      console.log("🔍 Checking access for user:", userId, "userAccess:", {
+        isActive: userAccess.isActive,
+        examCategory: userAccess.examCategory
+      });
 
-      // Check if account is suspended
-      if (userAccess.suspendedAt && userAccess.suspensionEndDate) {
-        let suspensionEnd: Date;
-        if (userAccess.suspensionEndDate instanceof Date) {
-          suspensionEnd = userAccess.suspensionEndDate;
-        } else if ((userAccess.suspensionEndDate as any)?.toDate) {
-          suspensionEnd = (userAccess.suspensionEndDate as any).toDate();
-        } else {
-          suspensionEnd = new Date(userAccess.suspensionEndDate as any);
-        }
-            
-        if (new Date() < suspensionEnd) {
-          return { 
-            canStart: false, 
-            reason: `Access suspended until ${suspensionEnd.toLocaleDateString()}: ${userAccess.suspensionReason || "Contact admin for details"}` 
-          };
-        }
+      // Check if access is active
+      if (!userAccess.isActive) {
+        console.log("❌ Access inactive for user:", userId);
+        return { canStart: false, reason: "Access has been deactivated" };
       }
 
       // Check if access is active
       if (!userAccess.isActive) {
+        console.log("❌ Access inactive for user:", userId);
         return { canStart: false, reason: "Access has been deactivated" };
       }
 

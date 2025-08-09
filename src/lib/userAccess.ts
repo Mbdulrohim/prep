@@ -1,6 +1,6 @@
 // src/lib/userAccess.ts
 import { db } from "./firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, Timestamp, deleteDoc } from "firebase/firestore";
 
 export interface UserAccess {
   userId: string;
@@ -145,7 +145,7 @@ export class UserAccessManager {
 
       await updateDoc(accessRef, {
         remainingAttempts: access.remainingAttempts - 1,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       });
 
       return true;
@@ -166,15 +166,10 @@ export class UserAccessManager {
         return false;
       }
 
-      await updateDoc(accessRef, {
-        isActive: false,
-        remainingAttempts: 0,
-        revokedAt: new Date(),
-        revokedReason: reason || "Access revoked by admin",
-        updatedAt: new Date(),
-      });
+      // Completely remove the access record - user appears as if they never had access
+      await deleteDoc(accessRef);
 
-      console.log(`Access revoked for user: ${userId}, reason: ${reason || "Admin action"}`);
+      console.log(`Access completely removed for user: ${userId}, reason: ${reason || "Admin action"}`);
       return true;
     } catch (error) {
       console.error("Error revoking user access:", error);
@@ -194,10 +189,10 @@ export class UserAccessManager {
 
       await updateDoc(accessRef, {
         isActive: false,
-        suspendedAt: new Date(),
+        suspendedAt: Timestamp.now(),
         suspensionEndDate,
         suspensionReason: reason || "Account suspended by admin",
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       });
 
       console.log(`Access suspended for user: ${userId} until ${suspensionEndDate}, reason: ${reason || "Admin action"}`);
@@ -226,8 +221,8 @@ export class UserAccessManager {
         suspensionReason: null,
         revokedAt: null,
         revokedReason: null,
-        restoredAt: new Date(),
-        updatedAt: new Date(),
+        restoredAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       console.log(`Access restored for user: ${userId}`);
@@ -260,7 +255,7 @@ export class UserAccessManager {
         totalQuestions,
         timeSpent,
         startedAt: new Date(Date.now() - timeSpent),
-        completedAt: new Date(),
+        completedAt: Timestamp.now().toDate(),
         answers,
       };
 

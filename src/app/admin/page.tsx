@@ -29,6 +29,7 @@ import {
   addDoc,
   getDoc,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   Settings,
@@ -155,16 +156,22 @@ export default function AdminDashboard() {
   const [schedulingLoading, setSchedulingLoading] = useState(false);
 
   // Weekly Assessment state
-  const [currentWeeklyAssessment, setCurrentWeeklyAssessment] = useState<any>(null);
-  const [previousWeeklyAssessments, setPreviousWeeklyAssessments] = useState<any[]>([]);
+  const [currentWeeklyAssessment, setCurrentWeeklyAssessment] =
+    useState<any>(null);
+  const [previousWeeklyAssessments, setPreviousWeeklyAssessments] = useState<
+    any[]
+  >([]);
   const [weeklyAssessmentStats, setWeeklyAssessmentStats] = useState<any>({});
-  const [showCreateWeeklyAssessment, setShowCreateWeeklyAssessment] = useState(false);
-  const [showAdvancedWeeklyManager, setShowAdvancedWeeklyManager] = useState(false);
-  const [showWeeklyAssessmentStats, setShowWeeklyAssessmentStats] = useState(false);
+  const [showCreateWeeklyAssessment, setShowCreateWeeklyAssessment] =
+    useState(false);
+  const [showAdvancedWeeklyManager, setShowAdvancedWeeklyManager] =
+    useState(false);
+  const [showWeeklyAssessmentStats, setShowWeeklyAssessmentStats] =
+    useState(false);
 
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
-  
+
   // Real-time admin data
   const {
     adminStats: realTimeAdminStats,
@@ -239,6 +246,12 @@ export default function AdminDashboard() {
         const userId = doc.id;
         const user = usersMap.get(userId) || {};
 
+        // Debug logging for access data
+        console.log(`🔍 Loading access for user ${userId}:`, {
+          isActive: access.isActive,
+          examCategory: access.examCategory,
+        });
+
         usersMap.set(userId, {
           ...user,
           id: userId,
@@ -247,9 +260,9 @@ export default function AdminDashboard() {
           university: access.userUniversity || user.university,
           isRestricted: access.isRestricted || false,
           restrictionReason: access.restrictionReason,
-          accessCategory: access.examCategory,
-          papers: access.papers,
-          expiryDate: access.expiryDate,
+          accessCategory: access.isActive ? access.examCategory : "", // Show category only if active
+          papers: access.isActive ? access.papers : [], // Show papers only if active
+          expiryDate: access.isActive ? access.expiryDate : undefined, // Show expiry only if active
           lastLoginAt: access.lastLoginAt,
         });
       });
@@ -314,18 +327,28 @@ export default function AdminDashboard() {
 
   const loadUniversityRankings = async () => {
     try {
-      const newRankings = await universityRankingManager.calculateUniversityRankings();
-      
+      const newRankings =
+        await universityRankingManager.calculateUniversityRankings();
+
       // Convert new ranking format to the format expected by the admin panel
       const convertedRankings: UniversityRanking[] = await Promise.all(
         newRankings.map(async (ranking) => {
           // Get top performers for this university
-          const topPerformers = await universityRankingManager.getTopPerformersByUniversity(ranking.universityId);
-          const topPerformer = topPerformers[0] || { name: "No data", score: 0 };
-          
+          const topPerformers =
+            await universityRankingManager.getTopPerformersByUniversity(
+              ranking.universityId
+            );
+          const topPerformer = topPerformers[0] || {
+            name: "No data",
+            score: 0,
+          };
+
           // Get category breakdown for this university
-          const categoryBreakdown = await universityRankingManager.getCategoryBreakdownByUniversity(ranking.universityId);
-          
+          const categoryBreakdown =
+            await universityRankingManager.getCategoryBreakdownByUniversity(
+              ranking.universityId
+            );
+
           return {
             university: ranking.universityName,
             totalStudents: ranking.totalStudents,
@@ -333,13 +356,13 @@ export default function AdminDashboard() {
             totalAttempts: ranking.totalAttempts,
             topStudent: {
               name: topPerformer.name,
-              score: topPerformer.score
+              score: topPerformer.score,
             },
-            categories: categoryBreakdown
+            categories: categoryBreakdown,
           };
         })
       );
-      
+
       setRankings(convertedRankings);
     } catch (error) {
       console.error("Error loading university rankings:", error);
@@ -357,9 +380,11 @@ export default function AdminDashboard() {
 
   const loadWeeklyAssessments = async () => {
     try {
-      const current = await weeklyAssessmentManager.getCurrentWeeklyAssessment();
-      const previous = await weeklyAssessmentManager.getPreviousWeeklyAssessments();
-      
+      const current =
+        await weeklyAssessmentManager.getCurrentWeeklyAssessment();
+      const previous =
+        await weeklyAssessmentManager.getPreviousWeeklyAssessments();
+
       setCurrentWeeklyAssessment(current);
       setPreviousWeeklyAssessments(previous);
     } catch (error) {
@@ -594,24 +619,49 @@ export default function AdminDashboard() {
 
   const revokeUserAccess = async (userId: string) => {
     try {
-      await updateDoc(doc(db, "userAccess", userId), {
-        hasAccess: false,
-        planType: "",
-        accessRevokedAt: new Date(),
-        revokedBy: user?.uid,
-        updatedAt: new Date(),
-      });
+      console.log("🔄 Starting revocation process for user:", userId);
 
-      // Update local state
-      setUsers((prev) =>
-        prev.map((userData) =>
-          userData.id === userId
-            ? { ...userData, accessCategory: "", expiryDate: undefined }
-            : userData
-        )
+      // Use the UserAccessManager for consistent access control
+      const { UserAccessManager } = await import("@/lib/userAccess");
+      const accessManager = new UserAccessManager();
+
+      // Check current access before revoking
+      const currentAccess = await accessManager.getUserAccess(userId);
+      console.log("📊 Current access before revocation:", currentAccess);
+
+      const success = await accessManager.revokeUserAccess(
+        userId,
+        "Access revoked by admin"
       );
+      console.log("✅ Revocation result:", success);
 
-      alert("Access revoked successfully");
+      if (success) {
+        // Check access after revoking to verify it worked
+        const updatedAccess = await accessManager.getUserAccess(userId);
+        console.log("📊 Access after revocation:", updatedAccess);
+
+        // Update local state - user now appears as having no access
+        setUsers((prev) =>
+          prev.map((userData) =>
+            userData.id === userId
+              ? {
+                  ...userData,
+                  accessCategory: "", // Remove access category
+                  papers: [], // Remove papers
+                  expiryDate: undefined, // Remove expiry date
+                }
+              : userData
+          )
+        );
+        alert("Access revoked successfully - user now appears as having no access");
+
+        // Refresh the users list to show updated status
+        console.log("🔄 Refreshing users list...");
+        await loadUsers();
+        console.log("✅ Users list refreshed");
+      } else {
+        alert("Failed to revoke user access - user may not exist");
+      }
     } catch (error) {
       console.error("Error revoking user access:", error);
       alert("Failed to revoke user access");
@@ -838,7 +888,11 @@ export default function AdminDashboard() {
 
   // Weekly Assessment functions
   const deactivateCurrentAssessment = async () => {
-    if (!confirm("Are you sure you want to deactivate the current weekly assessment? Students will no longer be able to take it.")) {
+    if (
+      !confirm(
+        "Are you sure you want to deactivate the current weekly assessment? Students will no longer be able to take it."
+      )
+    ) {
       return;
     }
 
@@ -849,7 +903,8 @@ export default function AdminDashboard() {
       showToast({
         type: "success",
         title: "Assessment Deactivated",
-        message: "The current weekly assessment has been deactivated successfully.",
+        message:
+          "The current weekly assessment has been deactivated successfully.",
       });
     } catch (error) {
       console.error("Error deactivating assessment:", error);
@@ -863,7 +918,9 @@ export default function AdminDashboard() {
 
   const viewAssessmentStats = async (assessmentId: string) => {
     try {
-      const stats = await weeklyAssessmentManager.getWeeklyAssessmentStats(assessmentId);
+      const stats = await weeklyAssessmentManager.getWeeklyAssessmentStats(
+        assessmentId
+      );
       setWeeklyAssessmentStats(stats);
       setShowWeeklyAssessmentStats(true);
     } catch (error) {
@@ -877,7 +934,11 @@ export default function AdminDashboard() {
   };
 
   const reactivateAssessment = async (assessmentId: string) => {
-    if (!confirm("Are you sure you want to reactivate this assessment? This will deactivate the current active assessment if any.")) {
+    if (
+      !confirm(
+        "Are you sure you want to reactivate this assessment? This will deactivate the current active assessment if any."
+      )
+    ) {
       return;
     }
 
@@ -952,7 +1013,11 @@ export default function AdminDashboard() {
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
     { id: "weekly-assessments", label: "Weekly Assessments", icon: Calendar },
-    { id: "standalone-weekly-assessments", label: "Weekly Assessment", icon: Target },
+    {
+      id: "standalone-weekly-assessments",
+      label: "Weekly Assessment",
+      icon: Target,
+    },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -1040,7 +1105,8 @@ export default function AdminDashboard() {
                           Total Questions
                         </p>
                         <p className="text-2xl font-bold text-green-900">
-                          {realTimeAdminStats?.totalQuestions || stats.totalQuestions}
+                          {realTimeAdminStats?.totalQuestions ||
+                            stats.totalQuestions}
                         </p>
                       </div>
                     </div>
@@ -1062,7 +1128,8 @@ export default function AdminDashboard() {
                           Total Attempts
                         </p>
                         <p className="text-2xl font-bold text-purple-900">
-                          {realTimeAdminStats?.totalAttempts || stats.totalAttempts}
+                          {realTimeAdminStats?.totalAttempts ||
+                            stats.totalAttempts}
                         </p>
                       </div>
                     </div>
@@ -1084,7 +1151,8 @@ export default function AdminDashboard() {
                           Average Score
                         </p>
                         <p className="text-2xl font-bold text-yellow-900">
-                          {realTimeAdminStats?.averageScore?.toFixed(1) || stats.averageScore.toFixed(1)}
+                          {realTimeAdminStats?.averageScore?.toFixed(1) ||
+                            stats.averageScore.toFixed(1)}
                         </p>
                       </div>
                     </div>
@@ -1994,7 +2062,9 @@ export default function AdminDashboard() {
                           Total Feedback
                         </p>
                         <p className="text-2xl font-bold text-blue-900">
-                          {liveFeedback ? liveFeedback.length : feedbackList.length}
+                          {liveFeedback
+                            ? liveFeedback.length
+                            : feedbackList.length}
                         </p>
                       </div>
                     </div>
@@ -2011,9 +2081,15 @@ export default function AdminDashboard() {
                     <div className="flex items-center">
                       <Clock className="h-8 w-8 text-yellow-600" />
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-yellow-600">New</p>
+                        <p className="text-sm font-medium text-yellow-600">
+                          New
+                        </p>
                         <p className="text-2xl font-bold text-yellow-900">
-                          {(liveFeedback || feedbackList).filter((f) => f.status === "new").length}
+                          {
+                            (liveFeedback || feedbackList).filter(
+                              (f) => f.status === "new"
+                            ).length
+                          }
                         </p>
                       </div>
                     </div>
@@ -2034,7 +2110,11 @@ export default function AdminDashboard() {
                           Resolved
                         </p>
                         <p className="text-2xl font-bold text-green-900">
-                          {(liveFeedback || feedbackList).filter((f) => f.status === "resolved").length}
+                          {
+                            (liveFeedback || feedbackList).filter(
+                              (f) => f.status === "resolved"
+                            ).length
+                          }
                         </p>
                       </div>
                     </div>
@@ -2103,13 +2183,14 @@ export default function AdminDashboard() {
                             <div className="text-sm text-gray-500">
                               {feedback.userEmail}
                             </div>
-                            {feedback.university && feedback.university !== "Not specified" && (
-                              <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                {feedback.university}
-                              </div>
-                            )}
+                            {feedback.university &&
+                              feedback.university !== "Not specified" && (
+                                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                  {feedback.university}
+                                </div>
+                              )}
                           </div>
-                          
+
                           <div className="flex items-center space-x-2 mb-3">
                             <span
                               className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -2126,7 +2207,8 @@ export default function AdminDashboard() {
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              {feedback.type.charAt(0).toUpperCase() + feedback.type.slice(1)}
+                              {feedback.type.charAt(0).toUpperCase() +
+                                feedback.type.slice(1)}
                             </span>
                             <span
                               className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -2141,7 +2223,10 @@ export default function AdminDashboard() {
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              {feedback.status === "in-review" ? "In Review" : feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                              {feedback.status === "in-review"
+                                ? "In Review"
+                                : feedback.status.charAt(0).toUpperCase() +
+                                  feedback.status.slice(1)}
                             </span>
                             <span
                               className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -2154,7 +2239,9 @@ export default function AdminDashboard() {
                                   : "bg-green-100 text-green-800"
                               }`}
                             >
-                              {feedback.priority.charAt(0).toUpperCase() + feedback.priority.slice(1)} Priority
+                              {feedback.priority.charAt(0).toUpperCase() +
+                                feedback.priority.slice(1)}{" "}
+                              Priority
                             </span>
                             {feedback.rating && (
                               <div className="flex items-center bg-blue-50 px-2 py-1 rounded">
@@ -2171,7 +2258,7 @@ export default function AdminDashboard() {
                               {feedback.subject}
                             </h4>
                           )}
-                          
+
                           <div className="text-gray-700 mb-3 whitespace-pre-wrap">
                             {feedback.message}
                           </div>
@@ -2179,11 +2266,19 @@ export default function AdminDashboard() {
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center space-x-4">
                               <div>
-                                Category: <span className="font-medium">{feedback.category}</span>
+                                Category:{" "}
+                                <span className="font-medium">
+                                  {feedback.category}
+                                </span>
                               </div>
                               <div>
-                                {new Date(feedback.createdAt).toLocaleDateString()} at{" "}
-                                {new Date(feedback.createdAt).toLocaleTimeString()}
+                                {new Date(
+                                  feedback.createdAt
+                                ).toLocaleDateString()}{" "}
+                                at{" "}
+                                {new Date(
+                                  feedback.createdAt
+                                ).toLocaleTimeString()}
                               </div>
                               {feedback.examId && (
                                 <div className="text-blue-600">
@@ -2211,7 +2306,10 @@ export default function AdminDashboard() {
                                   </div>
                                   {feedback.respondedAt && (
                                     <div className="text-xs text-blue-600 mt-1">
-                                      Responded on {new Date(feedback.respondedAt).toLocaleDateString()}
+                                      Responded on{" "}
+                                      {new Date(
+                                        feedback.respondedAt
+                                      ).toLocaleDateString()}
                                     </div>
                                   )}
                                 </div>
@@ -2226,7 +2324,9 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => updateFeedbackStatus(feedback.id, "in-review")}
+                              onClick={() =>
+                                updateFeedbackStatus(feedback.id, "in-review")
+                              }
                               className="text-blue-600 border-blue-300 hover:bg-blue-50"
                             >
                               Start Review
@@ -2235,7 +2335,9 @@ export default function AdminDashboard() {
                           {feedback.status !== "resolved" && (
                             <Button
                               size="sm"
-                              onClick={() => updateFeedbackStatus(feedback.id, "resolved")}
+                              onClick={() =>
+                                updateFeedbackStatus(feedback.id, "resolved")
+                              }
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               Mark Resolved
@@ -2245,7 +2347,9 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => updateFeedbackStatus(feedback.id, "dismissed")}
+                              onClick={() =>
+                                updateFeedbackStatus(feedback.id, "dismissed")
+                              }
                               className="text-gray-600 border-gray-300 hover:bg-gray-50"
                             >
                               Dismiss
@@ -2353,7 +2457,8 @@ export default function AdminDashboard() {
                     Weekly Assessment Management
                   </h2>
                   <p className="text-gray-600">
-                    Create and manage weekly assessments with flexible scheduling and advanced controls.
+                    Create and manage weekly assessments with flexible
+                    scheduling and advanced controls.
                   </p>
                 </div>
                 <div className="flex space-x-3">
@@ -2379,30 +2484,39 @@ export default function AdminDashboard() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-center mb-3">
                     <Calendar className="h-6 w-6 text-blue-600 mr-2" />
-                    <h3 className="font-semibold text-blue-900">Flexible Scheduling</h3>
+                    <h3 className="font-semibold text-blue-900">
+                      Flexible Scheduling
+                    </h3>
                   </div>
                   <p className="text-sm text-blue-700">
-                    Set precise start and end times for assessment availability with timezone support.
+                    Set precise start and end times for assessment availability
+                    with timezone support.
                   </p>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center mb-3">
                     <ToggleRight className="h-6 w-6 text-green-600 mr-2" />
-                    <h3 className="font-semibold text-green-900">Master Toggle</h3>
+                    <h3 className="font-semibold text-green-900">
+                      Master Toggle
+                    </h3>
                   </div>
                   <p className="text-sm text-green-700">
-                    Instantly enable or disable assessments with one-click override controls.
+                    Instantly enable or disable assessments with one-click
+                    override controls.
                   </p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <div className="flex items-center mb-3">
                     <Clock className="h-6 w-6 text-orange-600 mr-2" />
-                    <h3 className="font-semibold text-orange-900">Custom Duration</h3>
+                    <h3 className="font-semibold text-orange-900">
+                      Custom Duration
+                    </h3>
                   </div>
                   <p className="text-sm text-orange-700">
-                    Set custom time limits and question counts for each assessment.
+                    Set custom time limits and question counts for each
+                    assessment.
                   </p>
                 </div>
               </div>
@@ -2422,11 +2536,13 @@ export default function AdminDashboard() {
                     <div className="text-right">
                       <p className="text-sm text-blue-600">Created:</p>
                       <p className="text-sm font-medium text-blue-900">
-                        {new Date(currentWeeklyAssessment.createdAt).toLocaleDateString()}
+                        {new Date(
+                          currentWeeklyAssessment.createdAt
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-white rounded-lg p-4">
                       <p className="text-sm text-gray-600">Questions</p>
@@ -2473,7 +2589,8 @@ export default function AdminDashboard() {
                     No Active Weekly Assessment
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    Create a new weekly assessment to get started. Students will be able to take the assessment once it's published.
+                    Create a new weekly assessment to get started. Students will
+                    be able to take the assessment once it's published.
                   </p>
                   <Button
                     onClick={() => setShowCreateWeeklyAssessment(true)}
@@ -2492,15 +2609,22 @@ export default function AdminDashboard() {
                 {previousWeeklyAssessments.length > 0 ? (
                   <div className="space-y-4">
                     {previousWeeklyAssessments.map((assessment) => (
-                      <div key={assessment.id} className="border border-gray-200 rounded-lg p-4">
+                      <div
+                        key={assessment.id}
+                        className="border border-gray-200 rounded-lg p-4"
+                      >
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="font-medium text-gray-900">
                               {assessment.title}
                             </h4>
                             <p className="text-sm text-gray-600">
-                              Created: {new Date(assessment.createdAt).toLocaleDateString()} • 
-                              {assessment.questions.length} questions • {assessment.timeLimit} minutes
+                              Created:{" "}
+                              {new Date(
+                                assessment.createdAt
+                              ).toLocaleDateString()}{" "}
+                              •{assessment.questions.length} questions •{" "}
+                              {assessment.timeLimit} minutes
                             </p>
                           </div>
                           <div className="flex space-x-2">
@@ -2515,7 +2639,9 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => reactivateAssessment(assessment.id)}
+                              onClick={() =>
+                                reactivateAssessment(assessment.id)
+                              }
                               className="text-green-600 border-green-300 hover:bg-green-50"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />

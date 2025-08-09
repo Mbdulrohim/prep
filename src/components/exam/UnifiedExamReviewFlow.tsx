@@ -269,247 +269,251 @@ export const UnifiedExamReviewFlow: React.FC<UnifiedExamReviewFlowProps> = ({
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Question Navigator Sidebar - COLLAPSIBLE (Golden Standard) */}
-          {!isNavigatorCollapsed && (
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-32">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">
-                    Question Navigator
-                  </h3>
-                  <Button
-                    onClick={() => setIsNavigatorCollapsed(true)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                </div>
+        {/* Main Question Area - Full Width */}
+        <div className="w-full">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+            {/* Question Header with Status */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="text-sm font-medium text-gray-500">
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
+                  </span>
 
-                <div className="grid grid-cols-5 gap-2 mb-4">
-                  {questions.map((question, index) => {
-                    const answered = userAnswers[index] !== null;
-                    const correct = userAnswers[index] === question.correctAnswer;
-                    const isCurrent = index === currentQuestionIndex;
-
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => goToQuestion(index)}
-                        className={`
-                          w-8 h-8 text-xs font-medium rounded border-2 transition-all
-                          ${
-                            isCurrent
-                              ? "border-blue-500 bg-blue-500 text-white"
-                              : answered
-                              ? correct
-                                ? "border-green-500 bg-green-100 text-green-700"
-                                : "border-red-500 bg-red-100 text-red-700"
-                              : "border-gray-300 bg-gray-100 text-gray-700"
-                          }
-                        `}
-                      >
-                        {index + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="space-y-2 text-sm">
+                  {/* Status Indicator */}
                   <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
-                    <span>Correct ({correctCount})</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded"></div>
-                    <span>Wrong ({wrongCount})</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-gray-300 bg-gray-100 rounded"></div>
-                    <span>Unanswered ({unansweredCount})</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Show Navigator Button when collapsed */}
-          {isNavigatorCollapsed && (
-            <div className="fixed bottom-4 left-4 z-50">
-              <Button
-                onClick={() => setIsNavigatorCollapsed(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
-                title="Show Navigator (Space)"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* Main Question Area */}
-          <div className={`${isNavigatorCollapsed ? "lg:col-span-4" : "lg:col-span-3"}`}>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
-              {/* Question Header with Status */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-sm font-medium text-gray-500">
-                      Question {currentQuestionIndex + 1} of {totalQuestions}
-                    </span>
-
-                    {/* Status Indicator */}
-                    <div className="flex items-center space-x-2">
-                      {wasAnswered ? (
-                        isCorrect ? (
-                          <div className="flex items-center space-x-1 text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span className="text-sm font-medium">Correct</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-1 text-red-600">
-                            <XCircle className="h-4 w-4" />
-                            <span className="text-sm font-medium">Incorrect</span>
-                          </div>
-                        )
+                    {wasAnswered ? (
+                      isCorrect ? (
+                        <div className="flex items-center space-x-1 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">Correct</span>
+                        </div>
                       ) : (
-                        <div className="flex items-center space-x-1 text-gray-500">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="text-sm font-medium">Not Answered</span>
+                        <div className="flex items-center space-x-1 text-red-600">
+                          <XCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">Incorrect</span>
                         </div>
-                      )}
-                    </div>
+                      )
+                    ) : (
+                      <div className="flex items-center space-x-1 text-gray-500">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">Not Answered</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Question Text */}
-              <div className="mb-8">
-                <p className="text-lg text-gray-900 leading-relaxed">
-                  {currentQuestion?.text}
-                </p>
-              </div>
+            {/* Question Text */}
+            <div className="mb-8">
+              <p className="text-lg text-gray-900 leading-relaxed">
+                {currentQuestion?.text}
+              </p>
+            </div>
 
-              {/* Answer Options */}
-              <div className="space-y-4 mb-8">
-                {currentQuestion?.options?.map((option: string, index: number) => {
-                  const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
-                  const isUserAnswer = userAnswer === index;
-                  const isCorrectAnswer = correctAnswer === index;
+            {/* Answer Options */}
+            <div className="space-y-4 mb-8">
+              {currentQuestion?.options?.map((option: string, index: number) => {
+                const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
+                const isUserAnswer = userAnswer === index;
+                const isCorrectAnswer = correctAnswer === index;
 
-                  let optionStyle = "border-gray-200 bg-white";
-                  let labelStyle = "border-gray-300 text-gray-600";
+                let optionStyle = "border-gray-200 bg-white";
+                let labelStyle = "border-gray-300 text-gray-600";
 
-                  if (isCorrectAnswer) {
-                    optionStyle = "border-green-500 bg-green-50";
-                    labelStyle = "border-green-500 bg-green-500 text-white";
-                  } else if (isUserAnswer && !isCorrectAnswer) {
-                    optionStyle = "border-red-500 bg-red-50";
-                    labelStyle = "border-red-500 bg-red-500 text-white";
-                  }
+                if (isCorrectAnswer) {
+                  optionStyle = "border-green-500 bg-green-50";
+                  labelStyle = "border-green-500 bg-green-500 text-white";
+                } else if (isUserAnswer && !isCorrectAnswer) {
+                  optionStyle = "border-red-500 bg-red-50";
+                  labelStyle = "border-red-500 bg-red-500 text-white";
+                }
 
-                  return (
-                    <div
-                      key={index}
-                      className={`w-full p-4 rounded-lg border-2 ${optionStyle}`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium ${labelStyle}`}>
-                          {optionLabel}
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-gray-900">{option}</span>
-                          {isCorrectAnswer && (
-                            <div className="flex items-center space-x-1 mt-1">
-                              <CheckCircle className="h-3 w-3 text-green-600" />
-                              <span className="text-xs text-green-600 font-medium">Correct Answer</span>
-                            </div>
-                          )}
-                          {isUserAnswer && !isCorrectAnswer && (
-                            <div className="flex items-center space-x-1 mt-1">
-                              <XCircle className="h-3 w-3 text-red-600" />
-                              <span className="text-xs text-red-600 font-medium">Your Answer</span>
-                            </div>
-                          )}
-                        </div>
+                return (
+                  <div
+                    key={index}
+                    className={`w-full p-4 rounded-lg border-2 ${optionStyle}`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium ${labelStyle}`}>
+                        {optionLabel}
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-gray-900">{option}</span>
+                        {isCorrectAnswer && (
+                          <div className="flex items-center space-x-1 mt-1">
+                            <CheckCircle className="h-3 w-3 text-green-600" />
+                            <span className="text-xs text-green-600 font-medium">Correct Answer</span>
+                          </div>
+                        )}
+                        {isUserAnswer && !isCorrectAnswer && (
+                          <div className="flex items-center space-x-1 mt-1">
+                            <XCircle className="h-3 w-3 text-red-600" />
+                            <span className="text-xs text-red-600 font-medium">Your Answer</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between mb-6">
+              <Button
+                onClick={() => goToQuestion(currentQuestionIndex - 1)}
+                disabled={currentQuestionIndex === 0}
+                variant="outline"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+
+              <Button
+                onClick={() => goToQuestion(currentQuestionIndex + 1)}
+                disabled={currentQuestionIndex === totalQuestions - 1}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+
+            {/* AI Explanation Section */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Brain className="h-5 w-5 text-blue-600 mr-2" />
+                  AI Explanation
+                </h3>
+                
+                {!aiExplanations[currentQuestionIndex] && (
+                  <Button
+                    onClick={() => handleGetAIExplanation(currentQuestionIndex)}
+                    disabled={loadingAI === currentQuestionIndex}
+                    variant="outline"
+                  >
+                    {loadingAI === currentQuestionIndex ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb className="h-4 w-4 mr-2" />
+                        Get AI Explanation
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex items-center justify-between mb-6">
-                <Button
-                  onClick={() => goToQuestion(currentQuestionIndex - 1)}
-                  disabled={currentQuestionIndex === 0}
-                  variant="outline"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-
-                <Button
-                  onClick={() => goToQuestion(currentQuestionIndex + 1)}
-                  disabled={currentQuestionIndex === totalQuestions - 1}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-
-              {/* AI Explanation Section */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <Brain className="h-5 w-5 text-blue-600 mr-2" />
-                    AI Explanation
-                  </h3>
-                  
-                  {!aiExplanations[currentQuestionIndex] && (
-                    <Button
-                      onClick={() => handleGetAIExplanation(currentQuestionIndex)}
-                      disabled={loadingAI === currentQuestionIndex}
-                      variant="outline"
-                    >
-                      {loadingAI === currentQuestionIndex ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Lightbulb className="h-4 w-4 mr-2" />
-                          Get AI Explanation
-                        </>
-                      )}
-                    </Button>
-                  )}
+              {aiExplanations[currentQuestionIndex] && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="prose prose-sm max-w-none text-blue-900">
+                    <ReactMarkdown>
+                      {aiExplanations[currentQuestionIndex]}
+                    </ReactMarkdown>
+                  </div>
                 </div>
+              )}
 
-                {aiExplanations[currentQuestionIndex] && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="prose prose-sm max-w-none text-blue-900">
-                      <ReactMarkdown>
-                        {aiExplanations[currentQuestionIndex]}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
-
-                {/* Default explanation if available */}
-                {!aiExplanations[currentQuestionIndex] && currentQuestion?.explanation && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Explanation:</h4>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {currentQuestion.explanation}
-                    </p>
-                  </div>
-                )}
-              </div>
+              {/* Default explanation if available */}
+              {!aiExplanations[currentQuestionIndex] && currentQuestion?.explanation && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Explanation:</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {currentQuestion.explanation}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Question Navigator - Now at Bottom */}
+        {!isNavigatorCollapsed && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">
+                Question Navigator
+              </h3>
+              <Button
+                onClick={() => setIsNavigatorCollapsed(true)}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronUp className="h-4 w-4" />
+                Hide Navigator
+              </Button>
+            </div>
+
+            {/* Question Grid - More columns for horizontal layout */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {questions.map((question, index) => {
+                const answered = userAnswers[index] !== null;
+                const correct = userAnswers[index] === question.correctAnswer;
+                const isCurrent = index === currentQuestionIndex;
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => goToQuestion(index)}
+                    className={`
+                      w-8 h-8 text-xs font-medium rounded border-2 transition-all
+                      ${
+                        isCurrent
+                          ? "border-blue-500 bg-blue-500 text-white"
+                          : answered
+                          ? correct
+                            ? "border-green-500 bg-green-100 text-green-700"
+                            : "border-red-500 bg-red-100 text-red-700"
+                          : "border-gray-300 bg-gray-100 text-gray-700"
+                      }
+                    `}
+                  >
+                    {index + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Legend - Horizontal layout */}
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
+                <span>Correct ({correctCount})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded"></div>
+                <span>Wrong ({wrongCount})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 bg-gray-100 rounded"></div>
+                <span>Unanswered ({unansweredCount})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-blue-500 bg-blue-500 rounded"></div>
+                <span>Current</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Show Navigator Button when collapsed - Bottom Right */}
+        {isNavigatorCollapsed && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <Button
+              onClick={() => setIsNavigatorCollapsed(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2"
+              title="Show Navigator (Space)"
+            >
+              <ChevronUp className="h-4 w-4 mr-2" />
+              Show Navigator
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Keyboard Shortcuts Help Modal */}
