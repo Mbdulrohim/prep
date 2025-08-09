@@ -11,6 +11,7 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   AlertTriangle,
   CheckCircle,
   Save,
@@ -57,7 +58,7 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
   
   // UI state
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const [isNavigatorCollapsed, setIsNavigatorCollapsed] = useState(false);
+  const [isNavigatorCollapsed, setIsNavigatorCollapsed] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [examResults, setExamResults] = useState<any>(null);
 
@@ -488,63 +489,8 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Question Navigator Sidebar */}
-          {!isNavigatorCollapsed && (
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-32">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Question Navigator
-                </h3>
-
-                <div className="grid grid-cols-5 gap-2 mb-4">
-                  {questions.map((question, index) => {
-                    const isAnswered = userAnswers[index] !== null;
-                    const isCurrent = index === currentQuestionIndex;
-                    const isFlagged = flaggedQuestions.has(index);
-
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => goToQuestion(index)}
-                        className={`
-                          w-8 h-8 text-xs font-medium rounded border-2 transition-all
-                          ${
-                            isCurrent
-                              ? "border-blue-500 bg-blue-500 text-white"
-                              : isAnswered
-                              ? "border-green-500 bg-green-100 text-green-700"
-                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                          }
-                          ${isFlagged ? "ring-2 ring-yellow-400" : ""}
-                        `}
-                      >
-                        {index + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
-                    <span>Answered ({answeredCount})</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-gray-300 bg-white rounded"></div>
-                    <span>Not Answered ({unansweredCount})</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-yellow-400 bg-yellow-100 rounded ring-2 ring-yellow-400"></div>
-                    <span>Flagged ({flaggedCount})</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Main Question Area */}
-          <div className={`${isNavigatorCollapsed ? "lg:col-span-4" : "lg:col-span-3"}`}>
+        {/* Main Question Area */}
+        <div className="w-full">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
               {/* Question Header */}
               <div className="flex items-start justify-between mb-6">
@@ -559,18 +505,29 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
                   </div>
                 </div>
 
-                <Button
-                  onClick={toggleFlag}
-                  variant="outline"
-                  size="sm"
-                  className={`
-                    ${
-                      flaggedQuestions.has(currentQuestionIndex)
-                        ? "border-yellow-500 text-yellow-600"
-                        : "border-gray-300"
-                    }
-                  `}
-                >
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => setIsNavigatorCollapsed(!isNavigatorCollapsed)}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-300"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                    {isNavigatorCollapsed ? "Show" : "Hide"} Navigator
+                  </Button>
+
+                  <Button
+                    onClick={toggleFlag}
+                    variant="outline"
+                    size="sm"
+                    className={`
+                      ${
+                        flaggedQuestions.has(currentQuestionIndex)
+                          ? "border-yellow-500 text-yellow-600"
+                          : "border-gray-300"
+                      }
+                    `}
+                  >
                   <Flag
                     className={`h-4 w-4 mr-1 ${
                       flaggedQuestions.has(currentQuestionIndex) ? "fill-current" : ""
@@ -578,6 +535,7 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
                   />
                   {flaggedQuestions.has(currentQuestionIndex) ? "Unflag" : "Flag"}
                 </Button>
+                </div>
               </div>
 
               {/* Question Text */}
@@ -661,7 +619,67 @@ const StandaloneWeeklyAssessmentFlow: React.FC<StandaloneWeeklyAssessmentFlowPro
               </div>
             </div>
           </div>
-        </div>
+
+        {/* Bottom Question Navigator */}
+        {!isNavigatorCollapsed && (
+          <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Question Navigator</h3>
+              <Button
+                onClick={() => setIsNavigatorCollapsed(true)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Responsive question grid */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {questions.map((question, index) => {
+                const isAnswered = userAnswers[index] !== null;
+                const isCurrent = index === currentQuestionIndex;
+                const isFlagged = flaggedQuestions.has(index);
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => goToQuestion(index)}
+                    className={`
+                      w-8 h-8 text-xs font-medium rounded border-2 transition-all flex items-center justify-center
+                      ${
+                        isCurrent
+                          ? "border-blue-500 bg-blue-500 text-white"
+                          : isAnswered
+                          ? "border-green-500 bg-green-100 text-green-700"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                      }
+                      ${isFlagged ? "ring-2 ring-yellow-400" : ""}
+                    `}
+                  >
+                    {index + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-center space-x-6 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-green-500 bg-green-100 rounded"></div>
+                <span>Answered ({answeredCount})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 bg-white rounded"></div>
+                <span>Not Answered ({unansweredCount})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-yellow-400 bg-yellow-100 rounded ring-2 ring-yellow-400"></div>
+                <span>Flagged ({flaggedCount})</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Calculator Component */}
