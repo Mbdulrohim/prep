@@ -49,6 +49,7 @@ const ADMIN_EMAILS = [
   "ibrahimadekunle3030@gmail.com",
   "adekunleibrahim6060@gmail.com",
   "suleimanjemilat2009@gmail.com",
+  "raregem015@gmail.com",
 ];
 
 export default function DashboardPage() {
