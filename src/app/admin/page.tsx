@@ -17,6 +17,10 @@ import { useRealTimeAdminData } from "@/hooks/useRealTimeData";
 import { db } from "@/lib/firebase";
 import { feedbackManager, type Feedback } from "@/lib/feedback";
 import { universityRankingManager } from "@/lib/universityRankings";
+import { fetchRMExams, createRMExam, updateRMExam, type RMExamData } from "@/lib/rmExamData";
+import { rmUserAccessManager } from "@/lib/rmUserAccess";
+import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
+import { rmQuestionBankManager } from "@/lib/rmQuestionBank";
 import {
   collection,
   getDocs,
@@ -128,6 +132,7 @@ export default function AdminDashboard() {
     | "access-codes"
     | "weekly-assessments"
     | "standalone-weekly-assessments"
+    | "rm-management"
   >("overview");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -171,6 +176,24 @@ export default function AdminDashboard() {
   const [showWeeklyAssessmentStats, setShowWeeklyAssessmentStats] =
     useState(false);
 
+  // RM Management state
+  const [rmStats, setRMStats] = useState({
+    totalRMExams: 0,
+    totalRMQuestions: 0,
+    totalRMUsers: 0,
+    totalRMAttempts: 0,
+    averageRMScore: 0,
+    activeRMUsers: 0,
+  });
+  const [rmExams, setRMExams] = useState<any[]>([]);
+  const [rmQuestions, setRMQuestions] = useState<any[]>([]);
+  const [rmUsers, setRMUsers] = useState<any[]>([]);
+  const [rmAttempts, setRMAttempts] = useState<any[]>([]);
+  const [rmLoading, setRMLoading] = useState(false);
+  const [rmActiveSubTab, setRMActiveSubTab] = useState<
+    "overview" | "exams" | "questions" | "users" | "analytics"
+  >("overview");
+
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
 
@@ -198,6 +221,7 @@ export default function AdminDashboard() {
         loadUniversityRankings(),
         loadFeedback(),
         loadWeeklyAssessments(),
+        loadRMData(),
       ]);
     } catch (error) {
       console.error("Error loading admin data:", error);
@@ -391,6 +415,50 @@ export default function AdminDashboard() {
       setPreviousWeeklyAssessments(previous);
     } catch (error) {
       console.error("Error loading weekly assessments:", error);
+    }
+  };
+
+  const loadRMData = async () => {
+    setRMLoading(true);
+    try {
+      // Load RM exams
+      const rmExamsData = await fetchRMExams();
+      setRMExams(rmExamsData);
+
+      // Load RM questions stats (using stats method instead of all questions for performance)
+      const rmQuestionStats = rmQuestionBankManager.getRMQuestionBankStats();
+      const rmQuestionsCount = Object.values(rmQuestionStats).reduce((total: number, bank: any) => 
+        total + (bank.questionCount || 0), 0);
+
+      // Load RM users with access
+      const rmUsersData = await rmUserAccessManager.getAllRMUsers();
+      setRMUsers(rmUsersData);
+
+      // Load RM attempts and statistics
+      const rmStats = await rmExamAttemptManager.getRMExamStatistics();
+      const rmAttemptsData = await rmExamAttemptManager.getAllRMExamAttempts();
+      setRMAttempts(rmAttemptsData);
+
+      // Calculate RM overview stats
+      const totalRMExams = rmExamsData.length;
+      const totalRMQuestions = rmQuestionsCount;
+      const totalRMUsers = rmUsersData.length;
+      const totalRMAttempts = rmStats.totalAttempts;
+      const averageRMScore = rmStats.averageScore;
+      const activeRMUsers = rmUsersData.filter((user: any) => user.hasAccess).length;
+
+      setRMStats({
+        totalRMExams,
+        totalRMQuestions,
+        totalRMUsers,
+        totalRMAttempts,
+        averageRMScore,
+        activeRMUsers,
+      });
+    } catch (error) {
+      console.error("Error loading RM data:", error);
+    } finally {
+      setRMLoading(false);
     }
   };
 
@@ -1020,6 +1088,7 @@ export default function AdminDashboard() {
       label: "Weekly Assessment",
       icon: Target,
     },
+    { id: "rm-management", label: "RM Management", icon: Crown },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -2363,6 +2432,198 @@ export default function AdminDashboard() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* RM Management Tab */}
+          {activeTab === "rm-management" && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Crown className="h-6 w-6 text-green-600" />
+                    RM (Registered Midwifery) Management
+                  </h2>
+                  <p className="text-gray-600">
+                    Comprehensive management of RM exams, questions, users, and analytics
+                  </p>
+                </div>
+              </div>
+
+              {/* RM Sub-tabs */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="-mb-px flex space-x-8">
+                  {[
+                    { id: "overview", label: "Overview", icon: BarChart3 },
+                    { id: "exams", label: "Exam Configuration", icon: Settings },
+                    { id: "questions", label: "Question Management", icon: Database },
+                    { id: "users", label: "RM Users", icon: Users },
+                    { id: "analytics", label: "Analytics", icon: TrendingUp },
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.id}
+                      onClick={() => setRMActiveSubTab(subTab.id as any)}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
+                        rmActiveSubTab === subTab.id
+                          ? "border-green-500 text-green-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <subTab.icon className="h-4 w-4" />
+                      <span>{subTab.label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* RM Overview */}
+              {rmActiveSubTab === "overview" && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">RM System Overview</h3>
+                  
+                  {rmLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                    </div>
+                  ) : (
+                    <div>
+                      {/* RM Stats Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <Crown className="h-8 w-8 text-green-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-green-600">Total RM Exams</p>
+                              <p className="text-2xl font-bold text-green-700">{rmStats.totalRMExams}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <Database className="h-8 w-8 text-blue-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-blue-600">RM Questions</p>
+                              <p className="text-2xl font-bold text-blue-700">{rmStats.totalRMQuestions}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-purple-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <Users className="h-8 w-8 text-purple-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-purple-600">RM Users</p>
+                              <p className="text-2xl font-bold text-purple-700">{rmStats.totalRMUsers}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-orange-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <FileText className="h-8 w-8 text-orange-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-orange-600">RM Attempts</p>
+                              <p className="text-2xl font-bold text-orange-700">{rmStats.totalRMAttempts}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-indigo-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <Target className="h-8 w-8 text-indigo-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-indigo-600">Average Score</p>
+                              <p className="text-2xl font-bold text-indigo-700">{rmStats.averageRMScore.toFixed(1)}%</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-teal-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <UserCheck className="h-8 w-8 text-teal-600" />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-teal-600">Active RM Users</p>
+                              <p className="text-2xl font-bold text-teal-700">{rmStats.activeRMUsers}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RM Quick Actions */}
+                      <div className="border rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-4">Quick Actions</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <button
+                            onClick={() => setRMActiveSubTab("exams")}
+                            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Configure Exams</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setRMActiveSubTab("questions")}
+                            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <Upload className="h-4 w-4" />
+                            <span>Manage Questions</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setRMActiveSubTab("users")}
+                            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>Manage Users</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setRMActiveSubTab("analytics")}
+                            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            <span>View Analytics</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Placeholder for other RM sub-tabs */}
+              {rmActiveSubTab === "exams" && (
+                <div className="text-center py-8">
+                  <Crown className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Exam Configuration</h3>
+                  <p className="text-gray-600">Coming in Step 2 - Configure RM exam settings, pricing, and scheduling</p>
+                </div>
+              )}
+
+              {rmActiveSubTab === "questions" && (
+                <div className="text-center py-8">
+                  <Database className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Question Management</h3>
+                  <p className="text-gray-600">Coming in Step 2 - Upload and manage RM-specific questions</p>
+                </div>
+              )}
+
+              {rmActiveSubTab === "users" && (
+                <div className="text-center py-8">
+                  <Users className="h-16 w-16 text-purple-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM User Management</h3>
+                  <p className="text-gray-600">Coming in Step 3 - Manage RM user access and permissions</p>
+                </div>
+              )}
+
+              {rmActiveSubTab === "analytics" && (
+                <div className="text-center py-8">
+                  <TrendingUp className="h-16 w-16 text-orange-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Analytics</h3>
+                  <p className="text-gray-600">Coming in Step 4 - Detailed RM performance analytics and reporting</p>
+                </div>
+              )}
             </div>
           )}
 
