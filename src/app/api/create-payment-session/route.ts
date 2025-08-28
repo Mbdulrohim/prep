@@ -4,7 +4,7 @@ import { flutterwaveService } from "@/lib/flutterwave";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, amount, planType, userId, txRef, customerName } =
+    const { email, amount, planType, userId, txRef, customerName, planName, examCategory } =
       await request.json();
 
     if (!email || !amount || !planType || !userId || !txRef) {
@@ -20,6 +20,15 @@ export async function POST(request: NextRequest) {
 
     console.log("Payment session redirect URL:", redirectUrl);
 
+    // Set payment title and description based on exam category
+    let paymentTitle = "PREP - Premium Nursing Exam Access";
+    let paymentDescription = "Payment for premium exam preparation with mock exams";
+    
+    if (examCategory === "RM") {
+      paymentTitle = "PREP - RM (Registered Midwifery) Exam Access";
+      paymentDescription = "Payment for complete RM exam access with Paper 1 & Paper 2";
+    }
+
     // Initialize Flutterwave payment
     const paymentData = await flutterwaveService.initializePayment({
       tx_ref: txRef,
@@ -33,13 +42,15 @@ export async function POST(request: NextRequest) {
         phonenumber: "",
       },
       customizations: {
-        title: "PREP - Premium Nursing Exam Access",
-        description: "Payment for premium exam preparation with 3 mock exams",
+        title: paymentTitle,
+        description: paymentDescription,
         logo: `${baseUrl}/image.png`,
       },
       meta: flutterwaveService.createPaymentMetadata(userId, planType, {
         txRef,
         customerName,
+        planName: planName || paymentTitle,
+        examCategory: examCategory || "RN",
       }),
     });
 

@@ -4,6 +4,8 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
+import { RMPurchase } from "@/components/dashboard/RMPurchase";
+import { RMCodeRedemption } from "@/components/dashboard/RMCodeRedemption";
 import { 
   ArrowLeft, 
   CreditCard, 
@@ -259,18 +261,9 @@ export default function RMDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Payment Buttons */}
-                  <div className="space-y-4">
-                    <Button
-                      onClick={() => {
-                        // TODO: Implement RM payment with Flutterwave
-                        alert("RM Payment integration coming soon!");
-                      }}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg"
-                    >
-                      <CreditCard className="h-5 w-5 mr-2" />
-                      Pay ₦2,000 with Card
-                    </Button>
+                  {/* Payment Components */}
+                  <div className="space-y-6">
+                    <RMPurchase />
                     
                     <div className="flex items-center">
                       <div className="flex-1 border-t border-gray-300"></div>
@@ -278,17 +271,7 @@ export default function RMDashboardPage() {
                       <div className="flex-1 border-t border-gray-300"></div>
                     </div>
 
-                    <Button
-                      onClick={() => {
-                        // TODO: Implement RM access code redemption
-                        alert("RM Access code redemption coming soon!");
-                      }}
-                      variant="outline"
-                      className="w-full border-green-600 text-green-600 hover:bg-green-50 py-4 text-lg"
-                    >
-                      <Lock className="h-5 w-5 mr-2" />
-                      Redeem RM Access Code
-                    </Button>
+                    <RMCodeRedemption />
                   </div>
                 </div>
               </div>

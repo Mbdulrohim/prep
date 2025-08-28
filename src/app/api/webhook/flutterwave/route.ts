@@ -73,13 +73,37 @@ async function handleSuccessfulPayment(data: any) {
     // Extract user information
     const userId = metadata.userId;
     const planType = metadata.planType || "premium_access";
+    const examCategory = metadata.examCategory || "RN"; // Check if this is RM payment
 
     if (!userId) {
       console.error("No userId found in payment metadata");
       return;
     }
 
-    // Handle individual payment - Premium Access with 3 mock exams
+    // Handle RM payment separately
+    if (examCategory === "RM" && planType === "rm_access") {
+      // Import RM access manager
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      
+      // Grant RM access via payment
+      await rmUserAccessManager.grantRMAccessViaPayment(
+        userId,
+        customer.email,
+        {
+          amount: verification.data.amount,
+          currency,
+          paymentMethod: "flutterwave",
+          transactionId: data.id,
+          paymentDate: new Date(),
+          paymentStatus: "completed",
+        }
+      );
+
+      console.log(`RM payment processed successfully for user ${userId}`);
+      return;
+    }
+
+    // Handle regular RN payment - Premium Access with 3 mock exams
     const accessRef = doc(db, "userAccess", userId);
 
     // Calculate expiry date (90 days from now)

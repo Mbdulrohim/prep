@@ -1,13 +1,12 @@
-// src/app/api/redeem-access-code/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
 export async function POST(request: NextRequest) {
   try {
-    const { code, userId } = await request.json();
+    const { accessCode, userId, examCategory, userEmail, userName, university } = await request.json();
 
-    if (!code || !userId) {
+    if (!accessCode || !userId) {
       return NextResponse.json(
         { success: false, error: "Access code and user ID are required" },
         { status: 400 }
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Clean the code
-    const cleanCode = code.replace(/\s+/g, "").toUpperCase();
+    const cleanCode = accessCode.replace(/\s+/g, "").toUpperCase();
 
     // Get access code from Firestore
     const accessCodeDoc = await getDoc(doc(db, "accessCodes", cleanCode));
@@ -53,6 +52,56 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Check if requesting RM access and code is for RM
+    if (examCategory === "RM") {
+      if (accessCodeData.examCategory !== "RM") {
+        return NextResponse.json({
+          success: false,
+          error: "This access code is not valid for RM exams",
+        });
+      }
+
+      // Check if user already has RM access
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      const existingAccess = await rmUserAccessManager.getRMUserAccess(userId);
+      
+      if (existingAccess?.hasAccess) {
+        return NextResponse.json({
+          success: false,
+          error: "You already have RM access",
+        });
+      }
+
+      // Grant RM access via access code
+      await rmUserAccessManager.grantRMAccessViaCode(
+        userId,
+        userEmail || "",
+        {
+          code: cleanCode,
+          redeemedAt: new Date(),
+          codeType: accessCodeData.maxUses > 1 ? "multi_use" : "single_use",
+        }
+      );
+
+      // Update access code usage
+      await updateDoc(doc(db, "accessCodes", cleanCode), {
+        currentUses: accessCodeData.currentUses + 1,
+        lastUsedAt: new Date(),
+        lastUsedBy: userId,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "RM access granted successfully!",
+        accessDetails: {
+          examCategory: "RM",
+          papers: ["Paper 1", "Paper 2"],
+          expiryDate: accessCodeData.expiryDate,
+        },
+      });
+    }
+
+    // Handle regular RN access code redemption
     // Check if user already redeemed this code
     const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
     const userAccessData = userAccessDoc.exists()
@@ -76,9 +125,9 @@ export async function POST(request: NextRequest) {
     // Grant user access
     const userAccess = {
       userId,
-      userEmail: userAccessData.userEmail || "",
-      userName: userAccessData.userName || "",
-      userUniversity: userAccessData.userUniversity || "",
+      userEmail: userAccessData.userEmail || userEmail || "",
+      userName: userAccessData.userName || userName || "",
+      userUniversity: userAccessData.userUniversity || university || "",
       examCategory: accessCodeData.examCategory,
       papers: accessCodeData.papers,
       expiryDate: accessCodeData.expiryDate,
