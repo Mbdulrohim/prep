@@ -129,6 +129,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // RM User Access - only admins can manage, users can read their own
+    match /rmUserAccess/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;
