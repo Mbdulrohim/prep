@@ -617,16 +617,83 @@ export const AdvancedWeeklyAssessmentManager: React.FC<AdvancedWeeklyAssessmentM
                 </p>
               </div>
 
-              {/* Schedule Management Form would go here */}
-              <div className="text-center py-8">
-                <p className="text-gray-600">Schedule editing interface coming soon...</p>
-                <Button
-                  onClick={() => setCurrentView("list")}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Back to List
-                </Button>
+              {/* Schedule Management Form */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date & Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Set start date and time"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Date & Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Set end date and time"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max Attempts
+                      </label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="1">1 Attempt</option>
+                        <option value="2">2 Attempts</option>
+                        <option value="3">3 Attempts</option>
+                        <option value="unlimited">Unlimited</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Time Limit (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        min="30"
+                        max="300"
+                        defaultValue="90"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="90"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <div className="flex justify-between">
+                    <Button
+                      onClick={() => setCurrentView("list")}
+                      variant="outline"
+                    >
+                      Cancel Changes
+                    </Button>
+                    <div className="space-x-3">
+                      <Button
+                        variant="outline"
+                        className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                      >
+                        Save as Draft
+                      </Button>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Update Schedule
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

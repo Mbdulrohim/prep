@@ -142,8 +142,8 @@ export default function CategoryPage() {
                         {exam.title}
                       </h2>
                       {!exam.available && (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                          Coming Soon
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                          Setup Required
                         </span>
                       )}
                     </div>
@@ -208,7 +208,7 @@ export default function CategoryPage() {
                         disabled
                         className="gap-2 bg-gray-300 cursor-not-allowed"
                       >
-                        Coming Soon
+                        Admin Setup Required
                       </Button>
                     )}
                   </div>

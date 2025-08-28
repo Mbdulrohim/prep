@@ -1214,94 +1214,29 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* RPHN Exam Schedule */}
+              {/* RPHN Exam Schedule - Hidden until implementation */}
               <div className="lg:col-span-3">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                    RPHN Exam Schedule
-                  </h3>
-                  <div className="space-y-4">
-                    {/* Coming soon notice */}
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                      <h4 className="font-semibold text-purple-900 mb-2">
-                        🚧 Coming Soon
+                {/* Temporarily hidden - RPHN exams under development */}
+                {false && (
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                      RPHN Exam Schedule
+                    </h3>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        RPHN Exams in Development
                       </h4>
-                      <p className="text-sm text-purple-700">
-                        <strong>RPHN Exams:</strong> Currently under
-                        development.
-                        <br />
-                        This exam category will be available in a future update
-                        with full CBT support.
+                      <p className="text-sm text-blue-700">
+                        <strong>RPHN (Registered Public Health Nurse)</strong> certification
+                        exams are currently being developed with full CBT support.
                       </p>
-                      <p className="text-xs text-purple-600 mt-2">
-                        ⏳ RPHN (Registered Public Health Nurse) certification
-                        exams will follow the same 250-question, 150-minute
-                        format.
+                      <p className="text-xs text-blue-600 mt-2">
+                        📋 Will follow the same 250-question, 150-minute format as RN/RM exams
                       </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
-                        <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                          <span className="text-purple-700 font-medium">
-                            Coming Soon
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between blur-sm">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
-                              <FileText className="h-5 w-5 text-purple-500" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-purple-700">
-                                RPHN Paper 1
-                              </h4>
-                              <p className="text-sm text-purple-600">
-                                250 questions • 150 mins
-                              </p>
-                              <p className="text-xs text-purple-500 mt-1">
-                                CBT Format - Public Health Fundamentals
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-lg border border-gray-200 bg-purple-50 opacity-75 relative">
-                        <div className="absolute inset-0 bg-purple-100 bg-opacity-70 rounded-lg flex items-center justify-center">
-                          <span className="text-purple-700 font-medium">
-                            Coming Soon
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between blur-sm">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center mr-3">
-                              <FileText className="h-5 w-5 text-purple-500" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-purple-700">
-                                RPHN Paper 2
-                              </h4>
-                              <p className="text-sm text-purple-600">
-                                250 questions • 150 mins
-                              </p>
-                              <p className="text-xs text-purple-500 mt-1">
-                                CBT Format - Advanced Public Health
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-center py-4">
-                      <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
-                        <Star className="h-4 w-4 mr-2" />
-                        RPHN exams coming in future update
-                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Sidebar */}

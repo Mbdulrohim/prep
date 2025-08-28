@@ -148,16 +148,31 @@ export default function RNExamPage() {
                         </div>
 
                         <div className="text-right">
-                          <Link href={`/exam/${exam.id}`}>
-                            <Button
-                              variant="secondary"
-                              size="lg"
-                              className="text-slate-900"
-                              disabled={!exam.available} // Disable if not available
-                            >
-                              {exam.available ? "Start Exam" : "Coming Soon"}
-                            </Button>
-                          </Link>
+                          {exam.available ? (
+                            <Link href={`/exam/${exam.id}`}>
+                              <Button
+                                variant="secondary"
+                                size="lg"
+                                className="text-slate-900"
+                              >
+                                Start Exam
+                              </Button>
+                            </Link>
+                          ) : (
+                            <div className="text-center">
+                              <Button
+                                variant="outline"
+                                size="lg"
+                                disabled
+                                className="text-gray-500 border-gray-300"
+                              >
+                                Schedule Required
+                              </Button>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Contact admin to enable
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -138,15 +138,16 @@ export const AlternativePayment: React.FC<AlternativePaymentProps> = ({
       description: "Bitcoin, USDT, or other crypto payments",
       icon: <Globe className="h-6 w-6" />,
       processingTime: "30 minutes",
-      available: false,
+      available: true, // ✅ NOW ENABLED
       instructions: [
-        "Contact us for crypto wallet address",
-        "Send equivalent of ₦5,000 in your preferred crypto",
-        "Include payment reference in transaction memo",
-        "Wait for blockchain confirmation",
+        "Contact us via WhatsApp for crypto wallet address",
+        "Send equivalent of ₦5,000 in Bitcoin or USDT",
+        "Include your email and payment reference in transaction",
+        "Send transaction hash for quick verification",
       ],
       contactInfo: {
         whatsapp: "+234 123 456 7890",
+        email: "crypto@examprep.com",
       },
     },
   ];

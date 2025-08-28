@@ -190,8 +190,8 @@ export default function HomePage() {
                       <span className="text-gray-500 font-medium">
                         Paper 1 & Paper 2
                       </span>
-                      <span className="text-red-500 font-medium">
-                        Coming Soon
+                      <span className="text-green-600 font-medium">
+                        Available
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-400">
@@ -219,8 +219,8 @@ export default function HomePage() {
                       <span className="text-gray-500 font-medium">
                         Paper 1 & Paper 2
                       </span>
-                      <span className="text-red-500 font-medium">
-                        Coming Soon
+                      <span className="text-orange-500 font-medium">
+                        In Development
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-400">
