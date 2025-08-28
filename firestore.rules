@@ -135,6 +135,40 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // RM Exam Attempts - users can manage their own attempts, admins can read all
+    match /rmExamAttempts/{attemptId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // RM Questions - authenticated users can read, only admins can write
+    match /rmQuestions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Payments - users can read their own payments, admins can read all
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // User Activity - users can read their own activity, admins can read all
+    match /userActivity/{activityId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Study Groups - authenticated users can read and create, members can update
+    match /studyGroups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() || isAdmin();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;
