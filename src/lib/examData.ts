@@ -177,7 +177,35 @@ const ALL_EXAMS: ExamData[] = [
 export async function fetchAllExams(): Promise<ExamData[]> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
-  return ALL_EXAMS;
+  
+  // Clone the exams array to avoid mutating the original
+  const exams = ALL_EXAMS.map(exam => ({ ...exam }));
+  
+  // Check exam schedules and update availability dynamically
+  try {
+    const { examScheduleManager } = await import("./examSchedule");
+    
+    // Update availability based on scheduling status
+    for (const exam of exams) {
+      if (exam.category === "RM" || exam.category === "RN") {
+        const paper = exam.id.includes("paper-2") ? "paper2" : "paper1";
+        const scheduleId = `${exam.category}_${paper}`;
+        
+        try {
+          const schedule = await examScheduleManager.getSchedule(scheduleId);
+          if (schedule && schedule.isActive && schedule.scheduledDate) {
+            exam.available = true;
+          }
+        } catch (error) {
+          console.warn(`Could not check schedule for ${scheduleId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Could not load exam schedule manager:", error);
+  }
+  
+  return exams;
 }
 
 export async function fetchQuestionsForExam(

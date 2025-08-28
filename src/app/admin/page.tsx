@@ -1421,8 +1421,12 @@ export default function AdminDashboard() {
                       <h3 className="font-semibold text-green-600">
                         RM Paper 1
                       </h3>
-                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
-                        Not Scheduled
+                      <span className="text-xs px-2 py-1 rounded">
+                        {examSchedules["rm-paper-1"]?.isScheduled ? (
+                          <span className="bg-green-100 text-green-600">Scheduled</span>
+                        ) : (
+                          <span className="bg-red-100 text-red-600">Not Scheduled</span>
+                        )}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
@@ -1472,8 +1476,12 @@ export default function AdminDashboard() {
                       <h3 className="font-semibold text-green-600">
                         RM Paper 2
                       </h3>
-                      <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
-                        Not Scheduled
+                      <span className="text-xs px-2 py-1 rounded">
+                        {examSchedules["rm-paper-2"]?.isScheduled ? (
+                          <span className="bg-green-100 text-green-600">Scheduled</span>
+                        ) : (
+                          <span className="bg-red-100 text-red-600">Not Scheduled</span>
+                        )}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
