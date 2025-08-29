@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Alert, useToast } from "@/components/ui/Alert";
@@ -10,6 +11,7 @@ import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
 import { WeeklyAssessmentCreator } from "@/components/admin/WeeklyAssessmentCreator";
 import { AdvancedWeeklyAssessmentManager } from "@/components/admin/AdvancedWeeklyAssessmentManager";
 import StandaloneWeeklyAssessmentAdmin from "../../components/admin/StandaloneWeeklyAssessmentAdmin";
+import StandaloneRMExamAdmin from "../../components/admin/StandaloneRMExamAdmin";
 import { ParsedQuestion } from "@/lib/documentParser";
 import { examAttemptManager } from "@/lib/examAttempts";
 import { weeklyAssessmentManager } from "@/lib/weeklyAssessments";
@@ -20,7 +22,9 @@ import { universityRankingManager } from "@/lib/universityRankings";
 import { fetchRMExams, createRMExam, updateRMExam, type RMExamData } from "@/lib/rmExamData";
 import { rmUserAccessManager } from "@/lib/rmUserAccess";
 import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
-import { rmQuestionBankManager } from "@/lib/rmQuestionBank";
+import { questionBankManager } from "@/lib/questionBank";
+// Standalone RM System
+import { standaloneRMExamManager } from "@/lib/standaloneRMExams";
 import {
   collection,
   getDocs,
@@ -63,6 +67,8 @@ import {
   X,
   CheckCircle,
   ToggleRight,
+  CreditCard,
+  Eye,
 } from "lucide-react";
 
 // Admin access control
@@ -119,6 +125,7 @@ interface UniversityRanking {
 
 export default function AdminDashboard() {
   const { user, userProfile } = useAuth();
+  const router = useRouter();
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<
     | "overview"
@@ -132,6 +139,7 @@ export default function AdminDashboard() {
     | "access-codes"
     | "weekly-assessments"
     | "standalone-weekly-assessments"
+    | "standalone-rm-exams"
     | "rm-management"
   >("overview");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -426,10 +434,12 @@ export default function AdminDashboard() {
       const rmExamsData = await fetchRMExams();
       setRMExams(rmExamsData);
 
-      // Load RM questions stats (using stats method instead of all questions for performance)
-      const rmQuestionStats = rmQuestionBankManager.getRMQuestionBankStats();
-      const rmQuestionsCount = Object.values(rmQuestionStats).reduce((total: number, bank: any) => 
-        total + (bank.questionCount || 0), 0);
+      // Load RM questions stats (using standard question bank manager)
+      const rmQuestionStats = questionBankManager.getQuestionBankStats();
+      const rmQuestionsCount = Object.entries(rmQuestionStats)
+        .filter(([bankId]) => bankId.startsWith('rm-'))
+        .reduce((total: number, [, bank]: [string, any]) => 
+          total + (bank.totalQuestions || 0), 0);
 
       // Load RM users with access
       const rmUsersData = await rmUserAccessManager.getAllRMUsers();
@@ -1127,12 +1137,12 @@ export default function AdminDashboard() {
     { id: "questions", label: "Manage Questions", icon: Database },
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
-    { id: "weekly-assessments", label: "Weekly Assessments", icon: Calendar },
     {
       id: "standalone-weekly-assessments",
       label: "Weekly Assessment",
       icon: Target,
     },
+    { id: "standalone-rm-exams", label: "RM Exams", icon: Crown },
     { id: "rm-management", label: "RM Management", icon: Crown },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
@@ -2762,6 +2772,11 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <AccessCodeManager createdBy={user?.email || "admin"} />
             </div>
+          )}
+
+          {/* Standalone RM Exams Tab */}
+          {activeTab === "standalone-rm-exams" && (
+            <StandaloneRMExamAdmin user={user} />
           )}
 
           {/* Weekly Assessments Tab */}

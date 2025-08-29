@@ -46,6 +46,8 @@ import { examAttemptManager, ExamAttempt } from "@/lib/examAttempts";
 import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
 import { rmUserAccessManager } from "@/lib/rmUserAccess";
 import { rmExamAttemptManager, RMExamAttempt } from "@/lib/rmExamAttempts";
+// Standalone RM System
+import { standaloneRMExamManager } from "@/lib/standaloneRMExams";
 
 // Admin access control
 const ADMIN_EMAILS = [
@@ -94,6 +96,11 @@ export default function DashboardPage() {
   const [rmAttemptsLoading, setRmAttemptsLoading] = useState(true);
   const [rmUserAccess, setRmUserAccess] = useState<any>(null);
   const [rmAccessLoading, setRmAccessLoading] = useState(true);
+  
+  // Standalone RM System state
+  const [standaloneRMExams, setStandaloneRMExams] = useState<any[]>([]);
+  const [standaloneRMLoading, setStandaloneRMLoading] = useState(true);
+  const [standaloneRMAccess, setStandaloneRMAccess] = useState<any>(null);
   
   const [examAvailability, setExamAvailability] = useState<{
     [key: string]: {
@@ -236,6 +243,7 @@ export default function DashboardPage() {
     if (user?.uid) {
       loadUserAttempts();
       loadRMData(); // Load RM data alongside RN data
+      loadStandaloneRMData(); // Load standalone RM data
     }
   }, [user?.uid]);
 
@@ -292,6 +300,28 @@ export default function DashboardPage() {
 
   const refreshRMUserAccess = async () => {
     await checkRMUserAccess();
+  };
+
+  // Standalone RM System data loading
+  const loadStandaloneRMData = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      setStandaloneRMLoading(true);
+      
+      // Get available standalone RM exams
+      const exams = await standaloneRMExamManager.getActiveRMExams();
+      setStandaloneRMExams(exams);
+      
+      // Check user's exam history and access
+      const examHistory = await standaloneRMExamManager.getUserExamHistory(user.uid);
+      setStandaloneRMAccess({ examHistory, totalAttempts: examHistory.length });
+      
+    } catch (error) {
+      console.error("Failed to load standalone RM data:", error);
+    } finally {
+      setStandaloneRMLoading(false);
+    }
   };
 
   const handleProfileSave = async (name: string, university: string) => {
@@ -748,6 +778,88 @@ export default function DashboardPage() {
                         >
                           <BarChart className="h-4 w-4 mr-1" />
                           Results
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RM Exams Hero Section */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl shadow-2xl text-white p-8 relative overflow-hidden">
+                {/* Background pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-4 -translate-x-4"></div>
+
+                <div className="relative">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                          <Target className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl lg:text-3xl font-bold">
+                            RM Exam Practice
+                          </h2>
+                          <p className="text-emerald-100">
+                            Premium registered midwife certification prep
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
+                        Master your RM certification with our comprehensive exam
+                        practice system. Access premium questions with detailed
+                        explanations and performance analytics.
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{standaloneRMExams.length}</div>
+                          <div className="text-sm text-emerald-200">
+                            Available Exams
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{standaloneRMAccess?.totalAttempts || 0}</div>
+                          <div className="text-sm text-emerald-200">Your Attempts</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">Premium</div>
+                          <div className="text-sm text-emerald-200">Quality</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col space-y-4 lg:w-64">
+                      <Button
+                        onClick={() => router.push("/rm")}
+                        className="bg-white text-emerald-600 hover:bg-gray-50 font-semibold py-4 text-lg shadow-lg"
+                      >
+                        <Target className="h-5 w-5 mr-2" />
+                        Browse RM Exams
+                      </Button>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <Button
+                          onClick={() => router.push("/rm")}
+                          variant="outline"
+                          className="border-white/30 text-white hover:bg-white/10 text-xs py-2"
+                        >
+                          <Award className="h-4 w-4 mr-1" />
+                          Leaderboard
+                        </Button>
+                        <Button
+                          onClick={() => router.push("/rm/payment")}
+                          variant="outline"
+                          className="border-white/30 text-white hover:bg-white/10 text-xs py-2"
+                        >
+                          <CreditCard className="h-4 w-4 mr-1" />
+                          Purchase
                         </Button>
                       </div>
                     </div>

@@ -12,7 +12,7 @@ import { AlertCircle, BookOpen, CheckCircle, Clock, Users, ArrowLeft } from "luc
 import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
 import { rmUserAccessManager } from "@/lib/rmUserAccess";
 import { rmExamAttemptManager, RMExamAttempt } from "@/lib/rmExamAttempts";
-import { rmQuestionBankManager } from "@/lib/rmQuestionBank";
+import { questionBankManager } from "@/lib/questionBank";
 
 // Reusable components (will adapt for RM)
 import { RMExamFlow } from "@/components/exam/RMExamFlow";
@@ -171,15 +171,14 @@ export default function RMExamPage() {
 
       // Load RM questions for this exam
       // Extract paper name from exam ID (rm-paper-1 -> paper-1, rm-paper-2 -> paper-2)
-      const paper = rmExamData.id.replace('rm-', ''); // Remove 'rm-' prefix to get just 'paper-1' or 'paper-2'
+      const paper = rmExamData.id.replace('rm-', '') as "paper-1" | "paper-2"; // Remove 'rm-' prefix to get just 'paper-1' or 'paper-2'
       console.log("🔍 Using paper name for question bank:", paper);
       console.log("🔍 Full exam ID:", rmExamData.id);
       
-      // Initialize RM question banks if needed
-      await rmQuestionBankManager.initializeRMQuestionBanks();
-      
-      const questions = await rmQuestionBankManager.assignRMQuestionsToUser(
+      // Use the standard question bank manager for RM questions
+      const questions = await questionBankManager.assignQuestionsToUser(
         user.uid,
+        "RM",
         paper,
         rmExamData.questionsCount
       );

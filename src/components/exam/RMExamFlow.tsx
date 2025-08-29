@@ -21,12 +21,12 @@ import {
 
 interface Question {
   id: string;
-  question: string;
+  text: string;
   options: string[];
   correctAnswer: number;
   explanation?: string;
   category?: string;
-  difficulty?: "easy" | "medium" | "hard";
+  difficulty?: "Beginner" | "Intermediate" | "Advanced";
 }
 
 interface RMExamData {
@@ -83,6 +83,7 @@ export function RMExamFlow({
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [isNavigatorExpanded, setIsNavigatorExpanded] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -104,6 +105,56 @@ export function RMExamFlow({
       }
     };
   }, []);
+
+  // Keyboard navigation effect
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default if we're handling the key
+      const key = event.key.toLowerCase();
+      const currentQ = rmQuestions[currentQuestionIndex];
+      
+      if (!currentQ) return;
+      
+      // Answer selection keys (A, B, C, D)
+      if (['a', 'b', 'c', 'd'].includes(key)) {
+        event.preventDefault();
+        const answerIndex = key.charCodeAt(0) - 97; // Convert 'a' to 0, 'b' to 1, etc.
+        if (answerIndex < currentQ.options.length) {
+          handleAnswerSelect(currentQ.id, answerIndex);
+        }
+        return;
+      }
+      
+      // Next question (N key)
+      if (key === 'n') {
+        event.preventDefault();
+        goToNext();
+        return;
+      }
+      
+      // Previous question (P key)
+      if (key === 'p') {
+        event.preventDefault();
+        goToPrevious();
+        return;
+      }
+      
+      // Flag question (F key)
+      if (key === 'f') {
+        event.preventDefault();
+        toggleQuestionFlag(currentQuestionIndex);
+        return;
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentQuestionIndex, rmQuestions]); // Re-run when question changes
 
   // Format time display
   const formatTime = (seconds: number) => {
@@ -209,7 +260,7 @@ export function RMExamFlow({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20"> {/* Added bottom padding for fixed navigator */}
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -259,31 +310,174 @@ export function RMExamFlow({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Question Navigation Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow border p-4 sticky top-24">
-              <h3 className="font-semibold text-gray-900 mb-4">Questions</h3>
-              
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Question Content */}
+        <div className="bg-white rounded-lg shadow border">
+          {/* Question Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-500">
+                  Question {currentQuestionIndex + 1} of {rmQuestions.length}
+                </span>
+                {currentQuestion.difficulty && (
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    currentQuestion.difficulty === 'Beginner'
+                      ? 'bg-green-100 text-green-700'
+                      : currentQuestion.difficulty === 'Intermediate'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {currentQuestion.difficulty}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => toggleQuestionFlag(currentQuestionIndex)}
+                className={`p-2 rounded-lg transition-colors ${
+                  flaggedQuestions.has(currentQuestionIndex)
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {flaggedQuestions.has(currentQuestionIndex) ? (
+                  <BookmarkCheck className="h-4 w-4" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Question Text */}
+            <h2 className="text-lg font-medium text-gray-900 leading-relaxed">
+              {currentQuestion.text}
+            </h2>
+          </div>
+
+          {/* Answer Options */}
+          <div className="p-6">
+            <div className="space-y-3">
+              {currentQuestion.options.map((option: string, index: number) => {
+                const isSelected = answers[currentQuestion.id] === index;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(currentQuestion.id, index)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-gray-300'
+                      }`}>
+                        {isSelected && (
+                          <CheckCircle className="h-4 w-4 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-gray-700">
+                            {String.fromCharCode(65 + index)}.
+                          </span>
+                          <span className="text-gray-900">{option}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Keyboard shortcuts help */}
+            <div className="mt-6 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600">
+                <strong>Keyboard shortcuts:</strong> A-D (select answer), N (next), P (previous), F (flag)
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Footer */}
+          <div className="p-6 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={goToPrevious}
+                disabled={currentQuestionIndex === 0}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Previous</span>
+              </Button>
+
+              <div className="flex items-center space-x-3">
+                {currentQuestionIndex === rmQuestions.length - 1 ? (
+                  <Button
+                    onClick={handleManualSubmit}
+                    disabled={isSubmitting}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Exam'}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={goToNext}
+                    className="flex items-center space-x-2"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Question Navigator */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        {/* Toggle Button */}
+        <div className="max-w-4xl mx-auto px-4">
+          <button
+            onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
+            className="w-full py-3 text-center text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <span>Question Navigator</span>
+              <ArrowLeft className={`h-4 w-4 transform transition-transform ${
+                isNavigatorExpanded ? 'rotate-90' : '-rotate-90'
+              }`} />
+            </div>
+          </button>
+        </div>
+        
+        {/* Expandable Navigator Content */}
+        {isNavigatorExpanded && (
+          <div className="max-w-4xl mx-auto px-4 pb-4">
+            <div className="bg-gray-50 rounded-lg p-4">
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-2 mb-4 text-xs">
-                <div className="text-center">
-                  <div className="font-semibold text-green-600">{stats.answered}</div>
-                  <div className="text-gray-500">Answered</div>
+              <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                <div>
+                  <div className="text-lg font-semibold text-green-600">{stats.answered}</div>
+                  <div className="text-xs text-gray-500">Answered</div>
                 </div>
-                <div className="text-center">
-                  <div className="font-semibold text-gray-600">{stats.unanswered}</div>
-                  <div className="text-gray-500">Remaining</div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-600">{stats.unanswered}</div>
+                  <div className="text-xs text-gray-500">Remaining</div>
                 </div>
-                <div className="text-center">
-                  <div className="font-semibold text-yellow-600">{stats.flagged}</div>
-                  <div className="text-gray-500">Flagged</div>
+                <div>
+                  <div className="text-lg font-semibold text-yellow-600">{stats.flagged}</div>
+                  <div className="text-xs text-gray-500">Flagged</div>
                 </div>
               </div>
 
               {/* Question Grid */}
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-1 max-h-32 overflow-y-auto">
                 {rmQuestions.map((_, index: number) => {
                   const isAnswered = answers[rmQuestions[index].id] !== undefined;
                   const isFlagged = flaggedQuestions.has(index);
@@ -311,129 +505,7 @@ export function RMExamFlow({
               </div>
             </div>
           </div>
-
-          {/* Question Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow border">
-              {/* Question Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-500">
-                      Question {currentQuestionIndex + 1} of {rmQuestions.length}
-                    </span>
-                    {currentQuestion.difficulty && (
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        currentQuestion.difficulty === 'easy'
-                          ? 'bg-green-100 text-green-700'
-                          : currentQuestion.difficulty === 'medium'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {currentQuestion.difficulty}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => toggleQuestionFlag(currentQuestionIndex)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      flaggedQuestions.has(currentQuestionIndex)
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {flaggedQuestions.has(currentQuestionIndex) ? (
-                      <BookmarkCheck className="h-4 w-4" />
-                    ) : (
-                      <Bookmark className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Question Text */}
-                <h2 className="text-lg font-medium text-gray-900 leading-relaxed">
-                  {currentQuestion.question}
-                </h2>
-              </div>
-
-              {/* Answer Options */}
-              <div className="p-6">
-                <div className="space-y-3">
-                  {currentQuestion.options.map((option: string, index: number) => {
-                    const isSelected = answers[currentQuestion.id] === index;
-                    
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(currentQuestion.id, index)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-500'
-                              : 'border-gray-300'
-                          }`}>
-                            {isSelected && (
-                              <CheckCircle className="h-4 w-4 text-white" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium text-gray-700">
-                                {String.fromCharCode(65 + index)}.
-                              </span>
-                              <span className="text-gray-900">{option}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Navigation Footer */}
-              <div className="p-6 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={goToPrevious}
-                    disabled={currentQuestionIndex === 0}
-                    className="flex items-center space-x-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span>Previous</span>
-                  </Button>
-
-                  <div className="flex items-center space-x-3">
-                    {currentQuestionIndex === rmQuestions.length - 1 ? (
-                      <Button
-                        onClick={handleManualSubmit}
-                        disabled={isSubmitting}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6"
-                      >
-                        {isSubmitting ? 'Submitting...' : 'Submit Exam'}
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={goToNext}
-                        className="flex items-center space-x-2"
-                      >
-                        <span>Next</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Review Modal */}
