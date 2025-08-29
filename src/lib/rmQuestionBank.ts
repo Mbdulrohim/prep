@@ -74,8 +74,128 @@ class RMQuestionBankManager {
           console.log(`  ✅ ${id}: ${bank.questions.length} questions (${bank.metadata.difficultyDistribution.beginner} beginner, ${bank.metadata.difficultyDistribution.intermediate} intermediate, ${bank.metadata.difficultyDistribution.advanced} advanced)`);
         });
       }
+      
+      // Always check for additional questions in legacy rmQuestions collection
+      console.log("🔍 Checking for additional questions in legacy rmQuestions collection...");
+      await this.checkAndMergeFromLegacyRMQuestions();
     } catch (error) {
       console.error("Error initializing RM question banks:", error);
+    }
+  }
+  
+  /**
+   * Check for additional questions in legacy rmQuestions collection and merge them
+   */
+  private async checkAndMergeFromLegacyRMQuestions(): Promise<void> {
+    try {
+      const rmQuestionsQuery = query(collection(db, "rmQuestions"));
+      const rmQuestionsSnapshot = await getDocs(rmQuestionsQuery);
+      
+      if (rmQuestionsSnapshot.empty) {
+        console.log("📋 No additional questions found in rmQuestions collection");
+        return;
+      }
+      
+      const allLegacyQuestions: RMQuestion[] = [];
+      rmQuestionsSnapshot.forEach((doc) => {
+        const questionData = doc.data() as RMQuestion;
+        allLegacyQuestions.push(questionData);
+      });
+      
+      console.log(`📊 Found ${allLegacyQuestions.length} questions in legacy rmQuestions collection`);
+      
+      // Group questions by paper
+      const paper1Questions = allLegacyQuestions.filter(q => 
+        q.paper === "paper-1" || 
+        q.id?.includes("paper-1") || 
+        q.id?.includes("Paper1") ||
+        !q.paper // If no paper specified, assume paper-1 for first half
+      );
+      const paper2Questions = allLegacyQuestions.filter(q => 
+        q.paper === "paper-2" || 
+        q.id?.includes("paper-2") || 
+        q.id?.includes("Paper2")
+      );
+      
+      console.log(`📊 Legacy questions - Paper 1: ${paper1Questions.length}, Paper 2: ${paper2Questions.length}`);
+      
+      // Merge with existing question banks
+      if (paper1Questions.length > 0) {
+        await this.mergeQuestionsToExistingBank("paper-1", paper1Questions);
+      }
+      
+      if (paper2Questions.length > 0) {
+        await this.mergeQuestionsToExistingBank("paper-2", paper2Questions);
+      }
+      
+    } catch (error) {
+      console.error("Error checking legacy rmQuestions:", error);
+    }
+  }
+  
+  /**
+   * Merge legacy questions with existing question bank
+   */
+  private async mergeQuestionsToExistingBank(paper: string, legacyQuestions: RMQuestion[]): Promise<void> {
+    try {
+      const bankId = `rm-${paper}`;
+      const existingBank = this.rmQuestionBanks.get(bankId);
+      
+      if (!existingBank) {
+        console.log(`📦 Creating new question bank ${bankId} for ${legacyQuestions.length} legacy questions`);
+        await this.createQuestionBankFromLegacy(paper, legacyQuestions);
+        return;
+      }
+      
+      // Check for duplicate questions to avoid re-adding
+      const existingQuestionTexts = new Set(existingBank.questions.map(q => q.text.toLowerCase().trim()));
+      const newQuestions = legacyQuestions.filter(q => 
+        !existingQuestionTexts.has(q.text.toLowerCase().trim())
+      );
+      
+      if (newQuestions.length === 0) {
+        console.log(`📋 No new questions to add to ${bankId} (${legacyQuestions.length} questions already exist)`);
+        return;
+      }
+      
+      console.log(`🔄 Merging ${newQuestions.length} new questions into existing ${bankId} bank (${existingBank.questions.length} existing)`);
+      
+      // Process new questions
+      const processedQuestions: RMQuestion[] = newQuestions.map((q, index) => ({
+        ...q,
+        id: q.id || `rm-${paper}-legacy-${Date.now()}-${index}`,
+        category: "RM",
+        paper,
+        createdAt: q.createdAt || new Date(),
+        updatedAt: new Date(), // Update timestamp for merge
+        metadata: {
+          ...q.metadata,
+          source: "migrated",
+          reviewStatus: "approved", // Auto-approve migrated questions
+        },
+      }));
+      
+      // Merge questions
+      const mergedQuestions = [...existingBank.questions, ...processedQuestions];
+      const updatedMetadata = this.calculateQuestionBankMetadata(mergedQuestions);
+      
+      const updatedBank: RMQuestionBank = {
+        ...existingBank,
+        questions: mergedQuestions,
+        totalQuestions: mergedQuestions.length,
+        lastUpdated: new Date(),
+        metadata: updatedMetadata,
+      };
+      
+      // Save to Firebase
+      await setDoc(doc(db, "rmQuestionBanks", bankId), updatedBank);
+      
+      // Update local cache
+      this.rmQuestionBanks.set(bankId, updatedBank);
+      
+      console.log(`✅ Successfully merged ${newQuestions.length} questions into ${bankId}. Total: ${mergedQuestions.length} questions`);
+    } catch (error) {
+      console.error(`Error merging questions to ${paper}:`, error);
     }
   }
   
