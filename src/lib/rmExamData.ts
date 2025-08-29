@@ -46,7 +46,7 @@ export interface RMQuestion {
   createdAt: Date;
   updatedAt: Date;
   metadata: {
-    source: "uploaded" | "generated";
+    source: "uploaded" | "generated" | "migrated";
     reviewStatus: "pending" | "approved" | "rejected";
     uploadedBy?: string; // Admin who uploaded
   };

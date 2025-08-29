@@ -65,11 +65,14 @@ class RMQuestionBankManager {
       
       // NO DEFAULT CREATION - Only use uploaded questions
       if (this.rmQuestionBanks.size === 0) {
-        console.log("⚠️ No RM question banks found in Firebase. Seeding with sample questions...");
-        await this.seedRMQuestionBanks();
-        await this.loadRMQuestionBanksFromFirebase(); // Reload after seeding
+        console.log("⚠️ No RM question banks found in Firebase. Please upload questions via admin panel.");
+        console.log("🔍 Expected question bank IDs: rm-paper-1, rm-paper-2");
+        console.log("🔍 Check Firestore collections: rmQuestionBanks, rmQuestions, or questionBanks");
       } else {
         console.log("✅ RM question banks loaded from Firebase");
+        this.rmQuestionBanks.forEach((bank, id) => {
+          console.log(`  ✅ ${id}: ${bank.questions.length} questions (${bank.metadata.difficultyDistribution.beginner} beginner, ${bank.metadata.difficultyDistribution.intermediate} intermediate, ${bank.metadata.difficultyDistribution.advanced} advanced)`);
+        });
       }
     } catch (error) {
       console.error("Error initializing RM question banks:", error);
@@ -81,16 +84,120 @@ class RMQuestionBankManager {
    */
   private async loadRMQuestionBanksFromFirebase(): Promise<void> {
     try {
-      const q = query(collection(db, "rmQuestionBanks"));
-      const querySnapshot = await getDocs(q);
+      console.log("🔍 Loading RM question banks from Firebase...");
       
-      querySnapshot.forEach((doc) => {
+      // First try to load from rmQuestionBanks collection
+      const bankQuery = query(collection(db, "rmQuestionBanks"));
+      const bankSnapshot = await getDocs(bankQuery);
+      
+      bankSnapshot.forEach((doc) => {
         const bankData = doc.data() as RMQuestionBank;
         console.log(`📦 Loading question bank: ${bankData.id} with ${bankData.questions?.length || 0} questions`);
         this.rmQuestionBanks.set(bankData.id, bankData);
       });
+      
+      // If no banks found, try to load from legacy rmQuestions collection and migrate
+      if (this.rmQuestionBanks.size === 0) {
+        console.log("🔄 No question banks found, checking legacy rmQuestions collection...");
+        await this.migrateFromLegacyRMQuestions();
+      }
     } catch (error) {
       console.error("Error loading RM question banks from Firebase:", error);
+    }
+  }
+  
+  /**
+   * Migrate questions from legacy rmQuestions collection to new rmQuestionBanks
+   */
+  private async migrateFromLegacyRMQuestions(): Promise<void> {
+    try {
+      console.log("🔄 Migrating from legacy rmQuestions collection...");
+      
+      const rmQuestionsQuery = query(collection(db, "rmQuestions"));
+      const rmQuestionsSnapshot = await getDocs(rmQuestionsQuery);
+      
+      if (rmQuestionsSnapshot.empty) {
+        console.log("⚠️ No questions found in rmQuestions collection either");
+        return;
+      }
+      
+      const allQuestions: RMQuestion[] = [];
+      rmQuestionsSnapshot.forEach((doc) => {
+        const questionData = doc.data() as RMQuestion;
+        allQuestions.push(questionData);
+      });
+      
+      console.log(`📊 Found ${allQuestions.length} questions in legacy collection`);
+      
+      // Group questions by paper
+      const paper1Questions = allQuestions.filter(q => q.paper === "paper-1" || q.id?.includes("paper-1"));
+      const paper2Questions = allQuestions.filter(q => q.paper === "paper-2" || q.id?.includes("paper-2"));
+      
+      console.log(`📊 Paper 1: ${paper1Questions.length} questions, Paper 2: ${paper2Questions.length} questions`);
+      
+      // Create question banks from legacy questions
+      if (paper1Questions.length > 0) {
+        await this.createQuestionBankFromLegacy("paper-1", paper1Questions);
+      }
+      
+      if (paper2Questions.length > 0) {
+        await this.createQuestionBankFromLegacy("paper-2", paper2Questions);
+      }
+      
+      // Reload question banks after migration
+      await this.loadRMQuestionBanksFromFirebase();
+      
+    } catch (error) {
+      console.error("Error migrating from legacy rmQuestions:", error);
+    }
+  }
+  
+  /**
+   * Create question bank from legacy questions
+   */
+  private async createQuestionBankFromLegacy(paper: string, questions: RMQuestion[]): Promise<void> {
+    try {
+      const bankId = `rm-${paper}`;
+      console.log(`📦 Creating question bank ${bankId} with ${questions.length} legacy questions`);
+      
+      // Process legacy questions to ensure they have proper format
+      const processedQuestions: RMQuestion[] = questions.map((q, index) => ({
+        ...q,
+        id: q.id || `rm-${paper}-legacy-${index}`,
+        category: "RM",
+        paper,
+        createdAt: q.createdAt || new Date(),
+        updatedAt: q.updatedAt || new Date(),
+        metadata: {
+          ...q.metadata,
+          source: "migrated",
+          reviewStatus: "approved", // Auto-approve migrated questions
+        },
+      }));
+      
+      // Calculate metadata
+      const metadata = this.calculateQuestionBankMetadata(processedQuestions);
+      
+      const questionBank: RMQuestionBank = {
+        id: bankId,
+        category: "RM",
+        paper,
+        questions: processedQuestions,
+        totalQuestions: processedQuestions.length,
+        lastUpdated: new Date(),
+        createdBy: "migration",
+        metadata,
+      };
+      
+      // Save to Firebase
+      await setDoc(doc(db, "rmQuestionBanks", bankId), questionBank);
+      
+      // Update local cache
+      this.rmQuestionBanks.set(bankId, questionBank);
+      
+      console.log(`✅ Successfully migrated ${processedQuestions.length} questions to ${bankId}`);
+    } catch (error) {
+      console.error(`Error creating question bank from legacy data for ${paper}:`, error);
     }
   }
   
