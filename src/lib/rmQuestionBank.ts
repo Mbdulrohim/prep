@@ -58,13 +58,18 @@ class RMQuestionBankManager {
       await this.loadRMQuestionBanksFromFirebase();
       
       console.log("📊 Loaded question banks from Firebase:", Array.from(this.rmQuestionBanks.keys()));
+      console.log("📊 Question bank details:");
+      this.rmQuestionBanks.forEach((bank, id) => {
+        console.log(`  - ${id}: ${bank.questions.length} questions`);
+      });
       
-      // If no question banks exist, create default ones
+      // NO DEFAULT CREATION - Only use uploaded questions
       if (this.rmQuestionBanks.size === 0) {
-        console.log("⚠️ No RM question banks found, creating default ones...");
-        await this.createDefaultRMQuestionBanks();
+        console.log("⚠️ No RM question banks found in Firebase. Seeding with sample questions...");
+        await this.seedRMQuestionBanks();
+        await this.loadRMQuestionBanksFromFirebase(); // Reload after seeding
       } else {
-        console.log("✅ RM question banks already exist");
+        console.log("✅ RM question banks loaded from Firebase");
       }
     } catch (error) {
       console.error("Error initializing RM question banks:", error);
@@ -81,31 +86,11 @@ class RMQuestionBankManager {
       
       querySnapshot.forEach((doc) => {
         const bankData = doc.data() as RMQuestionBank;
+        console.log(`📦 Loading question bank: ${bankData.id} with ${bankData.questions?.length || 0} questions`);
         this.rmQuestionBanks.set(bankData.id, bankData);
       });
     } catch (error) {
       console.error("Error loading RM question banks from Firebase:", error);
-    }
-  }
-  
-  /**
-   * Create default RM question banks (only if none exist)
-   */
-  private async createDefaultRMQuestionBanks(): Promise<void> {
-    try {
-      console.log("🏗️ Creating default RM question banks...");
-      
-      // Create RM Paper 1 question bank
-      await this.createRMQuestionBank("RM", "paper-1", 1000, "system");
-      console.log("✅ Created RM Paper 1 question bank");
-      
-      // Create RM Paper 2 question bank  
-      await this.createRMQuestionBank("RM", "paper-2", 1000, "system");
-      console.log("✅ Created RM Paper 2 question bank");
-      
-      console.log("✅ Default RM question banks created");
-    } catch (error) {
-      console.error("Error creating default RM question banks:", error);
     }
   }
   
@@ -368,10 +353,12 @@ class RMQuestionBankManager {
   async uploadRMQuestions(
     paper: string,
     questions: Omit<RMQuestion, 'id' | 'category' | 'paper' | 'createdAt' | 'updatedAt' | 'metadata'>[],
-    uploadedBy: string
+    uploadedBy: string,
+    autoApprove: boolean = false
   ): Promise<void> {
     try {
       const bankId = `rm-${paper}`;
+      console.log(`🔄 Uploading ${questions.length} questions to bank: ${bankId}`);
       
       // Process uploaded questions
       const processedQuestions: RMQuestion[] = questions.map((q, index) => ({
@@ -383,7 +370,7 @@ class RMQuestionBankManager {
         updatedAt: new Date(),
         metadata: {
           source: "uploaded",
-          reviewStatus: "pending", // Admin needs to review uploaded questions
+          reviewStatus: autoApprove ? "approved" : "pending",
           uploadedBy,
         },
       }));
@@ -392,6 +379,7 @@ class RMQuestionBankManager {
       let existingBank = this.rmQuestionBanks.get(bankId);
       
       if (!existingBank) {
+        console.log(`📝 Creating new question bank: ${bankId}`);
         // Create new bank
         existingBank = {
           id: bankId,
@@ -426,9 +414,116 @@ class RMQuestionBankManager {
       // Update local cache
       this.rmQuestionBanks.set(bankId, updatedBank);
       
-      console.log(`Added ${processedQuestions.length} questions to RM ${paper} bank`);
+      console.log(`✅ Successfully uploaded ${processedQuestions.length} questions to RM ${paper} bank`);
     } catch (error) {
       console.error("Error uploading RM questions:", error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Seed RM question banks with sample questions for immediate testing
+   * Call this only once to populate the banks
+   */
+  async seedRMQuestionBanks(): Promise<void> {
+    try {
+      console.log("🌱 Seeding RM question banks with sample questions...");
+      
+      // Sample questions for Paper 1
+      const paper1Questions = [
+        {
+          text: "During antenatal care, what is the recommended frequency of visits for a low-risk pregnancy?",
+          options: ["Every 2 weeks", "Every 4 weeks until 28 weeks", "Monthly throughout", "Every 6 weeks"],
+          correctAnswer: 1,
+          explanation: "Standard antenatal care guidelines recommend visits every 4 weeks until 28 weeks for low-risk pregnancies.",
+          difficulty: "Beginner" as const,
+          topics: ["Antenatal Care"]
+        },
+        {
+          text: "What is the normal fetal heart rate range during labor?",
+          options: ["100-140 bpm", "110-160 bpm", "120-180 bpm", "140-200 bpm"],
+          correctAnswer: 1,
+          explanation: "Normal fetal heart rate during labor is 110-160 beats per minute.",
+          difficulty: "Beginner" as const,
+          topics: ["Labor & Delivery"]
+        },
+        {
+          text: "Which finding indicates successful breastfeeding in a newborn?",
+          options: ["Crying after feeds", "Weight gain of 150-200g per week", "Sleeping 6+ hours", "Yellow stools"],
+          correctAnswer: 1,
+          explanation: "Adequate weight gain of 150-200g per week indicates successful breastfeeding.",
+          difficulty: "Intermediate" as const,
+          topics: ["Newborn Care"]
+        },
+        {
+          text: "What is the most important assessment during the first hour after delivery?",
+          options: ["Blood pressure", "Fundal height and bleeding", "Temperature", "Pulse rate"],
+          correctAnswer: 1,
+          explanation: "Fundal height assessment and monitoring for bleeding are critical in the immediate postpartum period.",
+          difficulty: "Beginner" as const,
+          topics: ["Postnatal Care"]
+        },
+        {
+          text: "When should iron supplementation be started during pregnancy?",
+          options: ["First trimester", "Second trimester", "Third trimester", "Only if anemic"],
+          correctAnswer: 1,
+          explanation: "Iron supplementation should begin in the second trimester to prevent iron deficiency anemia.",
+          difficulty: "Intermediate" as const,
+          topics: ["Antenatal Care"]
+        }
+      ];
+      
+      // Sample questions for Paper 2
+      const paper2Questions = [
+        {
+          text: "What is the first-line management for postpartum hemorrhage?",
+          options: ["Blood transfusion", "Uterine massage and oxytocin", "Surgical intervention", "IV fluids only"],
+          correctAnswer: 1,
+          explanation: "Uterine massage and oxytocin administration are the first-line treatments for postpartum hemorrhage.",
+          difficulty: "Intermediate" as const,
+          topics: ["Obstetric Emergencies"]
+        },
+        {
+          text: "Which contraceptive method is most suitable for a breastfeeding mother?",
+          options: ["Combined oral contraceptive", "Progestin-only pill", "Copper IUD", "Both B and C"],
+          correctAnswer: 3,
+          explanation: "Both progestin-only pills and copper IUDs are safe and effective for breastfeeding mothers.",
+          difficulty: "Advanced" as const,
+          topics: ["Family Planning"]
+        },
+        {
+          text: "At what gestational age should a woman with gestational diabetes be delivered?",
+          options: ["37-38 weeks", "38-39 weeks", "39-40 weeks", "40-41 weeks"],
+          correctAnswer: 1,
+          explanation: "Women with well-controlled gestational diabetes should be delivered at 38-39 weeks to reduce risks.",
+          difficulty: "Advanced" as const,
+          topics: ["High-Risk Pregnancies"]
+        },
+        {
+          text: "What is the normal cervical dilatation rate for a primigravida in active labor?",
+          options: ["0.5 cm/hour", "1.0 cm/hour", "1.5 cm/hour", "2.0 cm/hour"],
+          correctAnswer: 1,
+          explanation: "The normal cervical dilatation rate for a primigravida in active labor is approximately 1.0 cm per hour.",
+          difficulty: "Beginner" as const,
+          topics: ["Labor & Delivery"]
+        },
+        {
+          text: "Which sign indicates placental separation in the third stage of labor?",
+          options: ["Cord lengthening", "Uterine contractions", "Vaginal bleeding", "All of the above"],
+          correctAnswer: 3,
+          explanation: "Signs of placental separation include cord lengthening, uterine contractions, and a controlled amount of bleeding.",
+          difficulty: "Intermediate" as const,
+          topics: ["Labor & Delivery"]
+        }
+      ];
+      
+      // Upload questions to both papers with auto-approval
+      await this.uploadRMQuestions("paper-1", paper1Questions, "system", true);
+      await this.uploadRMQuestions("paper-2", paper2Questions, "system", true);
+      
+      console.log("✅ Successfully seeded RM question banks");
+    } catch (error) {
+      console.error("Error seeding RM question banks:", error);
       throw error;
     }
   }
