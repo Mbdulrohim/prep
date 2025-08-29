@@ -38,14 +38,77 @@ export async function POST(request: NextRequest) {
     const { customer, amount, currency } = verification.data;
     const metadata = verification.data.meta || {};
     const verifiedUserId = metadata.userId || userId;
-    const planType = metadata.planType || "premium_access";
+    const planType = metadata.planType;
+    const examCategory = metadata.examCategory || "RN"; // Default to RN if not specified
 
-    if (!verifiedUserId) {
+    console.log("Payment metadata:", {
+      userId: verifiedUserId,
+      planType,
+      examCategory,
+      amount,
+      currency,
+    });    if (!verifiedUserId) {
       console.error("No userId found in payment metadata");
       return NextResponse.json(
         { error: "No user ID found in payment data" },
         { status: 400 }
       );
+    }
+
+    // Handle RM payment separately
+    if (examCategory === "RM" && planType === "rm_access") {
+      console.log("Processing RM payment verification");
+      
+      // Check if RM payment already processed
+      const existingRMAccess = await getDoc(doc(db, "rmUserAccess", verifiedUserId));
+      if (existingRMAccess.exists() && existingRMAccess.data()?.hasAccess) {
+        return NextResponse.json({
+          success: true,
+          message: "RM payment already processed",
+          examCategory: "RM",
+          hasAccess: true,
+          transaction: verification.data,
+        });
+      }
+
+      // Import and grant RM access
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      
+      await rmUserAccessManager.grantRMAccessViaPayment(
+        verifiedUserId,
+        customer.email,
+        {
+          amount: verification.data.amount,
+          currency,
+          paymentMethod: "flutterwave",
+          transactionId,
+          paymentDate: new Date(),
+          paymentStatus: "completed",
+        }
+      );
+
+      // Save transaction record
+      await setDoc(doc(db, "transactions", txRef), {
+        transactionId,
+        userId: verifiedUserId,
+        amount,
+        currency,
+        status: "successful",
+        examCategory: "RM",
+        planType,
+        processedAt: new Date(),
+        customerEmail: customer.email,
+        paymentProvider: "flutterwave",
+        transaction: verification.data,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "RM payment verified and access granted successfully!",
+        examCategory: "RM",
+        hasAccess: true,
+        transaction: verification.data,
+      });
     }
 
     // Check if this payment has already been processed
@@ -63,6 +126,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: "Payment already processed",
+        examCategory: examCategory,
         hasAccess: userAccessDoc.exists() && userAccessDoc.data()?.isActive,
         hasUserAccess: userDoc.exists() && userDoc.data()?.hasAccess,
         transaction: verification.data,
@@ -136,6 +200,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Payment verified and access granted successfully",
+      examCategory: examCategory,
       hasAccess: true,
       transaction: verification.data,
       accessData: {

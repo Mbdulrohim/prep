@@ -72,6 +72,14 @@ export default function RMExamPage() {
 
       // Check RM user access
       const rmAccess = await rmUserAccessManager.getRMUserAccess(user.uid);
+      console.log("RM Access check result:", {
+        userId: user.uid,
+        rmAccess: rmAccess,
+        hasAccess: rmAccess?.hasAccess,
+        accessMethod: rmAccess?.accessMethod,
+        accessGrantedAt: rmAccess?.accessGrantedAt,
+        examId: examId
+      });
       
       if (!rmAccess || !rmAccess.hasAccess) {
         setCanStartExam(false);

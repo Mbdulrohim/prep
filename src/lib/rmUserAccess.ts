@@ -221,7 +221,25 @@ class RMUserAccessManager {
         return null;
       }
       
-      return accessDoc.data() as RMUserAccess;
+      const data = accessDoc.data();
+      
+      // Convert Firestore timestamps to Date objects
+      return {
+        ...data,
+        accessGrantedAt: data.accessGrantedAt?.toDate ? data.accessGrantedAt.toDate() : new Date(data.accessGrantedAt),
+        accessExpiresAt: data.accessExpiresAt?.toDate ? data.accessExpiresAt.toDate() : data.accessExpiresAt ? new Date(data.accessExpiresAt) : undefined,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        lastLoginAt: data.lastLoginAt?.toDate ? data.lastLoginAt.toDate() : data.lastLoginAt ? new Date(data.lastLoginAt) : undefined,
+        paymentInfo: data.paymentInfo ? {
+          ...data.paymentInfo,
+          paymentDate: data.paymentInfo.paymentDate?.toDate ? data.paymentInfo.paymentDate.toDate() : new Date(data.paymentInfo.paymentDate)
+        } : undefined,
+        accessCodeInfo: data.accessCodeInfo ? {
+          ...data.accessCodeInfo,
+          redeemedAt: data.accessCodeInfo.redeemedAt?.toDate ? data.accessCodeInfo.redeemedAt.toDate() : new Date(data.accessCodeInfo.redeemedAt)
+        } : undefined,
+      } as RMUserAccess;
     } catch (error) {
       console.error("Error getting RM user access:", error);
       return null;
