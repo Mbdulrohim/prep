@@ -16,22 +16,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!userId || !userEmail) {
+    if (!userEmail) {
       return NextResponse.json(
-        { error: "userId and userEmail are required" },
+        { error: "userEmail is required" },
         { status: 400 }
       );
     }
 
-    console.log("🔧 Manually granting RM access for user:", userId, userEmail);
+    // Find user by email if userId not provided
+    let targetUserId = userId;
+    if (!targetUserId && userEmail) {
+      console.log("🔍 Finding user by email:", userEmail);
+      const usersRef = collection(db, "users");
+      const userQuery = query(usersRef, where("email", "==", userEmail));
+      const userDocs = await getDocs(userQuery);
+      
+      if (userDocs.empty) {
+        return NextResponse.json(
+          { error: "User not found with this email" },
+          { status: 404 }
+        );
+      }
+      
+      targetUserId = userDocs.docs[0].id;
+      console.log("✅ Found user ID:", targetUserId);
+    }
+
+    if (!targetUserId) {
+      return NextResponse.json(
+        { error: "Could not determine user ID" },
+        { status: 400 }
+      );
+    }
+
+    console.log("🔧 Manually granting RM access for user:", targetUserId, userEmail);
 
     // Check if user already has RM access
-    const existingAccess = await rmUserAccessManager.hasRMAccess(userId);
+    const existingAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
     if (existingAccess) {
       return NextResponse.json({
         success: true,
         message: "User already has RM access",
-        userId,
+        userId: targetUserId,
         hasAccess: true,
       });
     }
@@ -71,19 +97,19 @@ export async function POST(request: NextRequest) {
 
     // Grant RM access using the proper method
     await rmUserAccessManager.grantRMAccessViaPayment(
-      userId,
+      targetUserId,
       userEmail,
       paymentInfo
     );
 
     // Verify the access was granted
-    const hasAccess = await rmUserAccessManager.hasRMAccess(userId);
-    const accessData = await rmUserAccessManager.getRMUserAccess(userId);
+    const hasAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
+    const accessData = await rmUserAccessManager.getRMUserAccess(targetUserId);
 
     return NextResponse.json({
       success: true,
       message: "RM access granted successfully",
-      userId,
+      userId: targetUserId,
       userEmail,
       hasAccess,
       accessData,

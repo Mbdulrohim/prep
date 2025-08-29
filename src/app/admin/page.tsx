@@ -1151,6 +1151,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           userEmail: quickGrantEmail.trim(),
           grantedBy: user?.email || 'admin',
+          adminKey: 'fix_rm_access_2025',
         }),
       });
 
@@ -1226,6 +1227,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           userEmail,
           grantedBy: user?.email || 'admin',
+          adminKey: 'fix_rm_access_2025',
         }),
       });
 
@@ -1312,6 +1314,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           userEmail,
           resetBy: user?.email || 'admin',
+          adminKey: 'fix_rm_access_2025',
         }),
       });
 

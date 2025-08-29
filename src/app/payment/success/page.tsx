@@ -17,6 +17,7 @@ export default function PaymentSuccessPage() {
   );
   const [message, setMessage] = useState("");
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
+  const [examCategory, setExamCategory] = useState<string>("");
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -37,10 +38,16 @@ export default function PaymentSuccessPage() {
           return;
         }
 
+        // Check if this is likely an RM payment based on txRef pattern
+        const isLikelyRMPayment = txRef.toLowerCase().includes('rm') || 
+                                 txRef.toLowerCase().includes('midwife') ||
+                                 txRef.toLowerCase().includes('midwifery');
+
         console.log("Verifying payment with details:", {
           transactionId,
           txRef,
           userId: user?.uid,
+          isLikelyRMPayment,
         });
 
         // Use our backend verification endpoint
@@ -67,9 +74,11 @@ export default function PaymentSuccessPage() {
               : "Payment successful! You now have access to all exam materials."
           );
           setTransactionDetails(result.transaction);
+          // Set exam category with fallback detection
+          setExamCategory(result.examCategory || (isLikelyRMPayment ? "RM" : ""));
           
           // Trigger access refresh for RM payments
-          if (result.examCategory === "RM") {
+          if (result.examCategory === "RM" || isLikelyRMPayment) {
             localStorage.setItem('rm_payment_success', Date.now().toString());
             console.log("🎉 RM payment success - triggering access refresh");
           }
@@ -107,9 +116,11 @@ export default function PaymentSuccessPage() {
                 : "Payment verified! You now have access to all exam materials."
             );
             setTransactionDetails(manualResult.transaction);
+            // Set exam category with fallback detection
+            setExamCategory(manualResult.examCategory || (isLikelyRMPayment ? "RM" : ""));
             
             // Trigger access refresh for RM payments
-            if (manualResult.examCategory === "RM") {
+            if (manualResult.examCategory === "RM" || isLikelyRMPayment) {
               localStorage.setItem('rm_payment_success', Date.now().toString());
               console.log("🎉 RM payment success (manual verification) - triggering access refresh");
             }
@@ -204,7 +215,7 @@ export default function PaymentSuccessPage() {
 
             <div className="space-y-3">
               {/* Check if this is RM payment and show WhatsApp join button */}
-              {transactionDetails?.examCategory === "RM" && (
+              {examCategory === "RM" && (
                 <a
                   href="https://chat.whatsapp.com/BRzLmPSb1a07fPLLZbf6Ws"
                   target="_blank"
