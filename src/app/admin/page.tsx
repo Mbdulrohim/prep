@@ -222,6 +222,7 @@ export default function AdminDashboard() {
         loadFeedback(),
         loadWeeklyAssessments(),
         loadRMData(),
+        loadExamSchedules(),
       ]);
     } catch (error) {
       console.error("Error loading admin data:", error);
@@ -459,6 +460,42 @@ export default function AdminDashboard() {
       console.error("Error loading RM data:", error);
     } finally {
       setRMLoading(false);
+    }
+  };
+
+  const loadExamSchedules = async () => {
+    try {
+      const { examScheduleManager } = await import("@/lib/examSchedule");
+      
+      // Initialize default schedules if they don't exist
+      await examScheduleManager.initializeDefaultSchedules();
+      
+      // Load all current schedules
+      const allSchedules = await examScheduleManager.getAllSchedules();
+      console.log("Loaded exam schedules:", allSchedules);
+      
+      // Convert to the format expected by the admin UI
+      const scheduleState: { [examId: string]: { startDate: string; endDate: string; isScheduled: boolean } } = {};
+      
+      allSchedules.forEach(schedule => {
+        // Convert schedule ID format (RM_paper1) to exam ID format (rm-paper-1)
+        const examType = schedule.examType.toLowerCase();
+        const paper = schedule.paper === "paper1" ? "paper-1" : "paper-2";
+        const examId = `${examType}-${paper}`;
+        
+        scheduleState[examId] = {
+          startDate: schedule.scheduledDate ? schedule.scheduledDate.toISOString().slice(0, 16) : '',
+          endDate: schedule.scheduledDate ? 
+            new Date(schedule.scheduledDate.getTime() + (schedule.duration * 60 * 1000)).toISOString().slice(0, 16) : '',
+          isScheduled: schedule.isActive && !!schedule.scheduledDate
+        };
+      });
+      
+      setExamSchedules(scheduleState);
+      console.log("Exam schedules loaded successfully:", scheduleState);
+      
+    } catch (error) {
+      console.error("Error loading exam schedules:", error);
     }
   };
 
@@ -796,6 +833,14 @@ export default function AdminDashboard() {
       );
 
       console.log("Schedule update result:", updateResult);
+
+      // Verify the update by reading back the data
+      const verifySchedule = await examScheduleManager.getSchedule(scheduleId);
+      console.log("Verified schedule after update:", verifySchedule);
+
+      if (!verifySchedule?.isActive || !verifySchedule?.scheduledDate) {
+        throw new Error("Schedule update verification failed");
+      }
 
       // Update local state
       setExamSchedules((prev) => ({

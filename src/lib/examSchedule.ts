@@ -123,11 +123,30 @@ export class ExamScheduleManager {
         | "passingScore"
       >
     >
-  ): Promise<void> {
-    await updateDoc(doc(db, "examSchedules", scheduleId), {
-      ...updates,
-      updatedAt: new Date(),
-    });
+  ): Promise<boolean> {
+    try {
+      console.log("Updating schedule:", scheduleId, updates);
+      
+      const scheduleRef = doc(db, "examSchedules", scheduleId);
+      
+      // Check if document exists first
+      const scheduleDoc = await getDoc(scheduleRef);
+      if (!scheduleDoc.exists()) {
+        console.error("Schedule document does not exist:", scheduleId);
+        throw new Error(`Schedule ${scheduleId} does not exist`);
+      }
+      
+      await updateDoc(scheduleRef, {
+        ...updates,
+        updatedAt: new Date(),
+      });
+      
+      console.log("Schedule updated successfully:", scheduleId);
+      return true;
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      throw error;
+    }
   }
 
   // Check if exam is available for taking
