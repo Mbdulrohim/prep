@@ -160,9 +160,57 @@ export const RM_TOPICS = {
 // API functions for RM exams - completely separate from RN system
 export async function fetchRMExams(): Promise<RMExamData[]> {
   try {
-    // Will fetch from separate Firebase collection 'rmExams'
-    // For now return defaults - will implement Firebase integration next
-    return DEFAULT_RM_EXAMS;
+    // Clone the exams array to avoid mutating the original
+    const exams = DEFAULT_RM_EXAMS.map(exam => ({ ...exam }));
+    
+    // Check exam schedules and update availability dynamically
+    try {
+      const { examScheduleManager } = await import("./examSchedule");
+      
+      // Update availability based on scheduling status
+      for (const exam of exams) {
+        const paper = exam.id.includes("paper-2") ? "paper2" : "paper1";
+        const scheduleId = `RM_${paper}`;
+        
+        console.log(`Checking RM schedule for exam ${exam.id} with scheduleId: ${scheduleId}`);
+        
+        try {
+          const schedule = await examScheduleManager.getSchedule(scheduleId);
+          console.log(`RM Schedule found for ${scheduleId}:`, schedule);
+          
+          if (schedule && schedule.isActive && schedule.scheduledDate) {
+            const now = new Date();
+            const scheduledDate = new Date(schedule.scheduledDate);
+            console.log(`RM Schedule check for ${scheduleId}:`, {
+              isActive: schedule.isActive,
+              scheduledDate: scheduledDate,
+              now: now,
+              isScheduledDatePassed: now >= scheduledDate
+            });
+            
+            // Make exam available if it's scheduled and the time has passed
+            if (now >= scheduledDate) {
+              exam.available = true;
+              console.log(`✅ RM Exam ${exam.id} is now available (scheduled for ${scheduledDate})`);
+            } else {
+              console.log(`⏰ RM Exam ${exam.id} is scheduled but not yet available (scheduled for ${scheduledDate})`);
+            }
+          } else {
+            console.log(`❌ RM Exam ${exam.id} is not available:`, {
+              hasSchedule: !!schedule,
+              isActive: schedule?.isActive,
+              hasScheduledDate: !!schedule?.scheduledDate
+            });
+          }
+        } catch (error) {
+          console.warn(`Could not check RM schedule for ${scheduleId}:`, error);
+        }
+      }
+    } catch (error) {
+      console.warn("Could not load exam schedule manager for RM exams:", error);
+    }
+    
+    return exams;
   } catch (error) {
     console.error("Error fetching RM exams:", error);
     return [];
