@@ -71,34 +71,25 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Import and grant RM access using server-side method
+      // Import and grant RM access using the proper manager method
       try {
         console.log("💰 Granting RM access via payment for user:", verifiedUserId);
         
-        // Create RM access record directly (server-side approach)
-        await setDoc(doc(db, "rmUserAccess", verifiedUserId), {
-          id: verifiedUserId,
-          userId: verifiedUserId,
-          userEmail: customer.email,
-          examCategory: "RM",
-          hasAccess: true,
-          accessMethod: "payment",
-          accessGrantedAt: new Date(),
-          paymentInfo: {
+        const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+        
+        // Use the proper manager method instead of direct setDoc
+        await rmUserAccessManager.grantRMAccessViaPayment(
+          verifiedUserId,
+          customer.email,
+          {
             amount: verification.data.amount,
             currency,
             paymentMethod: "flutterwave",
             transactionId,
             paymentDate: new Date(),
             paymentStatus: "completed",
-          },
-          rmAttempts: {},
-          adminSettings: {
-            maxAttempts: 1, // Default, admin can modify
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+          }
+        );
         
         console.log("✅ RM access granted successfully for user:", verifiedUserId);
       } catch (rmError) {

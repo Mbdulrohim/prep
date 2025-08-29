@@ -66,6 +66,7 @@ import {
   Star,
   X,
   CheckCircle,
+  AlertCircle,
   ToggleRight,
   CreditCard,
   Eye,
@@ -201,6 +202,13 @@ export default function AdminDashboard() {
   const [rmActiveSubTab, setRMActiveSubTab] = useState<
     "overview" | "exams" | "questions" | "users" | "analytics"
   >("overview");
+
+  // RM Access Management State
+  const [rmAccessUsers, setRMAccessUsers] = useState<any[]>([]);
+  const [quickGrantEmail, setQuickGrantEmail] = useState("");
+  const [quickGrantTxId, setQuickGrantTxId] = useState("");
+  const [grantingAccess, setGrantingAccess] = useState(false);
+  const [findingUsers, setFindingUsers] = useState(false);
 
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
@@ -1093,6 +1101,246 @@ export default function AdminDashboard() {
       title: "Assessment Created",
       message: "Weekly assessment has been created and activated successfully.",
     });
+  };
+
+  // RM Access Management Functions
+  const loadRMAccessUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/debug-rm-access');
+      const data = await response.json();
+      
+      if (data.success) {
+        setRMAccessUsers(data.users || []);
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to load RM access users",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading RM access users:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to load RM access users",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickGrantAccess = async () => {
+    if (!quickGrantEmail.trim()) {
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Please enter an email address",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/grant-rm-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail: quickGrantEmail.trim(),
+          grantedBy: user?.email || 'admin',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast({
+          type: "success",
+          title: "Success",
+          message: `RM access granted to ${quickGrantEmail}`,
+        });
+        setQuickGrantEmail('');
+        await loadRMAccessUsers(); // Refresh the list
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to grant RM access",
+        });
+      }
+    } catch (error) {
+      console.error('Error granting RM access:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to grant RM access",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFindNeedingAccess = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/debug-rm-access?needsAccess=true');
+      const data = await response.json();
+      
+      if (data.success) {
+        setRMAccessUsers(data.users || []);
+        showToast({
+          type: "success",
+          title: "Search Complete",
+          message: `Found ${data.users?.length || 0} users who may need RM access`,
+        });
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to find users needing access",
+        });
+      }
+    } catch (error) {
+      console.error('Error finding users needing access:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to search for users needing access",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGrantUserAccess = async (userEmail: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/grant-rm-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail,
+          grantedBy: user?.email || 'admin',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast({
+          type: "success",
+          title: "Success",
+          message: `RM access granted to ${userEmail}`,
+        });
+        await loadRMAccessUsers(); // Refresh the list
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to grant RM access",
+        });
+      }
+    } catch (error) {
+      console.error('Error granting RM access:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to grant RM access",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckUserAccess = async (userEmail: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/debug-rm-access?email=${encodeURIComponent(userEmail)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const userInfo = data.users?.[0];
+        if (userInfo) {
+          showToast({
+            type: "success",
+            title: "User Access Status",
+            message: `${userEmail}: ${userInfo.hasAccess ? 'Has RM Access' : 'No RM Access'} - ${userInfo.paymentCount || 0} payments`,
+          });
+        } else {
+          showToast({
+            type: "error",
+            title: "User Not Found",
+            message: `No user found with email: ${userEmail}`,
+          });
+        }
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to check user access",
+        });
+      }
+    } catch (error) {
+      console.error('Error checking user access:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to check user access",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetUserAccess = async (userEmail: string) => {
+    if (!confirm(`Are you sure you want to reset RM access for ${userEmail}? This will remove all their RM access records.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/reset-rm-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail,
+          resetBy: user?.email || 'admin',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast({
+          type: "success",
+          title: "Success",
+          message: `RM access reset for ${userEmail}`,
+        });
+        await loadRMAccessUsers(); // Refresh the list
+      } else {
+        showToast({
+          type: "error",
+          title: "Error",
+          message: data.error || "Failed to reset RM access",
+        });
+      }
+    } catch (error) {
+      console.error('Error resetting RM access:', error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to reset RM access",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredUsers = users.filter(
@@ -2673,10 +2921,197 @@ export default function AdminDashboard() {
               )}
 
               {rmActiveSubTab === "users" && (
-                <div className="text-center py-8">
-                  <Users className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM User Management</h3>
-                  <p className="text-gray-600">Coming in Step 3 - Manage RM user access and permissions</p>
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <Users className="h-5 w-5 text-purple-600" />
+                        RM User Access Management
+                      </h3>
+                      <p className="text-gray-600">Grant and manage RM access for users who paid</p>
+                    </div>
+                    <button
+                      onClick={loadRMAccessUsers}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      Refresh Users
+                    </button>
+                  </div>
+
+                  {/* RM Access Actions */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-green-600">Users with RM Access</p>
+                          <p className="text-2xl font-bold text-green-700">{rmAccessUsers.filter(u => u.hasRMAccess).length}</p>
+                        </div>
+                        <CheckCircle className="h-8 w-8 text-green-600" />
+                      </div>
+                    </div>
+
+                    <div className="bg-red-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-red-600">Users Needing Access</p>
+                          <p className="text-2xl font-bold text-red-700">{rmAccessUsers.filter(u => u.hasPaidRM && !u.hasRMAccess).length}</p>
+                        </div>
+                        <AlertCircle className="h-8 w-8 text-red-600" />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-blue-600">Total RM Payments</p>
+                          <p className="text-2xl font-bold text-blue-700">{rmAccessUsers.filter(u => u.hasPaidRM).length}</p>
+                        </div>
+                        <CreditCard className="h-8 w-8 text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Grant Access */}
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Quick Grant RM Access</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">User Email</label>
+                        <input
+                          type="email"
+                          value={quickGrantEmail}
+                          onChange={(e) => setQuickGrantEmail(e.target.value)}
+                          placeholder="user@example.com"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Transaction ID (Optional)</label>
+                        <input
+                          type="text"
+                          value={quickGrantTxId}
+                          onChange={(e) => setQuickGrantTxId(e.target.value)}
+                          placeholder="Transaction reference"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={handleQuickGrantAccess}
+                        disabled={!quickGrantEmail || grantingAccess}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      >
+                        {grantingAccess ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <UserCheck className="h-4 w-4" />
+                        )}
+                        Grant RM Access
+                      </button>
+                      <button
+                        onClick={handleFindNeedingAccess}
+                        disabled={findingUsers}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      >
+                        {findingUsers ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                        Find Users Needing Access
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* RM Users Table */}
+                  <div className="bg-white border border-gray-200 rounded-lg">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <h4 className="text-lg font-semibold text-gray-900">RM Access Status</h4>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RM Access</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {rmAccessUsers.map((user) => (
+                            <tr key={user.userId} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{user.userEmail}</p>
+                                  <p className="text-xs text-gray-500">{user.userId}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  user.hasRMAccess 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {user.hasRMAccess ? 'Has Access' : 'No Access'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  user.hasPaidRM 
+                                    ? 'bg-blue-100 text-blue-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {user.hasPaidRM ? 'Paid' : 'Not Paid'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {user.transactionId || 'N/A'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex gap-2">
+                                  {!user.hasRMAccess && (
+                                    <button
+                                      onClick={() => handleGrantUserAccess(user.userEmail)}
+                                      disabled={grantingAccess}
+                                      className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                                    >
+                                      Grant Access
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleCheckUserAccess(user.userEmail)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                  >
+                                    Check Status
+                                  </button>
+                                  {user.hasRMAccess && (
+                                    <button
+                                      onClick={() => handleResetUserAccess(user.userEmail)}
+                                      className="text-red-600 hover:text-red-900"
+                                    >
+                                      Reset
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {rmAccessUsers.length === 0 && (
+                        <div className="text-center py-8">
+                          <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">No RM users found. Click "Find Users Needing Access" to scan for users.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

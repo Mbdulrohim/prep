@@ -85,27 +85,45 @@ class RMUserAccessManager {
    */
   async hasRMAccess(userId: string): Promise<boolean> {
     try {
+      console.log("🔍 Checking RM access for user:", userId);
       const accessDoc = await getDoc(doc(db, "rmUserAccess", userId));
       
       if (!accessDoc.exists()) {
+        console.log("❌ No RM access document found for user:", userId);
         return false;
       }
       
       const access = accessDoc.data() as RMUserAccess;
+      console.log("📄 Found RM access document:", {
+        hasAccess: access.hasAccess,
+        accessMethod: access.accessMethod,
+        accessGrantedAt: access.accessGrantedAt,
+        accessExpiresAt: access.accessExpiresAt,
+      });
       
       // Check if access is valid and not expired
       if (!access.hasAccess) {
+        console.log("❌ RM access is disabled for user:", userId);
         return false;
       }
       
       // Check expiration if set
-      if (access.accessExpiresAt && new Date() > new Date(access.accessExpiresAt)) {
-        return false;
+      if (access.accessExpiresAt) {
+        const now = new Date();
+        const expiresAt = access.accessExpiresAt instanceof Date 
+          ? access.accessExpiresAt 
+          : new Date(access.accessExpiresAt);
+          
+        if (now > expiresAt) {
+          console.log("❌ RM access expired for user:", userId, "expired at:", expiresAt);
+          return false;
+        }
       }
       
+      console.log("✅ RM access confirmed for user:", userId);
       return true;
     } catch (error) {
-      console.error("Error checking RM access:", error);
+      console.error("❌ Error checking RM access:", error);
       return false;
     }
   }

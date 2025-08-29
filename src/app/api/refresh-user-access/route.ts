@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { rmUserAccessManager } from "@/lib/rmUserAccess";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +22,11 @@ export async function POST(request: NextRequest) {
     const hasUserAccess =
       userAccessDoc.exists() && userAccessDoc.data()?.isActive;
     const hasUserFlag = userDoc.exists() && userDoc.data()?.hasAccess;
+
+    // Check RM access
+    console.log("🔄 Checking RM access for user:", userId);
+    const hasRMAccess = await rmUserAccessManager.hasRMAccess(userId);
+    const rmAccessData = await rmUserAccessManager.getRMUserAccess(userId);
 
     let userAccessData = null;
     if (userAccessDoc.exists()) {
@@ -51,13 +57,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       hasAccess: hasUserAccess && hasUserFlag,
+      hasRMAccess,
       userAccess: userAccessData,
+      rmAccess: rmAccessData,
       user: userData,
       debug: {
         userAccessExists: userAccessDoc.exists(),
         userExists: userDoc.exists(),
         userAccessActive: hasUserAccess,
         userHasAccess: hasUserFlag,
+        rmAccessExists: !!rmAccessData,
+        hasRMAccess,
       },
     });
   } catch (error) {
