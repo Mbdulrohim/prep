@@ -10,6 +10,7 @@ export function RMPurchase() {
   const { user, userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStep, setPaymentStep] = useState<'ready' | 'processing' | 'redirecting'>('ready');
 
   const rmPlan = {
     name: "RM Exam Access Package",
@@ -39,6 +40,7 @@ export function RMPurchase() {
     }
 
     setIsLoading(true);
+    setPaymentStep('processing');
     setError(null);
 
     try {
@@ -68,6 +70,8 @@ export function RMPurchase() {
         throw new Error(result.error || "Failed to create RM payment session");
       }
 
+      setPaymentStep('redirecting');
+      
       // Redirect to Flutterwave payment page
       if (result.data?.link) {
         window.location.href = result.data.link;
@@ -76,6 +80,7 @@ export function RMPurchase() {
       }
     } catch (error) {
       console.error("RM Payment error:", error);
+      setPaymentStep('ready');
       setError(
         error instanceof Error
           ? error.message
@@ -120,16 +125,49 @@ export function RMPurchase() {
         ))}
       </div>
 
+      {/* Payment Status */}
+      {paymentStep !== 'ready' && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Loader className="w-5 h-5 animate-spin text-blue-600" />
+            <div>
+              <p className="font-medium text-blue-900">
+                {paymentStep === 'processing' && "Setting up your payment..."}
+                {paymentStep === 'redirecting' && "Redirecting to secure payment..."}
+              </p>
+              <p className="text-sm text-blue-600">
+                {paymentStep === 'processing' && "Please wait while we prepare your payment session"}
+                {paymentStep === 'redirecting' && "You'll be taken to Flutterwave payment page"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800 text-sm">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-600 text-sm underline mt-1"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Payment Button */}
       <Button
         onClick={handlePayment}
-        disabled={isLoading}
+        disabled={isLoading || paymentStep !== 'ready'}
         className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <div className="flex items-center justify-center gap-2">
             <Loader className="w-5 h-5 animate-spin" />
-            Processing Payment...
+            {paymentStep === 'processing' ? "Setting up payment..." : 
+             paymentStep === 'redirecting' ? "Redirecting..." : "Processing..."}
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2">

@@ -27,7 +27,9 @@ const RMPaymentPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [exam, setExam] = useState<StandaloneRMExam | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStep, setPaymentStep] = useState<'ready' | 'processing' | 'verifying' | 'complete'>('ready');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -76,20 +78,25 @@ const RMPaymentPage: React.FC = () => {
     if (!user || !examId) return;
     
     try {
-      setLoading(true);
+      setCheckingAccess(true);
+      setError(null);
       const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
       const hasAccess = await rmUserAccessManager.hasRMAccess(user.uid);
       if (hasAccess) {
         console.log("✅ RM access confirmed, redirecting to exam...");
-        router.push(`/rm/${examId}`);
+        setPaymentStep('complete');
+        setTimeout(() => {
+          router.push(`/rm/${examId}`);
+        }, 1500);
       } else {
         console.log("❌ No RM access found");
         setError("No RM access found. Please complete payment first.");
       }
     } catch (error) {
       console.error("Error checking RM access:", error);
+      setError("Failed to check access. Please try again.");
     } finally {
-      setLoading(false);
+      setCheckingAccess(false);
     }
   };
 
@@ -97,43 +104,43 @@ const RMPaymentPage: React.FC = () => {
     if (!user || !exam) return;
 
     setPaymentLoading(true);
+    setPaymentStep('processing');
     setError(null);
 
     try {
-      // Prepare payment data
-      const paymentData = {
-        tx_ref: `rm-${exam.id}-${user.uid}-${Date.now()}`,
-        amount: exam.price,
-        currency: exam.currency,
-        customer: {
-          email: user.email!,
-          name: user.displayName || user.email!,
+      // Create payment session
+      const response = await fetch("/api/create-payment-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        customizations: {
-          title: `RM Exam - Paper ${exam.paper}`,
-          description: exam.title,
-          logo: "", // Add your logo URL
-        },
-        meta: {
-          examId: exam.id,
+        body: JSON.stringify({
+          amount: exam.price,
+          email: user.email,
           userId: user.uid,
-          examType: "rm-exam",
-          paper: exam.paper,
-        },
-      };
+          txRef: `rm-${exam.id}-${user.uid}-${Date.now()}`,
+          customerName: user.displayName || user.email,
+          planType: "rm_access",
+          planName: `RM Exam - ${exam.title}`,
+          examCategory: "RM",
+        }),
+      });
 
-      // Initialize Flutterwave payment
-      const response = await flutterwaveService.initializePayment(paymentData);
-      
-      if (response.status === 'success') {
-        // Redirect to Flutterwave payment page
-        window.location.href = response.data.link;
-      } else {
-        setError("Failed to initialize payment. Please try again.");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create payment session");
       }
+
+      console.log("🎯 Redirecting to payment page...");
+      setPaymentStep('verifying');
+      
+      // Redirect to Flutterwave payment page
+      window.location.href = result.data.link;
     } catch (error) {
       console.error("Payment error:", error);
-      setError("Payment failed. Please try again.");
+      setError(error instanceof Error ? error.message : "Payment failed. Please try again.");
+      setPaymentStep('ready');
     } finally {
       setPaymentLoading(false);
     }
@@ -153,16 +160,35 @@ const RMPaymentPage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push("/rm")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            Back to RM Exams
-          </button>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Issue</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setPaymentStep('ready');
+                if (examId) fetchExamData(examId);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={refreshAccess}
+              disabled={checkingAccess}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg"
+            >
+              {checkingAccess ? "Checking..." : "Check if Already Paid"}
+            </button>
+            <button
+              onClick={() => router.push("/rm")}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+            >
+              Back to RM Exams
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -308,16 +334,46 @@ const RMPaymentPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Payment Progress Indicator */}
+            {paymentStep !== 'ready' && (
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    {paymentStep === 'processing' && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
+                    {paymentStep === 'verifying' && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
+                    {paymentStep === 'complete' && <CheckCircle className="h-5 w-5 text-green-600" />}
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      {paymentStep === 'processing' && "Setting up your payment..."}
+                      {paymentStep === 'verifying' && "Redirecting to secure payment..."}
+                      {paymentStep === 'complete' && "Payment successful! Redirecting to exam..."}
+                    </p>
+                    <p className="text-sm text-blue-600">
+                      {paymentStep === 'processing' && "Please wait while we prepare your payment session"}
+                      {paymentStep === 'verifying' && "You'll be taken to Flutterwave payment page"}
+                      {paymentStep === 'complete' && "You now have access to all RM exams"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Payment Button */}
             <button
               onClick={handlePayment}
-              disabled={paymentLoading}
+              disabled={paymentLoading || paymentStep !== 'ready'}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
             >
               {paymentLoading ? (
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Processing...
+                  {paymentStep === 'processing' ? "Setting up payment..." : "Processing..."}
+                </>
+              ) : paymentStep === 'complete' ? (
+                <>
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Payment Complete
                 </>
               ) : (
                 <>
@@ -330,13 +386,18 @@ const RMPaymentPage: React.FC = () => {
             {/* Refresh Access Button */}
             <button
               onClick={refreshAccess}
-              disabled={loading}
+              disabled={checkingAccess || paymentStep === 'complete'}
               className="w-full mt-3 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center text-sm"
             >
-              {loading ? (
+              {checkingAccess ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Checking...
+                  Checking access...
+                </>
+              ) : paymentStep === 'complete' ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Access confirmed
                 </>
               ) : (
                 <>

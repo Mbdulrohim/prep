@@ -7,6 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 import { standaloneRMExamManager, StandaloneRMExam, StandaloneRMAttempt } from "../../../lib/standaloneRMExams";
 import StandaloneRMExamFlow from "@/components/rm/StandaloneRMExamFlow";
+import EnhancedRMExamEntry from "@/components/rm/EnhancedRMExamEntry";
 import { 
   Clock, 
   Users, 
@@ -136,6 +137,16 @@ const RMExamPage: React.FC = () => {
     );
   }
 
+  // Show exam flow when started
+  if (showExam && exam && user && hasAccess) {
+    return (
+      <StandaloneRMExamFlow
+        examId={exam.id}
+        isPreview={false}
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -174,23 +185,49 @@ const RMExamPage: React.FC = () => {
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Lock className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Required</h2>
-          <p className="text-gray-600 mb-4">You need to purchase access to take this exam.</p>
-          <button
-            onClick={() => router.push(`/rm/payment?examId=${exam.id}`)}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg mr-3"
-          >
-            Purchase Access
-          </button>
-          <button
-            onClick={() => router.push("/rm")}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
-          >
-            Back to RM Exams
-          </button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <Lock className="h-16 w-16 text-orange-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-3">RM Access Required</h2>
+            <p className="text-gray-600 mb-6">
+              You need to purchase RM access to take this exam. Get access to all RM exams including Paper 1 and Paper 2.
+            </p>
+            
+            {/* Pricing highlight */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+              <p className="text-orange-800 font-medium">Complete RM Package</p>
+              <p className="text-2xl font-bold text-orange-900">₦2,000</p>
+              <p className="text-sm text-orange-600">Access to all RM exams + 90 days validity</p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push(`/rm/payment?examId=${exam.id}`)}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+              >
+                Purchase RM Access
+              </button>
+              
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  if (user) await fetchExamData(user, examId);
+                }}
+                disabled={loading}
+                className="w-full bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                {loading ? "Checking..." : "Already purchased? Refresh Access"}
+              </button>
+              
+              <button
+                onClick={() => router.push("/rm")}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Back to RM Exams
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -320,21 +357,11 @@ const RMExamPage: React.FC = () => {
               </ul>
             </div>
 
-            {/* Action Button */}
-            <div className="text-center">
-              <button
-                onClick={handleStartExam}
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center mx-auto"
-              >
-                <Play className="h-5 w-5 mr-2" />
-                {activeAttempt && !activeAttempt.isCompleted ? "Resume Exam" : "Start Exam"}
-              </button>
-              
-              <p className="text-sm text-gray-500 mt-3">
-                Make sure you have a stable internet connection before starting
-              </p>
-            </div>
+            {/* Enhanced Exam Entry */}
+            <EnhancedRMExamEntry
+              examId={exam.id}
+              onStartExam={() => setShowExam(true)}
+            />
           </div>
         </div>
 
