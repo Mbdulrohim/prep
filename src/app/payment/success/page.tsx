@@ -62,9 +62,17 @@ export default function PaymentSuccessPage() {
         if (result.success && result.hasAccess) {
           setStatus("success");
           setMessage(
-            "Payment successful! You now have access to all exam materials."
+            result.examCategory === "RM" 
+              ? "Payment successful! You now have access to all RM exam materials."
+              : "Payment successful! You now have access to all exam materials."
           );
           setTransactionDetails(result.transaction);
+          
+          // Trigger access refresh for RM payments
+          if (result.examCategory === "RM") {
+            localStorage.setItem('rm_payment_success', Date.now().toString());
+            console.log("🎉 RM payment success - triggering access refresh");
+          }
         } else if (result.success && !result.hasAccess) {
           setStatus("failed");
           setMessage(
@@ -94,9 +102,17 @@ export default function PaymentSuccessPage() {
           if (manualResult.success && manualResult.hasAccess) {
             setStatus("success");
             setMessage(
-              "Payment verified! You now have access to all exam materials."
+              manualResult.examCategory === "RM" 
+                ? "Payment verified! You now have access to all RM exam materials."
+                : "Payment verified! You now have access to all exam materials."
             );
             setTransactionDetails(manualResult.transaction);
+            
+            // Trigger access refresh for RM payments
+            if (manualResult.examCategory === "RM") {
+              localStorage.setItem('rm_payment_success', Date.now().toString());
+              console.log("🎉 RM payment success (manual verification) - triggering access refresh");
+            }
           } else {
             setStatus("failed");
             setMessage(

@@ -59,7 +59,8 @@ const RMPaymentPage: React.FC = () => {
       
       // Check if user already has access
       if (user) {
-        const hasAccess = await standaloneRMExamManager.checkUserAccess(user.uid, examId);
+        const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+        const hasAccess = await rmUserAccessManager.hasRMAccess(user.uid);
         if (hasAccess) {
           router.push(`/rm/${examId}`);
           return;
@@ -68,6 +69,27 @@ const RMPaymentPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching exam data:", error);
       setError("Failed to load exam details");
+    }
+  };
+
+  const refreshAccess = async () => {
+    if (!user || !examId) return;
+    
+    try {
+      setLoading(true);
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      const hasAccess = await rmUserAccessManager.hasRMAccess(user.uid);
+      if (hasAccess) {
+        console.log("✅ RM access confirmed, redirecting to exam...");
+        router.push(`/rm/${examId}`);
+      } else {
+        console.log("❌ No RM access found");
+        setError("No RM access found. Please complete payment first.");
+      }
+    } catch (error) {
+      console.error("Error checking RM access:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -301,6 +323,25 @@ const RMPaymentPage: React.FC = () => {
                 <>
                   <CreditCard className="h-5 w-5 mr-2" />
                   Pay {exam.currency} {exam.price}
+                </>
+              )}
+            </button>
+
+            {/* Refresh Access Button */}
+            <button
+              onClick={refreshAccess}
+              disabled={loading}
+              className="w-full mt-3 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center text-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Already paid? Check Access
                 </>
               )}
             </button>

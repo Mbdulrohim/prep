@@ -51,16 +51,14 @@ const RMExamPage: React.FC = () => {
       const exams = await standaloneRMExamManager.getActiveRMExams();
       setRmExams(exams);
 
-      // Check user access for each exam
-      const accessPromises = exams.map(async (exam) => {
-        const hasAccess = await standaloneRMExamManager.checkUserAccess(currentUser.uid, exam.id);
-        return { examId: exam.id, hasAccess };
-      });
-
-      const accessResults = await Promise.all(accessPromises);
+      // Check user's overall RM access (not per-exam, but per-category)
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      const hasRMAccess = await rmUserAccessManager.hasRMAccess(currentUser.uid);
+      
+      // Set access for all exams based on overall RM access
       const accessMap: Record<string, boolean> = {};
-      accessResults.forEach(({ examId, hasAccess }) => {
-        accessMap[examId] = hasAccess;
+      exams.forEach((exam) => {
+        accessMap[exam.id] = hasRMAccess;
       });
       setUserAccess(accessMap);
 
@@ -78,6 +76,42 @@ const RMExamPage: React.FC = () => {
       console.error("Error fetching RM data:", error);
     }
   };
+
+  // Refresh access function for use after payments
+  const refreshRMAccess = async () => {
+    if (!user) return;
+    
+    try {
+      console.log("🔄 Refreshing RM access for user:", user.uid);
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      const hasRMAccess = await rmUserAccessManager.hasRMAccess(user.uid);
+      
+      // Update access for all exams
+      const accessMap: Record<string, boolean> = {};
+      rmExams.forEach((exam) => {
+        accessMap[exam.id] = hasRMAccess;
+      });
+      setUserAccess(accessMap);
+      console.log("✅ RM access refreshed. Has access:", hasRMAccess);
+    } catch (error) {
+      console.error("❌ Error refreshing RM access:", error);
+    }
+  };
+
+  // Add effect to listen for storage events (payment success from other tabs)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rm_payment_success' && e.newValue) {
+        console.log("🎉 RM payment success detected, refreshing access...");
+        refreshRMAccess();
+        // Clear the storage event
+        localStorage.removeItem('rm_payment_success');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user, rmExams]);
 
   const handleStartExam = async (exam: StandaloneRMExam) => {
     if (!user) return;

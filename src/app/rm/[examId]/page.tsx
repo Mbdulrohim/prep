@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 import { standaloneRMExamManager, StandaloneRMExam, StandaloneRMAttempt } from "../../../lib/standaloneRMExams";
-import StandaloneRMExamFlow from "../../../components/rm/StandaloneRMExamFlow";
+import StandaloneRMExamFlow from "@/components/rm/StandaloneRMExamFlow";
 import { 
   Clock, 
   Users, 
@@ -61,8 +61,9 @@ const RMExamPage: React.FC = () => {
       
       setExam(examData);
       
-      // Check user access
-      const userHasAccess = await standaloneRMExamManager.checkUserAccess(currentUser.uid, examId);
+      // Check user's RM access using the proper access manager
+      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+      const userHasAccess = await rmUserAccessManager.hasRMAccess(currentUser.uid);
       setHasAccess(userHasAccess);
       
       if (!userHasAccess && examData.requiresPayment) {
