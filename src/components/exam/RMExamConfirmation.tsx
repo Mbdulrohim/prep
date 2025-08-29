@@ -26,6 +26,14 @@ interface RMExamConfirmationProps {
   onConfirm: (details: StudentDetails) => void;
   onCancel?: () => void;
   isLoading?: boolean;
+  userProfile?: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    displayName?: string;
+    email?: string;
+    university?: string | null;
+  } | null;
 }
 
 export function RMExamConfirmation({
@@ -33,9 +41,32 @@ export function RMExamConfirmation({
   onConfirm,
   onCancel,
   isLoading = false,
+  userProfile,
 }: RMExamConfirmationProps) {
-  const [name, setName] = useState("");
-  const [university, setUniversity] = useState("");
+  // Get user's display name from various possible sources
+  const getUserDisplayName = () => {
+    if (userProfile?.displayName) return userProfile.displayName;
+    if (userProfile?.name) return userProfile.name;
+    if (userProfile?.firstName && userProfile?.lastName) {
+      return `${userProfile.firstName} ${userProfile.lastName}`;
+    }
+    if (userProfile?.firstName) return userProfile.firstName;
+    if (userProfile?.email) {
+      // Extract name from email as fallback
+      return userProfile.email
+        .split("@")[0]
+        .replace(/[._]/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+    }
+    return "";
+  };
+
+  const getUserUniversity = () => {
+    return userProfile?.university || "";
+  };
+
+  const [name, setName] = useState(getUserDisplayName());
+  const [university, setUniversity] = useState(getUserUniversity());
   const [agreed, setAgreed] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {

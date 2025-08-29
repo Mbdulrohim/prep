@@ -447,6 +447,7 @@ export default function RMExamPage() {
             onConfirm={handleStartRMExam}
             onCancel={() => setShowConfirmationModal(false)}
             isLoading={questionsLoading}
+            userProfile={userProfile}
           />
         )}
       </div>
