@@ -384,7 +384,7 @@ class QuestionBankManager {
   }
 
   /**
-   * Assign unique questions to a user for an exam
+   * Assign unique questions to a user for an exam - retrieves from Firestore
    */
   async assignQuestionsToUser(
     userId: string,
@@ -392,11 +392,74 @@ class QuestionBankManager {
     paper: "paper-1" | "paper-2",
     questionCount: number = 250
   ): Promise<Question[]> {
+    // Import Firebase functions here to avoid circular dependencies
+    const { db } = await import("@/lib/firebase");
+    const { collection, query, where, getDocs } = await import("firebase/firestore");
+    
+    try {
+      const categoryId = `${examCategory.toLowerCase()}-${paper}`;
+      console.log(`🔍 Fetching questions from Firestore for category: ${categoryId}`);
+      
+      // Query Firestore for questions with the specific category
+      const questionsRef = collection(db, "questions");
+      const q = query(questionsRef, where("category", "==", categoryId));
+      const querySnapshot = await getDocs(q);
+      
+      const firestoreQuestions: Question[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        firestoreQuestions.push({
+          id: doc.id,
+          text: data.text,
+          options: data.options,
+          correctAnswer: data.correctAnswer,
+          explanation: data.explanation || "",
+          difficulty: data.difficulty || "Intermediate",
+          topics: data.topics || [],
+          category: data.category,
+          paper: data.paper || paper,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          metadata: data.metadata || {},
+        });
+      });
+      
+      console.log(`📊 Found ${firestoreQuestions.length} questions in Firestore for ${categoryId}`);
+      
+      if (firestoreQuestions.length === 0) {
+        console.warn(`⚠️ No questions found in Firestore for category: ${categoryId}`);
+        // Fallback to in-memory questions if no Firestore questions exist
+        return this.getInMemoryQuestions(examCategory, paper, questionCount);
+      }
+      
+      // Shuffle and select required count
+      const shuffled = [...firestoreQuestions].sort(() => Math.random() - 0.5);
+      const selectedQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
+      
+      console.log(`✅ Returning ${selectedQuestions.length} questions for ${categoryId}`);
+      return selectedQuestions;
+      
+    } catch (error) {
+      console.error("Error fetching questions from Firestore:", error);
+      // Fallback to in-memory questions on error
+      return this.getInMemoryQuestions(examCategory, paper, questionCount);
+    }
+  }
+
+  /**
+   * Fallback method to get in-memory generated questions
+   */
+  private getInMemoryQuestions(
+    examCategory: "RN" | "RM" | "RPHN",
+    paper: "paper-1" | "paper-2",
+    questionCount: number = 250
+  ): Question[] {
     const bankId = `${examCategory.toLowerCase()}-${paper}`;
     const questionBank = this.questionBanks.get(bankId);
 
     if (!questionBank) {
-      throw new Error(`Question bank not found for ${examCategory} ${paper}`);
+      console.error(`❌ Question bank not found for ${examCategory} ${paper}`);
+      return [];
     }
 
     // Shuffle questions and select required count
