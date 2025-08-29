@@ -39,8 +39,14 @@ export default function RMExamPage() {
 
   // Check RM exam eligibility
   useEffect(() => {
+    console.log("🧪 RM Exam eligibility effect triggered. user:", !!user, "userProfile:", !!userProfile, "examId:", examId);
+    console.log("👤 User details:", user ? { uid: user.uid, email: user.email } : "Not available");
+    
     if (user && userProfile) {
+      console.log("✅ User and profile available, checking RM exam eligibility");
       checkRMExamEligibility();
+    } else {
+      console.log("⏳ Waiting for user or profile to be available");
     }
   }, [user, userProfile, examId]);
 
@@ -52,44 +58,73 @@ export default function RMExamPage() {
   }, [user, router]);
 
   const checkRMExamEligibility = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      console.log("❌ No user uid found for RM exam check");
+      return;
+    }
 
+    console.log("🔍 Starting RM exam eligibility check for user:", user.uid, "examId:", examId);
     setLoading(true);
     setError("");
 
     try {
+      console.log("🔍 Starting RM exam eligibility check for user:", user.uid);
+      
       // Load RM exam data
       const rmExams = await fetchRMExams();
       const currentExam = rmExams.find(exam => exam.id === examId);
       
       if (!currentExam) {
+        console.error("❌ RM exam not found:", examId);
         setError("RM exam not found");
         setLoading(false);
         return;
       }
       
+      console.log("✅ RM exam found:", currentExam);
       setRmExamData(currentExam);
 
-      // Check RM user access
+      // Check RM user access with detailed debugging
+      console.log("🔍 Checking RM access for user:", user.uid);
       const rmAccess = await rmUserAccessManager.getRMUserAccess(user.uid);
-      console.log("RM Access check result:", {
+      
+      console.log("📊 RM Access check result:", {
         userId: user.uid,
+        userEmail: user.email,
         rmAccess: rmAccess,
         hasAccess: rmAccess?.hasAccess,
         accessMethod: rmAccess?.accessMethod,
         accessGrantedAt: rmAccess?.accessGrantedAt,
-        examId: examId
+        paymentInfo: rmAccess?.paymentInfo,
+        examId: examId,
+        currentExamAvailable: currentExam.available
       });
       
-      if (!rmAccess || !rmAccess.hasAccess) {
+      if (!rmAccess) {
+        console.error("❌ No RM access record found for user:", user.uid);
+        setCanStartExam(false);
+        setError("You don't have access to RM exams. Please purchase RM access.");
+        setLoading(false);
+        return;
+      }
+      
+      if (!rmAccess.hasAccess) {
+        console.error("❌ RM access record exists but hasAccess is false:", rmAccess);
         setCanStartExam(false);
         setError("You don't have access to RM exams. Please purchase RM access.");
         setLoading(false);
         return;
       }
 
+      console.log("✅ RM access confirmed, checking exam availability...");
+
       // Check if exam is available (admin scheduled)
       if (!currentExam.available) {
+        console.warn("⏰ RM exam not available yet:", {
+          examId: examId,
+          scheduling: currentExam.scheduling,
+          available: currentExam.available
+        });
         setCanStartExam(false);
         setError("This RM exam has not been scheduled by admin yet.");
         setLoading(false);

@@ -119,6 +119,8 @@ class RMUserAccessManager {
     paymentInfo: RMUserAccess['paymentInfo']
   ): Promise<void> {
     try {
+      console.log("💰 Granting RM access via payment for user:", userId, "email:", userEmail);
+      
       const accessData: RMUserAccess = {
         id: userId,
         userId,
@@ -136,9 +138,11 @@ class RMUserAccessManager {
         updatedAt: new Date(),
       };
       
+      console.log("💾 Saving RM access data:", accessData);
       await setDoc(doc(db, "rmUserAccess", userId), accessData);
+      console.log("✅ RM access saved successfully for user:", userId);
     } catch (error) {
-      console.error("Error granting RM access via payment:", error);
+      console.error("❌ Error granting RM access via payment:", error);
       throw error;
     }
   }
@@ -215,16 +219,20 @@ class RMUserAccessManager {
    */
   async getRMUserAccess(userId: string): Promise<RMUserAccess | null> {
     try {
+      console.log("🔍 Getting RM user access for:", userId);
       const accessDoc = await getDoc(doc(db, "rmUserAccess", userId));
       
       if (!accessDoc.exists()) {
+        console.log("❌ No RM access document found for user:", userId);
         return null;
       }
+      
+      console.log("📄 Raw RM access document data:", accessDoc.data());
       
       const data = accessDoc.data();
       
       // Convert Firestore timestamps to Date objects
-      return {
+      const processedData = {
         ...data,
         accessGrantedAt: data.accessGrantedAt?.toDate ? data.accessGrantedAt.toDate() : new Date(data.accessGrantedAt),
         accessExpiresAt: data.accessExpiresAt?.toDate ? data.accessExpiresAt.toDate() : data.accessExpiresAt ? new Date(data.accessExpiresAt) : undefined,
@@ -240,8 +248,11 @@ class RMUserAccessManager {
           redeemedAt: data.accessCodeInfo.redeemedAt?.toDate ? data.accessCodeInfo.redeemedAt.toDate() : new Date(data.accessCodeInfo.redeemedAt)
         } : undefined,
       } as RMUserAccess;
+      
+      console.log("✅ Processed RM access data:", processedData);
+      return processedData;
     } catch (error) {
-      console.error("Error getting RM user access:", error);
+      console.error("❌ Error getting RM user access:", error);
       return null;
     }
   }
