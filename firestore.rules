@@ -169,6 +169,12 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() || isAdmin();
     }
 
+    // RM Question Banks - authenticated users can read, admins and system can write
+    match /rmQuestionBanks/{bankId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isAuthenticated();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;
