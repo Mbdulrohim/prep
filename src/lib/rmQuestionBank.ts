@@ -52,12 +52,19 @@ class RMQuestionBankManager {
    */
   async initializeRMQuestionBanks(): Promise<void> {
     try {
+      console.log("🔧 Initializing RM question banks...");
+      
       // Load existing RM question banks from Firebase
       await this.loadRMQuestionBanksFromFirebase();
       
+      console.log("📊 Loaded question banks from Firebase:", Array.from(this.rmQuestionBanks.keys()));
+      
       // If no question banks exist, create default ones
       if (this.rmQuestionBanks.size === 0) {
+        console.log("⚠️ No RM question banks found, creating default ones...");
         await this.createDefaultRMQuestionBanks();
+      } else {
+        console.log("✅ RM question banks already exist");
       }
     } catch (error) {
       console.error("Error initializing RM question banks:", error);
@@ -86,13 +93,17 @@ class RMQuestionBankManager {
    */
   private async createDefaultRMQuestionBanks(): Promise<void> {
     try {
+      console.log("🏗️ Creating default RM question banks...");
+      
       // Create RM Paper 1 question bank
       await this.createRMQuestionBank("RM", "paper-1", 1000, "system");
+      console.log("✅ Created RM Paper 1 question bank");
       
       // Create RM Paper 2 question bank  
       await this.createRMQuestionBank("RM", "paper-2", 1000, "system");
+      console.log("✅ Created RM Paper 2 question bank");
       
-      console.log("Default RM question banks created");
+      console.log("✅ Default RM question banks created");
     } catch (error) {
       console.error("Error creating default RM question banks:", error);
     }
@@ -431,12 +442,20 @@ class RMQuestionBankManager {
     questionCount: number = 250
   ): Promise<RMQuestion[]> {
     try {
+      console.log("🔍 assignRMQuestionsToUser called with:", { userId, paper, questionCount });
       const bankId = `rm-${paper}`;
+      console.log("🔍 Looking for question bank with ID:", bankId);
+      console.log("🔍 Available question banks:", Array.from(this.rmQuestionBanks.keys()));
+      
       const questionBank = this.rmQuestionBanks.get(bankId);
       
       if (!questionBank) {
+        console.error("❌ RM question bank not found:", bankId);
+        console.log("📊 Available banks:", Array.from(this.rmQuestionBanks.keys()));
         throw new Error(`RM question bank not found for ${paper}`);
       }
+      
+      console.log("✅ Found question bank:", bankId, "with", questionBank.questions.length, "questions");
       
       if (questionBank.questions.length < questionCount) {
         throw new Error(`Insufficient questions in RM ${paper} bank. Available: ${questionBank.questions.length}, Required: ${questionCount}`);

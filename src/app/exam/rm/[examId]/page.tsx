@@ -170,7 +170,14 @@ export default function RMExamPage() {
       setQuestionsLoading(true);
 
       // Load RM questions for this exam
-      const paper = rmExamData.id.includes('paper-2') ? 'paper-2' : 'paper-1';
+      // Extract paper name from exam ID (rm-paper-1 -> paper-1, rm-paper-2 -> paper-2)
+      const paper = rmExamData.id.replace('rm-', ''); // Remove 'rm-' prefix to get just 'paper-1' or 'paper-2'
+      console.log("🔍 Using paper name for question bank:", paper);
+      console.log("🔍 Full exam ID:", rmExamData.id);
+      
+      // Initialize RM question banks if needed
+      await rmQuestionBankManager.initializeRMQuestionBanks();
+      
       const questions = await rmQuestionBankManager.assignRMQuestionsToUser(
         user.uid,
         paper,
