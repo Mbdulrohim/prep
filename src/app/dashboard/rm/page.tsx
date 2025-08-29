@@ -402,6 +402,10 @@ export default function RMDashboardPage() {
                       <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                         Available
                       </span>
+                    ) : exam.scheduling?.isScheduled ? (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        Scheduled
+                      </span>
                     ) : (
                       <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
                         Schedule Required
@@ -415,6 +419,22 @@ export default function RMDashboardPage() {
                   <p className="text-gray-600 text-sm mb-4">
                     {exam.description}
                   </p>
+
+                  {/* Show scheduling info if exam is scheduled but not available */}
+                  {exam.scheduling?.isScheduled && !exam.available && exam.scheduling.scheduledDate && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-center text-sm text-blue-700">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>
+                          Scheduled for {exam.scheduling.scheduledDate.toLocaleDateString()} at{' '}
+                          {exam.scheduling.scheduledDate.toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                     <div>
@@ -432,7 +452,12 @@ export default function RMDashboardPage() {
                     disabled={!exam.available}
                     className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50"
                   >
-                    {exam.available ? 'Start Exam' : 'Waiting for Schedule'}
+                    {exam.available 
+                      ? 'Start Exam' 
+                      : exam.scheduling?.isScheduled 
+                        ? 'Scheduled - Not Yet Available'
+                        : 'Waiting for Schedule'
+                    }
                   </Button>
                 </div>
               ))}

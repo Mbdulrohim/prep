@@ -12,6 +12,11 @@ export interface RMExamData {
   topics: string[];
   color: string;
   available: boolean;
+  scheduling?: {
+    isScheduled: boolean;
+    scheduledDate?: Date;
+    isActive?: boolean;
+  };
   pricing: {
     amount: number; // Default 2000 NGN, admin configurable
     currency: string;
@@ -188,6 +193,13 @@ export async function fetchRMExams(): Promise<RMExamData[]> {
               isScheduledDatePassed: now >= scheduledDate
             });
             
+            // Add scheduling information to exam
+            exam.scheduling = {
+              isScheduled: true,
+              scheduledDate: scheduledDate,
+              isActive: schedule.isActive
+            };
+            
             // Make exam available if it's scheduled and the time has passed
             if (now >= scheduledDate) {
               exam.available = true;
@@ -196,6 +208,9 @@ export async function fetchRMExams(): Promise<RMExamData[]> {
               console.log(`⏰ RM Exam ${exam.id} is scheduled but not yet available (scheduled for ${scheduledDate})`);
             }
           } else {
+            exam.scheduling = {
+              isScheduled: false
+            };
             console.log(`❌ RM Exam ${exam.id} is not available:`, {
               hasSchedule: !!schedule,
               isActive: schedule?.isActive,
