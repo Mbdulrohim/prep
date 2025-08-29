@@ -175,6 +175,19 @@ service cloud.firestore {
       allow write: if isAdmin() || isAuthenticated();
     }
 
+    // Standalone RM Exams - authenticated users can read, only admins can write
+    match /standaloneRMExams/{examId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Standalone RM Exam Attempts - users can manage their own attempts, admins can read all
+    match /standaloneRMAttempts/{attemptId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     // Default deny all other documents
     match /{document=**} {
       allow read, write: if false;
