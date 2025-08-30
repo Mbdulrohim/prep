@@ -9,7 +9,6 @@ import { standaloneRMExamManager, StandaloneRMExam, StandaloneRMAttempt } from "
 import { 
   Calendar, 
   Clock, 
-  Users, 
   Trophy, 
   AlertCircle, 
   Play, 

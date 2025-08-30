@@ -6,12 +6,12 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { RMPurchase } from "@/components/dashboard/RMPurchase";
 import { RMCodeRedemption } from "@/components/dashboard/RMCodeRedemption";
-import { 
-  ArrowLeft, 
-  CreditCard, 
-  CheckCircle, 
-  Lock, 
-  FileText, 
+import {
+  ArrowLeft,
+  CreditCard,
+  CheckCircle,
+  Lock,
+  FileText,
   Clock,
   AlertTriangle,
   Star,
@@ -19,7 +19,7 @@ import {
   Target,
   Zap,
   Award,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -30,7 +30,7 @@ import { rmExamAttemptManager, RMExamAttempt } from "@/lib/rmExamAttempts";
 export default function RMDashboardPage() {
   const { user, userProfile } = useAuth();
   const router = useRouter();
-  
+
   // State
   const [rmExams, setRmExams] = useState<RMExamData[]>([]);
   const [rmUserAccess, setRmUserAccess] = useState<any>(null);
@@ -48,7 +48,7 @@ export default function RMDashboardPage() {
 
   const loadRMData = async () => {
     if (!user?.uid) return;
-    
+
     try {
       setLoading(true);
       const [exams, access, attempts] = await Promise.all([
@@ -56,7 +56,7 @@ export default function RMDashboardPage() {
         rmUserAccessManager.getRMUserAccess(user.uid),
         rmExamAttemptManager.getUserRMExamAttempts(user.uid),
       ]);
-      
+
       setRmExams(exams);
       setRmUserAccess(access);
       setRmUserAttempts(attempts);
@@ -70,7 +70,7 @@ export default function RMDashboardPage() {
 
   const refreshRMAccess = async () => {
     if (!user?.uid) return;
-    
+
     try {
       setAccessLoading(true);
       const access = await rmUserAccessManager.getRMUserAccess(user.uid);
@@ -109,18 +109,23 @@ export default function RMDashboardPage() {
   }
 
   const hasRMAccess = rmUserAccess?.hasAccess;
-  const completedAttempts = rmUserAttempts.filter(a => a.completed).length;
-  const averageScore = rmUserAttempts.length > 0 
-    ? Math.round(rmUserAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / rmUserAttempts.length)
-    : 0;
-  const bestScore = rmUserAttempts.length > 0 
-    ? Math.max(...rmUserAttempts.map(a => a.percentage || 0))
-    : 0;
+  const completedAttempts = rmUserAttempts.filter((a) => a.completed).length;
+  const averageScore =
+    rmUserAttempts.length > 0
+      ? Math.round(
+          rmUserAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) /
+            rmUserAttempts.length
+        )
+      : 0;
+  const bestScore =
+    rmUserAttempts.length > 0
+      ? Math.max(...rmUserAttempts.map((a) => a.percentage || 0))
+      : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation */}
         <div className="mb-8">
@@ -175,18 +180,22 @@ export default function RMDashboardPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <div className="bg-white/10 rounded-lg p-4 text-center">
                       <FileText className="h-8 w-8 mx-auto mb-2" />
-                      <div className="text-lg font-bold">500+</div>
+                      <div className="text-lg font-bold">5,000+</div>
                       <div className="text-sm text-green-100">RM Questions</div>
                     </div>
                     <div className="bg-white/10 rounded-lg p-4 text-center">
                       <Target className="h-8 w-8 mx-auto mb-2" />
                       <div className="text-lg font-bold">2 Papers</div>
-                      <div className="text-sm text-green-100">Complete Coverage</div>
+                      <div className="text-sm text-green-100">
+                        Complete Coverage
+                      </div>
                     </div>
                     <div className="bg-white/10 rounded-lg p-4 text-center">
                       <Award className="h-8 w-8 mx-auto mb-2" />
                       <div className="text-lg font-bold">₦2,000</div>
-                      <div className="text-sm text-green-100">One-time Payment</div>
+                      <div className="text-sm text-green-100">
+                        One-time Payment
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -197,8 +206,12 @@ export default function RMDashboardPage() {
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">
                       RM Exam Access Package
                     </h3>
-                    <div className="text-4xl font-bold text-green-600 mb-2">₦2,000</div>
-                    <p className="text-gray-600">One-time payment • Lifetime access</p>
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      ₦2,000
+                    </div>
+                    <p className="text-gray-600">
+                      One-time payment • Lifetime access
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -264,10 +277,12 @@ export default function RMDashboardPage() {
                   {/* Payment Components */}
                   <div className="space-y-6">
                     <RMPurchase />
-                    
+
                     <div className="flex items-center">
                       <div className="flex-1 border-t border-gray-300"></div>
-                      <span className="px-4 text-sm text-gray-500 bg-white">OR</span>
+                      <span className="px-4 text-sm text-gray-500 bg-white">
+                        OR
+                      </span>
                       <div className="flex-1 border-t border-gray-300"></div>
                     </div>
 
@@ -356,22 +371,32 @@ export default function RMDashboardPage() {
                       </div>
 
                       <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Access method: {rmUserAccess.accessMethod} • 
-                        Attempts used: {Object.keys(rmUserAccess.rmAttempts || {}).length} / {rmUserAccess.adminSettings?.maxAttempts || 1}
+                        Access method: {rmUserAccess.accessMethod} • Attempts
+                        used:{" "}
+                        {Object.keys(rmUserAccess.rmAttempts || {}).length} /{" "}
+                        {rmUserAccess.adminSettings?.maxAttempts || 1}
                       </p>
 
                       <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="text-center">
-                          <div className="text-2xl font-bold">{completedAttempts}</div>
-                          <div className="text-sm text-green-200">Completed</div>
+                          <div className="text-2xl font-bold">
+                            {completedAttempts}
+                          </div>
+                          <div className="text-sm text-green-200">
+                            Completed
+                          </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold">{averageScore}%</div>
+                          <div className="text-2xl font-bold">
+                            {averageScore}%
+                          </div>
                           <div className="text-sm text-green-200">Average</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold">{bestScore}%</div>
-                          <div className="text-sm text-green-200">Best Score</div>
+                          <div className="text-sm text-green-200">
+                            Best Score
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -393,9 +418,20 @@ export default function RMDashboardPage() {
             {/* RM Exams Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {rmExams.map((exam) => (
-                <div key={exam.id} className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+                <div
+                  key={exam.id}
+                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow"
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${exam.color.replace('from-', 'bg-').replace('to-', '').split(' ')[0].replace('bg-', 'bg-') || 'bg-green-100'}`}>
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        exam.color
+                          .replace("from-", "bg-")
+                          .replace("to-", "")
+                          .split(" ")[0]
+                          .replace("bg-", "bg-") || "bg-green-100"
+                      }`}
+                    >
                       <FileText className="h-6 w-6 text-green-600" />
                     </div>
                     {exam.available ? (
@@ -421,20 +457,27 @@ export default function RMDashboardPage() {
                   </p>
 
                   {/* Show scheduling info if exam is scheduled but not available */}
-                  {exam.scheduling?.isScheduled && !exam.available && exam.scheduling.scheduledDate && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <div className="flex items-center text-sm text-blue-700">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>
-                          Scheduled for {exam.scheduling.scheduledDate.toLocaleDateString()} at{' '}
-                          {exam.scheduling.scheduledDate.toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </span>
+                  {exam.scheduling?.isScheduled &&
+                    !exam.available &&
+                    exam.scheduling.scheduledDate && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-center text-sm text-blue-700">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>
+                            Scheduled for{" "}
+                            {exam.scheduling.scheduledDate.toLocaleDateString()}{" "}
+                            at{" "}
+                            {exam.scheduling.scheduledDate.toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                     <div>
@@ -443,7 +486,9 @@ export default function RMDashboardPage() {
                     </div>
                     <div>
                       <span className="text-gray-500">Duration:</span>
-                      <div className="font-semibold">{exam.durationMinutes} mins</div>
+                      <div className="font-semibold">
+                        {exam.durationMinutes} mins
+                      </div>
                     </div>
                   </div>
 
@@ -452,12 +497,11 @@ export default function RMDashboardPage() {
                     disabled={!exam.available}
                     className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50"
                   >
-                    {exam.available 
-                      ? 'Start Exam' 
-                      : exam.scheduling?.isScheduled 
-                        ? 'Scheduled - Not Yet Available'
-                        : 'Waiting for Schedule'
-                    }
+                    {exam.available
+                      ? "Start Exam"
+                      : exam.scheduling?.isScheduled
+                      ? "Scheduled - Not Yet Available"
+                      : "Waiting for Schedule"}
                   </Button>
                 </div>
               ))}
@@ -471,19 +515,28 @@ export default function RMDashboardPage() {
                 </h3>
                 <div className="space-y-3">
                   {rmUserAttempts.slice(0, 5).map((attempt) => (
-                    <div key={attempt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={attempt.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
                       <div>
                         <div className="font-medium">{attempt.examTitle}</div>
                         <div className="text-sm text-gray-600">
                           {attempt.completed ? (
-                            <>Score: {attempt.percentage}% • {attempt.correctAnswers}/{attempt.assignedQuestions.length}</>
+                            <>
+                              Score: {attempt.percentage}% •{" "}
+                              {attempt.correctAnswers}/
+                              {attempt.assignedQuestions.length}
+                            </>
                           ) : (
-                            'In Progress'
+                            "In Progress"
                           )}
                         </div>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {attempt.endTime ? new Date(attempt.endTime).toLocaleDateString() : 'Ongoing'}
+                        {attempt.endTime
+                          ? new Date(attempt.endTime).toLocaleDateString()
+                          : "Ongoing"}
                       </div>
                     </div>
                   ))}
