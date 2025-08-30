@@ -42,6 +42,7 @@ import {
   addDoc,
   getDoc,
   setDoc,
+  deleteDoc,
   Timestamp,
 } from "firebase/firestore";
 import {
@@ -208,6 +209,15 @@ export default function AdminDashboard() {
     "overview" | "exams" | "questions" | "users" | "analytics"
   >("overview");
 
+  // Question Management Sub-tabs State
+  const [questionActiveSubTab, setQuestionActiveSubTab] = useState<
+    "rn" | "rm" | "weekly-assessment"
+  >("rn");
+
+  // Delete confirmation state
+  const [showDeleteRMConfirm, setShowDeleteRMConfirm] = useState(false);
+  const [deletingRMQuestions, setDeletingRMQuestions] = useState(false);
+
   // RM Access Management State
   const [rmAccessUsers, setRMAccessUsers] = useState<any[]>([]);
   const [quickGrantEmail, setQuickGrantEmail] = useState("");
@@ -231,6 +241,11 @@ export default function AdminDashboard() {
       loadAdminData();
     }
   }, [isAdmin]);
+
+  // Reset delete confirmation when changing tabs or sub-tabs
+  useEffect(() => {
+    setShowDeleteRMConfirm(false);
+  }, [activeTab, questionActiveSubTab]);
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -1380,6 +1395,152 @@ export default function AdminDashboard() {
     }
   };
 
+  // Question Export/Offload Functions
+  const exportRNQuestions = async () => {
+    try {
+      const questionsQuery = query(
+        collection(db, "questions"),
+        where("category", "in", ["rn-paper-1", "rn-paper-2"]),
+        orderBy("createdAt", "desc")
+      );
+      const questionsSnapshot = await getDocs(questionsQuery);
+      const questionsData = questionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt:
+          doc.data().createdAt?.toDate?.()?.toISOString() ||
+          new Date().toISOString(),
+      }));
+
+      const dataStr = JSON.stringify(questionsData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `rn-questions-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast({
+        type: "success",
+        title: "Success",
+        message: `Exported ${questionsData.length} RN questions successfully`,
+      });
+    } catch (error) {
+      console.error("Error exporting RN questions:", error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to export RN questions",
+      });
+    }
+  };
+
+  const deleteAllRMQuestions = async () => {
+    if (!showDeleteRMConfirm) {
+      setShowDeleteRMConfirm(true);
+      return;
+    }
+
+    setDeletingRMQuestions(true);
+    try {
+      const questionsQuery = query(
+        collection(db, "questions"),
+        where("category", "in", ["rm-paper-1", "rm-paper-2"])
+      );
+      const questionsSnapshot = await getDocs(questionsQuery);
+
+      if (questionsSnapshot.empty) {
+        showToast({
+          type: "info",
+          title: "No Questions",
+          message: "No RM questions found to delete",
+        });
+        setShowDeleteRMConfirm(false);
+        setDeletingRMQuestions(false);
+        return;
+      }
+
+      // Use batch delete for efficiency
+      const batch = writeBatch(db);
+      let deleteCount = 0;
+
+      questionsSnapshot.docs.forEach((docSnapshot) => {
+        batch.delete(doc(db, "questions", docSnapshot.id));
+        deleteCount++;
+      });
+
+      await batch.commit();
+
+      // Reload questions to refresh the UI
+      await loadQuestions();
+
+      showToast({
+        type: "success",
+        title: "Success",
+        message: `Successfully deleted ${deleteCount} RM questions`,
+      });
+
+      setShowDeleteRMConfirm(false);
+    } catch (error) {
+      console.error("Error deleting RM questions:", error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to delete RM questions",
+      });
+    } finally {
+      setDeletingRMQuestions(false);
+    }
+  };
+
+  const exportWeeklyAssessmentQuestions = async () => {
+    try {
+      const assessmentsQuery = query(
+        collection(db, "weeklyAssessments"),
+        orderBy("createdAt", "desc")
+      );
+      const assessmentsSnapshot = await getDocs(assessmentsQuery);
+      const assessmentsData = assessmentsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt:
+          doc.data().createdAt?.toDate?.()?.toISOString() ||
+          new Date().toISOString(),
+      }));
+
+      const dataStr = JSON.stringify(assessmentsData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `weekly-assessment-questions-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast({
+        type: "success",
+        title: "Success",
+        message: `Exported ${assessmentsData.length} weekly assessment questions successfully`,
+      });
+    } catch (error) {
+      console.error("Error exporting weekly assessment questions:", error);
+      showToast({
+        type: "error",
+        title: "Error",
+        message: "Failed to export weekly assessment questions",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2373,94 +2534,343 @@ export default function AdminDashboard() {
                     Question Management
                   </h2>
                   <p className="text-gray-600">
-                    View, edit, and manage all exam questions
+                    View, edit, and manage all exam questions by type
                   </p>
                 </div>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => setShowAddQuestion(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Question
-                </Button>
               </div>
 
-              {/* Search */}
+              {/* Question Type Sub-tabs */}
               <div className="mb-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search questions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setQuestionActiveSubTab("rn")}
+                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                      questionActiveSubTab === "rn"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    RN Questions
+                  </button>
+                  <button
+                    onClick={() => setQuestionActiveSubTab("rm")}
+                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                      questionActiveSubTab === "rm"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    RM Questions
+                  </button>
+                  <button
+                    onClick={() => setQuestionActiveSubTab("weekly-assessment")}
+                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                      questionActiveSubTab === "weekly-assessment"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    Weekly Assessment
+                  </button>
                 </div>
               </div>
 
-              {/* Questions List */}
-              <div className="space-y-4">
-                {filteredQuestions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No questions found
-                    </h3>
-                    <p className="text-gray-600">
-                      Upload documents to start adding questions to the
-                      database.
-                    </p>
-                  </div>
-                ) : (
-                  filteredQuestions.map((question) => (
-                    <div
-                      key={question.id}
-                      className="border border-gray-200 rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                              {question.category}
-                            </span>
-                            <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
-                              {question.difficulty}
-                            </span>
-                          </div>
-                          <p className="text-gray-900 font-medium mb-2">
-                            {question.text}
-                          </p>
-                          <div className="text-sm text-gray-600">
-                            <p>Options: {question.options.length}</p>
-                            <p>
-                              Correct:{" "}
-                              {question.options[question.correctAnswer]}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingQuestion(question)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => deleteQuestion(question.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+              {/* RN Questions Tab Content */}
+              {questionActiveSubTab === "rn" && (
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        RN Questions
+                      </h3>
+                      <p className="text-gray-600">
+                        Manage Registered Nurse examination questions
+                      </p>
                     </div>
-                  ))
-                )}
-              </div>
+                    <div className="flex space-x-3">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={exportRNQuestions}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Export RN Questions
+                      </Button>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setShowAddQuestion(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Question
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Search */}
+                  <div className="mb-6">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search RN questions..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Questions List */}
+                  <div className="space-y-4">
+                    {filteredQuestions.filter((q) => q.category?.includes("rn"))
+                      .length === 0 ? (
+                      <div className="text-center py-12">
+                        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No RN questions found
+                        </h3>
+                        <p className="text-gray-600">
+                          Upload documents to start adding RN questions to the
+                          database.
+                        </p>
+                      </div>
+                    ) : (
+                      filteredQuestions
+                        .filter((q) => q.category?.includes("rn"))
+                        .map((question) => (
+                          <div
+                            key={question.id}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                    {question.category}
+                                  </span>
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
+                                    {question.difficulty}
+                                  </span>
+                                </div>
+                                <p className="text-gray-900 font-medium mb-2">
+                                  {question.text}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <p>Options: {question.options.length}</p>
+                                  <p>
+                                    Correct:{" "}
+                                    {question.options[question.correctAnswer]}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingQuestion(question)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => deleteQuestion(question.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* RM Questions Tab Content */}
+              {questionActiveSubTab === "rm" && (
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        RM Questions
+                      </h3>
+                      <p className="text-gray-600">
+                        Manage Registered Midwife examination questions
+                      </p>
+                    </div>
+                    <div className="flex space-x-3">
+                      <Button
+                        className={`${
+                          showDeleteRMConfirm 
+                            ? "bg-red-700 hover:bg-red-800" 
+                            : "bg-red-600 hover:bg-red-700"
+                        } ${deletingRMQuestions ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={deleteAllRMQuestions}
+                        disabled={deletingRMQuestions}
+                      >
+                        {deletingRMQuestions ? (
+                          <>
+                            <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                            Deleting...
+                          </>
+                        ) : showDeleteRMConfirm ? (
+                          <>
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                            Click Again to Confirm
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete All RM Questions
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setShowAddQuestion(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Question
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Search */}
+                  <div className="mb-6">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search RM questions..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Questions List */}
+                  <div className="space-y-4">
+                    {filteredQuestions.filter((q) => q.category?.includes("rm"))
+                      .length === 0 ? (
+                      <div className="text-center py-12">
+                        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No RM questions found
+                        </h3>
+                        <p className="text-gray-600">
+                          Upload documents to start adding RM questions to the
+                          database.
+                        </p>
+                      </div>
+                    ) : (
+                      filteredQuestions
+                        .filter((q) => q.category?.includes("rm"))
+                        .map((question) => (
+                          <div
+                            key={question.id}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">
+                                    {question.category}
+                                  </span>
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
+                                    {question.difficulty}
+                                  </span>
+                                </div>
+                                <p className="text-gray-900 font-medium mb-2">
+                                  {question.text}
+                                </p>
+                                <div className="text-sm text-gray-600">
+                                  <p>Options: {question.options.length}</p>
+                                  <p>
+                                    Correct:{" "}
+                                    {question.options[question.correctAnswer]}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingQuestion(question)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => deleteQuestion(question.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Weekly Assessment Questions Tab Content */}
+              {questionActiveSubTab === "weekly-assessment" && (
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Weekly Assessment Questions
+                      </h3>
+                      <p className="text-gray-600">
+                        Manage weekly assessment questions and content
+                      </p>
+                    </div>
+                    <div className="flex space-x-3">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={exportWeeklyAssessmentQuestions}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Export Weekly Assessments
+                      </Button>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() =>
+                          setActiveTab("standalone-weekly-assessments")
+                        }
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Manage Assessments
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="text-center py-12">
+                    <Calendar className="mx-auto h-12 w-12 text-blue-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Weekly Assessment Management
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Weekly assessment questions are managed through the
+                      dedicated Weekly Assessment section.
+                    </p>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() =>
+                        setActiveTab("standalone-weekly-assessments")
+                      }
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Go to Weekly Assessment Management
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
