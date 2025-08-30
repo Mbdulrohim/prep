@@ -209,6 +209,75 @@ export default function RMExamPage() {
     router.push("/dashboard");
   };
 
+  const handleRMExamComplete = async (results: any) => {
+    if (!user?.uid || !userProfile || !rmExamData) {
+      console.error("Missing required data for RM exam completion");
+      return;
+    }
+
+    try {
+      console.log("🔄 Processing RM exam completion...");
+      console.log("Results received:", results);
+
+      // Prepare user answers array
+      const userAnswers: (number | null)[] = new Array(rmQuestions.length).fill(null);
+      
+      // Convert answers object to array
+      Object.entries(results.answers).forEach(([questionIndex, answerIndex]) => {
+        const qIndex = parseInt(questionIndex);
+        if (!isNaN(qIndex) && qIndex < rmQuestions.length) {
+          userAnswers[qIndex] = answerIndex as number;
+        }
+      });
+
+      console.log("Converted user answers:", userAnswers);
+
+      // Start RM exam attempt
+      const startResult = await rmExamAttemptManager.startRMExamAttempt(
+        user.uid,
+        user.email || userProfile.email || "",
+        userProfile.displayName || studentDetails.name || "",
+        userProfile.university || studentDetails.university || "",
+        examId,
+        rmExamData.title,
+        rmExamData.id.replace('rm-', ''), // Convert "rm-paper-1" to "paper-1"
+        rmQuestions,
+        rmExamData.durationMinutes
+      );
+
+      if (!startResult.success || !startResult.attemptId) {
+        console.error("Failed to create RM exam attempt:", startResult.error);
+        throw new Error(startResult.error || "Failed to create RM exam attempt");
+      }
+
+      console.log("✅ RM exam attempt created:", startResult.attemptId);
+
+      // Submit the attempt immediately
+      const submitResult = await rmExamAttemptManager.submitRMExamAttempt(
+        startResult.attemptId,
+        userAnswers,
+        results.timeSpent || 0,
+        false // not auto-submitted
+      );
+
+      if (!submitResult.success) {
+        console.error("Failed to submit RM exam attempt:", submitResult.error);
+        throw new Error(submitResult.error || "Failed to submit RM exam attempt");
+      }
+
+      console.log("✅ RM exam attempt submitted successfully");
+      console.log("Submission results:", submitResult.results);
+
+      // Navigate to results page
+      router.push(`/exam/rm/${examId}/results?immediate=true`);
+
+    } catch (error) {
+      console.error("❌ Error completing RM exam:", error);
+      // Still navigate to results page so user isn't stuck
+      router.push(`/exam/rm/${examId}/results?immediate=true`);
+    }
+  };
+
   const handleBackToRMExams = () => {
     router.push("/exam/rm");
   };
@@ -350,10 +419,7 @@ export default function RMExamPage() {
           rmExamData={rmExamData!}
           rmQuestions={rmQuestions}
           userDetails={studentDetails}
-          onExamComplete={(results: any) => {
-            // Navigate to RM results page
-            router.push(`/exam/rm/${examId}/results?immediate=true`);
-          }}
+          onExamComplete={handleRMExamComplete}
         />
       </div>
     );
