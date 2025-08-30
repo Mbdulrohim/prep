@@ -123,7 +123,29 @@ const RMExamPage: React.FC = () => {
       return;
     }
 
-    // Start exam
+    // Check if user has completed this exam (to show results instead of blocking)
+    const attempts = userAttempts[exam.id] || [];
+    const completedAttempt = attempts.find(attempt => attempt.completed);
+    
+    if (completedAttempt) {
+      // Check if they can start another attempt or if they've reached max attempts
+      try {
+        const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+        const canStart = await rmUserAccessManager.canStartRMExam(user.uid, exam.id);
+        
+        if (!canStart.canStart && canStart.reason?.includes("Maximum attempts")) {
+          // User has reached max attempts, show results instead of blocking
+          console.log("🎯 User has max attempts, redirecting to results...");
+          router.push(`/exam/rm/${exam.id}/results?attemptId=${completedAttempt.id}`);
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking attempt limits:", error);
+        // Fall through to normal exam start if check fails
+      }
+    }
+
+    // Start exam normally
     router.push(`/rm/${exam.id}`);
   };
 
@@ -362,7 +384,7 @@ const RMExamPage: React.FC = () => {
                     >
                       {examStatus.status === 'payment_required' && 'Purchase Access'}
                       {examStatus.status === 'available' && 'Start Exam'}
-                      {examStatus.status === 'completed' && 'Retake Exam'}
+                      {examStatus.status === 'completed' && 'View Results / Retake'}
                       {examStatus.status === 'locked' && 'Locked'}
                     </button>
                   </div>

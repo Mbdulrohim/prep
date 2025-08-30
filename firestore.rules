@@ -181,10 +181,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Standalone RM Exam Attempts - users can manage their own attempts, admins can read all
+    // Standalone RM Exam Attempts - users can manage their own attempts, admins can read all, allow server-side operations
     match /standaloneRMAttempts/{attemptId} {
-      allow read: if isAuthenticated() || isAdmin();
-      allow create, update: if isAuthenticated();
+      allow read: if isAuthenticated() || isAdmin() || request.auth == null; // Allow server-side reads
+      allow create, update: if isAuthenticated() || request.auth == null; // Allow server-side writes
       allow delete: if isAdmin();
     }
 

@@ -131,21 +131,29 @@ export default function RMExamPage() {
         return;
       }
 
-      // Check if user can start this specific RM exam
-      const canStart = await rmUserAccessManager.canStartRMExam(user.uid, examId);
-      
-      if (!canStart.canStart) {
-        setCanStartExam(false);
-        setError(canStart.reason || "Cannot start RM exam");
-        setLoading(false);
-        return;
-      }
-
-      // Check for existing RM exam attempt
+      // Check for existing RM exam attempts first
       const existingAttempts = await rmExamAttemptManager.getUserRMExamAttempts(user.uid);
       const existingAttempt = existingAttempts.find(attempt => 
         attempt.examId === examId && attempt.completed
       );
+
+      // Check if user can start this specific RM exam
+      const canStart = await rmUserAccessManager.canStartRMExam(user.uid, examId);
+      
+      if (!canStart.canStart) {
+        // If user has existing attempts and reason is "Maximum attempts reached", show results instead of blocking
+        if (existingAttempt && canStart.reason?.includes("Maximum attempts")) {
+          console.log("🎯 User has max attempts but has completed exam, showing results...");
+          setRmExamAttempt(existingAttempt);
+          setCanStartExam(false); // Will trigger the "exam completed" view with results
+        } else {
+          // For other blocking reasons (no access, not scheduled, etc.)
+          setCanStartExam(false);
+          setError(canStart.reason || "Cannot start RM exam");
+        }
+        setLoading(false);
+        return;
+      }
 
       if (existingAttempt) {
         setRmExamAttempt(existingAttempt);
@@ -279,7 +287,7 @@ export default function RMExamPage() {
   };
 
   const handleBackToRMExams = () => {
-    router.push("/exam/rm");
+    router.push("/rm");
   };
 
   if (!user) {

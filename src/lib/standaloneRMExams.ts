@@ -63,7 +63,7 @@ export interface StandaloneRMAttempt {
   unansweredQuestions: number;
   userAnswers: (number | null)[];
   flaggedQuestions: number[];
-  isCompleted: boolean;
+  completed: boolean; // Changed from isCompleted to match Firestore data
   submittedAt?: Date;
   // Payment verification
   hasPaidAccess: boolean;
@@ -247,7 +247,7 @@ class StandaloneRMExamManager {
         unansweredQuestions: exam.totalQuestions,
         userAnswers: [],
         flaggedQuestions: [],
-        isCompleted: false,
+        completed: false, // Changed from isCompleted to completed
       };
 
       await setDoc(doc(this.attemptsCollection, accessRecord.id!), accessRecord);
@@ -279,7 +279,7 @@ class StandaloneRMExamManager {
 
       // Check if user already has an active attempt
       const existingAttempt = await this.getUserActiveAttempt(userId, examId);
-      if (existingAttempt && !existingAttempt.isCompleted) {
+      if (existingAttempt && !existingAttempt.completed) { // Changed from isCompleted to completed
         return existingAttempt.id;
       }
 
@@ -303,7 +303,7 @@ class StandaloneRMExamManager {
         unansweredQuestions: exam.totalQuestions,
         userAnswers: new Array(exam.totalQuestions).fill(null),
         flaggedQuestions: [],
-        isCompleted: false,
+        completed: false, // Changed from isCompleted to completed
         hasPaidAccess: true,
         paymentReference: "", // Will be updated from access record
       };
@@ -324,7 +324,7 @@ class StandaloneRMExamManager {
         this.attemptsCollection,
         where("userId", "==", userId),
         where("examId", "==", examId),
-        where("isCompleted", "==", false),
+        where("completed", "==", false), // Changed from isCompleted to completed
         orderBy("startTime", "desc"),
         limit(1)
       );
@@ -399,7 +399,7 @@ class StandaloneRMExamManager {
         correctAnswers,
         wrongAnswers,
         unansweredQuestions,
-        isCompleted: true,
+        completed: true, // Changed from isCompleted to completed
       });
 
       console.log(`✅ Submitted RM exam attempt: ${attemptId}`);
@@ -415,8 +415,8 @@ class StandaloneRMExamManager {
     try {
       const q = query(
         this.attemptsCollection,
-        where("userId", "==", userId),
-        where("isCompleted", "==", true),
+        where("userId", "==", userId), // Put userId first for better index optimization
+        where("completed", "==", true), 
         orderBy("submittedAt", "desc")
       );
 
@@ -444,7 +444,7 @@ class StandaloneRMExamManager {
       const q = query(
         this.attemptsCollection,
         where("examId", "==", examId),
-        where("isCompleted", "==", true),
+        where("completed", "==", true), // Changed from isCompleted to completed
         orderBy("percentage", "desc"),
         orderBy("timeSpent", "asc")
       );
