@@ -37,15 +37,15 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-    const expiryDate = accessCodeData.expiryDate.toDate();
-    if (now > expiryDate) {
+    const expiryDate = accessCodeData.expiresAt?.toDate ? accessCodeData.expiresAt.toDate() : accessCodeData.expiresAt;
+    if (!expiryDate || now > expiryDate) {
       return NextResponse.json({
         success: false,
         error: "This access code has expired",
       });
     }
 
-    if (accessCodeData.currentUses >= accessCodeData.maxUses) {
+    if ((accessCodeData.currentUses || 0) >= (accessCodeData.maxUses || 1)) {
       return NextResponse.json({
         success: false,
         error: "This access code has been fully used",
@@ -79,13 +79,13 @@ export async function POST(request: NextRequest) {
         {
           code: cleanCode,
           redeemedAt: new Date(),
-          codeType: accessCodeData.maxUses > 1 ? "multi_use" : "single_use",
+          codeType: (accessCodeData.maxUses || 1) > 1 ? "multi_use" : "single_use",
         }
       );
 
       // Update access code usage
       await updateDoc(doc(db, "accessCodes", cleanCode), {
-        currentUses: accessCodeData.currentUses + 1,
+        currentUses: (accessCodeData.currentUses || 0) + 1,
         lastUsedAt: new Date(),
         lastUsedBy: userId,
       });
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         accessDetails: {
           examCategory: "RM",
           papers: ["Paper 1", "Paper 2"],
-          expiryDate: accessCodeData.expiryDate,
+          expiryDate: expiryDate,
         },
       });
     }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // Update access code usage
     await updateDoc(doc(db, "accessCodes", cleanCode), {
-      currentUses: accessCodeData.currentUses + 1,
+      currentUses: (accessCodeData.currentUses || 0) + 1,
       lastUsedAt: new Date(),
       lastUsedBy: userId,
     });
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       userUniversity: userAccessData.userUniversity || university || "",
       examCategory: accessCodeData.examCategory,
       papers: accessCodeData.papers,
-      expiryDate: accessCodeData.expiryDate,
+      expiryDate: expiryDate,
       accessGrantedAt: new Date(),
       accessCode: cleanCode,
       hasAccess: true,
@@ -151,17 +151,21 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Access granted for ${
         accessCodeData.examCategory
-      } ${accessCodeData.papers.join(" & ")}`,
+      } ${(accessCodeData.papers || []).join(" & ")}`,
       accessDetails: {
         examCategory: accessCodeData.examCategory,
         papers: accessCodeData.papers,
-        expiryDate: accessCodeData.expiryDate,
+        expiryDate: expiryDate,
       },
     });
   } catch (error) {
     console.error("Error redeeming access code:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to redeem access code" },
+      { 
+        success: false, 
+        error: "Failed to redeem access code",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
