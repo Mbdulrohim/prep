@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
+import { getRepository } from "@/lib/databaseClean";
+import { RMExamAttempt } from "@/lib/entities/RMExamAttempt";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +14,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const attempts = await rmExamAttemptManager.getUserRMExamAttempts(userId);
+    const rmExamAttemptRepo = await getRepository(RMExamAttempt);
+    
+    const attempts = await rmExamAttemptRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' }
+    });
 
     return NextResponse.json({
       success: true,

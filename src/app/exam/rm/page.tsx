@@ -18,9 +18,28 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
-import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
+
+// Define interfaces for PostgreSQL data
+interface RMExamData {
+  id: string;
+  title: string;
+  paper: string;
+  description?: string;
+  duration: number;
+  totalQuestions: number;
+  passingScore: number;
+  instructions?: any;
+  settings?: any;
+  isActive: boolean;
+  isPublished: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface RMUserAccess {
+  hasAccess: boolean;
+  accessData?: any;
+}
 
 export default function RMExamPage() {
   const { user } = useAuth();
@@ -36,17 +55,42 @@ export default function RMExamPage() {
       setLoading(true);
       setError(null);
       try {
-        const [exams, access, attempts] = await Promise.all([
-          fetchRMExams(),
-          user?.uid ? rmUserAccessManager.getRMUserAccess(user.uid) : null,
-          user?.uid ? rmExamAttemptManager.getUserRMExamAttempts(user.uid) : [],
-        ]);
+        // Fetch RM exams from PostgreSQL API
+        const examsResponse = await fetch('/api/rm-exams');
+        const examsResult = await examsResponse.json();
 
-        setRmExams(exams);
+        // Fetch user access from PostgreSQL API
+        let access = null;
+        if (user?.uid) {
+          const accessResponse = await fetch(`/api/check-rm-access?userId=${user.uid}`);
+          const accessResult = await accessResponse.json();
+          access = accessResult;
+        }
+
+        // Fetch user attempts from PostgreSQL API (if available)
+        let attempts: any[] = [];
+        if (user?.uid) {
+          try {
+            const attemptsResponse = await fetch(`/api/get-user-rm-attempts?userId=${user.uid}`);
+            const attemptsResult = await attemptsResponse.json();
+            attempts = attemptsResult.success ? attemptsResult.attempts : [];
+          } catch (err) {
+            console.warn('Could not fetch user attempts:', err);
+            // Fallback to empty array if attempts API is not ready
+            attempts = [];
+          }
+        }
+
+        if (examsResult.success) {
+          setRmExams(examsResult.exams || []);
+        } else {
+          setError("Failed to load RM exams.");
+        }
+        
         setRmUserAccess(access);
         setRmAttempts(attempts);
 
-        if (exams.length === 0) {
+        if (!examsResult.success || (examsResult.exams && examsResult.exams.length === 0)) {
           setError("No RM exams found at this time.");
         }
       } catch (err) {
@@ -194,13 +238,16 @@ export default function RMExamPage() {
               <div className="grid gap-6 md:gap-8">
                 {rmExams.map((exam) => {
                   const canAccess = hasRMAccess;
-                  const canStart = canAccess && exam.available;
+                  const canStart = canAccess && exam.isActive && exam.isPublished;
 
                   // Check if user has completed this exam
                   const examAttempt = rmAttempts.find(
                     (attempt) => attempt.examId === exam.id && attempt.completed
                   );
                   const hasCompletedExam = !!examAttempt;
+
+                  // Map PostgreSQL data to expected format
+                  const examColor = exam.paper === 'paper1' ? 'from-green-500 to-emerald-600' : 'from-blue-500 to-cyan-600';
 
                   return (
                     <div
@@ -210,7 +257,7 @@ export default function RMExamPage() {
                       }`}
                     >
                       <div
-                        className={`bg-gradient-to-r ${exam.color} p-6 text-white relative`}
+                        className={`bg-gradient-to-r ${examColor} p-6 text-white relative`}
                       >
                         {!canAccess && (
                           <div className="absolute top-4 right-4">
@@ -230,17 +277,17 @@ export default function RMExamPage() {
                               {exam.title}
                             </h3>
                             <p className="text-green-100 mb-4">
-                              {exam.description}
+                              {exam.description || `RM ${exam.paper} examination`}
                             </p>
 
                             <div className="flex items-center gap-6 text-sm">
                               <div className="flex items-center">
                                 <BookOpen className="h-4 w-4 mr-1" />
-                                <span>{exam.questionsCount} questions</span>
+                                <span>{exam.totalQuestions} questions</span>
                               </div>
                               <div className="flex items-center">
                                 <Clock className="h-4 w-4 mr-1" />
-                                <span>{exam.durationMinutes} minutes</span>
+                                <span>{exam.duration} minutes</span>
                               </div>
                             </div>
 
@@ -304,18 +351,13 @@ export default function RMExamPage() {
                       </div>
 
                       <div className="p-6">
-                        <h4 className="font-semibold text-slate-800 mb-3">
-                          Topics Covered:
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {exam.topics.map((topic, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                            >
-                              {topic}
-                            </span>
-                          ))}
+                        <div className="mb-4">
+                          <p className="text-slate-600 text-sm">
+                            {exam.paper === 'paper1' ? 'Paper 1' : 'Paper 2'} - RM Examination
+                          </p>
+                          <p className="text-slate-500 text-xs mt-1">
+                            Passing Score: {exam.passingScore}%
+                          </p>
                         </div>
 
                         {!canAccess && (
@@ -324,9 +366,11 @@ export default function RMExamPage() {
                               <span className="text-sm text-gray-600">
                                 Access Required
                               </span>
-                              <span className="font-semibold text-green-600">
-                                ₦{exam.pricing.amount}
-                              </span>
+                              <Link href="/rm/payment">
+                                <span className="text-green-600 hover:text-green-700 text-sm font-medium">
+                                  Purchase Access →
+                                </span>
+                              </Link>
                             </div>
                           </div>
                         )}
