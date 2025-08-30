@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
+import { rmUserAccessAdminManager } from "@/lib/rmUserAccessAdmin";
 
 export async function GET(request: NextRequest) {
   console.log('🧪 Testing RM Payment Flow - Real Firebase Test');
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     results.steps.push('2️⃣ Checking initial state');
     console.log('\n2️⃣ Checking initial state');
     
-    const initialAccess = await rmUserAccessManager.hasRMAccess(testUserId);
-    const initialRawAccess = await rmUserAccessManager.getRMUserAccess(testUserId);
+    const initialAccess = await rmUserAccessAdminManager.hasRMAccess(testUserId);
+    const initialRawAccess = await rmUserAccessAdminManager.getRMUserAccess(testUserId);
     
     console.log('Initial hasRMAccess:', initialAccess);
     console.log('Initial rawAccess:', initialRawAccess);
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
     
     // Step 2: Grant access
     results.steps.push('3️⃣ Granting RM access');
-    console.log('\n3️⃣ Using rmUserAccessManager.grantRMAccessViaPayment()');
+    console.log('\n3️⃣ Using rmUserAccessAdminManager.grantRMAccessViaPayment()');
     
     try {
-      await rmUserAccessManager.grantRMAccessViaPayment(
+      const grantResult = await rmUserAccessAdminManager.grantRMAccessViaPayment(
         testUserId,
         testEmail,
         {
@@ -54,9 +54,12 @@ export async function GET(request: NextRequest) {
         }
       );
       
-      console.log('✅ grantRMAccessViaPayment completed successfully');
-      results.steps.push('✅ grantRMAccessViaPayment completed');
+      if (!grantResult.success) {
+        throw new Error(grantResult.error || "Failed to grant access");
+      }
       
+      console.log('✅ grantRMAccessViaPayment succeeded');
+      results.steps.push('✅ grantRMAccessViaPayment succeeded');
     } catch (grantError) {
       console.error('❌ grantRMAccessViaPayment failed:', grantError);
       results.steps.push(`❌ grantRMAccessViaPayment failed: ${grantError instanceof Error ? grantError.message : grantError}`);
@@ -78,7 +81,7 @@ export async function GET(request: NextRequest) {
     results.steps.push('5️⃣ Checking access after grant');
     console.log('\n5️⃣ Testing hasRMAccess()');
     
-    const hasAccess = await rmUserAccessManager.hasRMAccess(testUserId);
+    const hasAccess = await rmUserAccessAdminManager.hasRMAccess(testUserId);
     console.log('hasRMAccess result:', hasAccess);
     results.steps.push(`hasRMAccess result: ${hasAccess}`);
     
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
     results.steps.push('6️⃣ Getting raw access data');
     console.log('\n6️⃣ Getting raw access data');
     
-    const rawAccess = await rmUserAccessManager.getRMUserAccess(testUserId);
+    const rawAccess = await rmUserAccessAdminManager.getRMUserAccess(testUserId);
     console.log('Raw access data:', rawAccess);
     results.steps.push(`Raw access data: ${rawAccess ? 'exists' : 'null'}`);
     

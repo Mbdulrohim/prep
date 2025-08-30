@@ -137,7 +137,7 @@ class RMUserAccessAdminManager {
     userId: string,
     userEmail: string,
     paymentInfo: RMUserAccess['paymentInfo']
-  ): Promise<void> {
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log("💰 [ADMIN] Granting RM access via payment for user:", userId, "email:", userEmail);
       
@@ -161,9 +161,14 @@ class RMUserAccessAdminManager {
       console.log("💾 [ADMIN] Saving RM access data:", accessData);
       await adminDb.collection("rmUserAccess").doc(userId).set(accessData);
       console.log("✅ [ADMIN] RM access saved successfully for user:", userId);
+      
+      return { success: true };
     } catch (error) {
       console.error("❌ [ADMIN] Error granting RM access via payment:", error);
-      throw error;
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      };
     }
   }
   

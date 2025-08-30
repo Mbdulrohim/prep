@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { flutterwaveService } from "@/lib/flutterwave";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { grantRMAccessViaPaymentDirect } from "@/lib/rmUserAccessDirect";
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,71 +55,72 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Handle RM payment separately
-      if (examCategory === "RM" && planType === "rm_access") {
-        console.log("Processing RM payment verification");
-
-        // Check if RM payment already processed
-        const existingRMAccess = await getDoc(doc(db, "rmUserAccess", verifiedUserId));
-        if (existingRMAccess.exists() && existingRMAccess.data()?.hasAccess) {
-          return NextResponse.json({
-            success: true,
-            message: "RM payment already processed",
-            examCategory: "RM",
-            hasAccess: true,
-            transaction: verification.data,
-          });
-        }
-
-        // Import and grant RM access using the proper manager method
+            // Handle RM-specific payments using Admin SDK
+      if (examCategory === "RM" || planType?.toLowerCase().includes("midwife")) {
+        console.log("Processing RM payment with Admin SDK...");
+        
         try {
-          console.log("💰 Granting RM access via payment for user:", verifiedUserId);
+          // Prepare payment info for RM access
+          const rmPaymentInfo = {
+            amount: verification.data.amount,
+            currency: verification.data.currency,
+            paymentMethod: "flutterwave" as const,
+            transactionId: transactionId,
+            paymentDate: new Date(),
+            paymentStatus: "completed" as const,
+          };
 
-          const { rmUserAccessAdminManager } = await import("@/lib/rmUserAccessAdmin");
-
-          // Use the proper manager method instead of direct setDoc
-          await rmUserAccessAdminManager.grantRMAccessViaPayment(
-            verifiedUserId,
+          // Grant RM access using direct client SDK (bypasses quota)
+          const rmAccessResult = await grantRMAccessViaPaymentDirect(
             customer.email,
-            {
-              amount: verification.data.amount,
-              currency,
-              paymentMethod: "flutterwave",
-              transactionId,
-              paymentDate: new Date(),
-              paymentStatus: "completed",
-            }
+            rmPaymentInfo
           );
 
-          console.log("✅ RM access granted successfully for user:", verifiedUserId);
-        } catch (rmError) {
-          console.error("❌ Error granting RM access:", rmError);
-          // Don't fail the whole payment if RM access fails
-          // We'll still save the transaction for manual review
+          if (rmAccessResult.success) {
+            console.log("✅ RM access granted successfully via Admin SDK");
+            
+            // Save transaction record
+            await setDoc(doc(db, "transactions", txRef), {
+              transactionId,
+              userId: verifiedUserId,
+              amount,
+              currency,
+              status: "successful",
+              examCategory: "RM",
+              planType,
+              processedAt: new Date(),
+              customerEmail: customer.email,
+              paymentProvider: "flutterwave",
+              transaction: verification.data,
+            });
+
+            return NextResponse.json({
+              success: true,
+              message: "RM payment verified and access granted successfully!",
+              examCategory: "RM",
+              hasAccess: true,
+              transaction: verification.data,
+              rmAccess: rmAccessResult,
+            });
+          } else {
+            console.error("❌ Failed to grant RM access:", rmAccessResult.message);
+            return NextResponse.json({
+              success: false,
+              message: `RM access grant failed: ${rmAccessResult.message}`,
+              examCategory: "RM",
+              hasAccess: false,
+            }, { status: 500 });
+          }
+        } catch (error) {
+          console.error("❌ Error granting RM access:", error);
+          return NextResponse.json({
+            success: false,
+            message: "Failed to grant RM access due to server error",
+            examCategory: "RM",
+            hasAccess: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          }, { status: 500 });
         }
-
-        // Save transaction record
-        await setDoc(doc(db, "transactions", txRef), {
-          transactionId,
-          userId: verifiedUserId,
-          amount,
-          currency,
-          status: "successful",
-          examCategory: "RM",
-          planType,
-          processedAt: new Date(),
-          customerEmail: customer.email,
-          paymentProvider: "flutterwave",
-          transaction: verification.data,
-        });
-
-        return NextResponse.json({
-          success: true,
-          message: "RM payment verified and access granted successfully!",
-          examCategory: "RM",
-          hasAccess: true,
-          transaction: verification.data,
-        });
       }
 
       // Check if this payment has already been processed

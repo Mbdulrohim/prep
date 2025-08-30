@@ -44,41 +44,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        // When a user logs in, create a reference to their document in the 'users' collection
-        const userRef = doc(db, "users", user.uid);
+    let profileUnsubscribe: (() => void) | null = null;
 
-        // Set up a real-time listener for the user's profile data
-        const unsubProfile = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            // If the profile exists, set it in our state
-            setUserProfile(docSnap.data() as UserProfile);
-          } else {
-            // If it's a new user, create their initial profile document in Firestore
-            const newUserProfile: UserProfile = {
-              uid: user.uid,
-              email: user.email!,
-              displayName: user.displayName!,
-              university: null, // University is null until they set it up
-              photoURL: user.photoURL!,
-            };
-            setDoc(userRef, newUserProfile);
-            setUserProfile(newUserProfile);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (user) {
+          setUser(user);
+          // When a user logs in, create a reference to their document in the 'users' collection
+          const userRef = doc(db, "users", user.uid);
+
+          // Clean up previous profile listener if exists
+          if (profileUnsubscribe) {
+            profileUnsubscribe();
+            profileUnsubscribe = null;
           }
+
+          // Set up a real-time listener for the user's profile data with error handling
+          profileUnsubscribe = onSnapshot(
+            userRef, 
+            (docSnap) => {
+              try {
+                if (docSnap.exists()) {
+                  // If the profile exists, set it in our state
+                  setUserProfile(docSnap.data() as UserProfile);
+                } else {
+                  // If it's a new user, create their initial profile document in Firestore
+                  const newUserProfile: UserProfile = {
+                    uid: user.uid,
+                    email: user.email || "",
+                    displayName: user.displayName || "User",
+                    university: null, // University is null until they set it up
+                    photoURL: user.photoURL || "",
+                  };
+                  setDoc(userRef, newUserProfile).catch((error) => {
+                    console.error("Error creating user profile:", error);
+                  });
+                  setUserProfile(newUserProfile);
+                }
+                setLoading(false);
+              } catch (error) {
+                console.error("Error processing user profile snapshot:", error);
+                setLoading(false);
+              }
+            },
+            (error) => {
+              console.error("Error listening to user profile:", error);
+              // Create a basic profile from auth data in case of error
+              if (user) {
+                const fallbackProfile: UserProfile = {
+                  uid: user.uid,
+                  email: user.email || "",
+                  displayName: user.displayName || "User",
+                  university: null,
+                  photoURL: user.photoURL || "",
+                };
+                setUserProfile(fallbackProfile);
+              }
+              setLoading(false);
+            }
+          );
+        } else {
+          // If no user is logged in, clear all state
+          if (profileUnsubscribe) {
+            profileUnsubscribe();
+            profileUnsubscribe = null;
+          }
+          setUser(null);
+          setUserProfile(null);
           setLoading(false);
-        });
-        return () => unsubProfile(); // Cleanup profile listener on logout
-      } else {
-        // If no user is logged in, clear all state
-        setUser(null);
-        setUserProfile(null);
+        }
+      } catch (error) {
+        console.error("Error in auth state change:", error);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe(); // Cleanup auth listener on unmount
+    return () => {
+      unsubscribe();
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+      }
+    };
   }, []);
 
   const signInWithGoogle = async () => {
@@ -87,22 +133,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
+      throw error;
     }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
   };
 
   // Function to update the user's name and university
   const updateUserProfile = async (name: string, university: string) => {
     if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await setDoc(
-      userRef,
-      { displayName: name, university: university },
-      { merge: true }
-    );
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(
+        userRef,
+        { displayName: name, university: university },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      throw error;
+    }
   };
 
   const value = {

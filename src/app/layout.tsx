@@ -19,6 +19,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Analytics } from "@vercel/analytics/next";
 import { Footer } from "@/components/layout/Footer";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 
@@ -93,10 +94,12 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}
       >
-        <AuthProvider>
-          <div className="flex-1">{children}</div>
-          <Footer />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </AuthProvider>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
+import { hasRMAccessDirect, getRMUserAccessDirect } from "@/lib/rmUserAccessDirect";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const hasAccess = await rmUserAccessManager.hasRMAccess(userId);
+    const hasAccess = await hasRMAccessDirect(userId);
     const accessData = hasAccess
-      ? await rmUserAccessManager.getRMUserAccess(userId)
+      ? await getRMUserAccessDirect(userId)
       : null;
 
     return NextResponse.json({

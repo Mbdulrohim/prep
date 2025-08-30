@@ -54,6 +54,11 @@ Package manager is pnpm — always use pnpm commands (never npm or yarn).
 
 # Database
 
-We are using firebase so always make sure any collection you add have their rules and indexes updated.
+# Testing
+
+When testing code, follow these guidelines:
+
+- Do not start or run the development server; it is always running on port 3000.
+- Only test the specific functionality you need to verify.
 
 When generating code, please follow these patterns and maintain consistency with the existing codebase. Always consider the health-focused nature of the application and implement appropriate safety measures for medical content.

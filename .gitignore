@@ -43,6 +43,8 @@ next-env.d.ts
 # Firebase
 firebase-debug.log
 .firebase/
+*firebase-adminsdk*.json
+service-account*.json
 
 # Sensitive documentation (should not be in public repo)
 *ENV_SETUP*.md
@@ -181,3 +183,5 @@ jspm_packages/
 # Word documents with sensitive info
 *.DOCX
 *.docx
+
+dev/

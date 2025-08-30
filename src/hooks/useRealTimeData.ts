@@ -97,57 +97,68 @@ export function useRealTimeData() {
 
   // Cleanup function
   const cleanup = useCallback(() => {
-    unsubscribers.current.forEach((unsubscribe: Unsubscribe) => unsubscribe());
-    unsubscribers.current = [];
+    try {
+      unsubscribers.current.forEach((unsubscribe: Unsubscribe) => {
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      });
+      unsubscribers.current = [];
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+    }
   }, []);
 
-  // Global stats listener
+  // Global stats listener with error handling
   const setupGlobalStatsListener = useCallback(() => {
-    const attemptsQuery = query(
-      collection(db, "examAttempts"),
-      orderBy("createdAt", "desc"),
-      limit(100)
-    );
+    try {
+      const attemptsQuery = query(
+        collection(db, "examAttempts"),
+        orderBy("createdAt", "desc"),
+        limit(100)
+      );
 
-    const unsubscribe = onSnapshot(attemptsQuery, (snapshot) => {
-      try {
-        const attempts: RealTimeExamAttempt[] = [];
-        const userIds = new Set();
-        let totalScore = 0;
-        let completedCount = 0;
-        
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const attempt: RealTimeExamAttempt = {
-            id: doc.id,
-            userId: data.userId,
-            userName: data.userName || 'Unknown',
-            userUniversity: data.userUniversity || 'Unknown',
-            examId: data.examId,
-            examCategory: data.examCategory,
-            score: data.score || 0,
-            percentage: data.percentage || 0,
-            completed: data.completed || false,
-            submitted: data.submitted || false,
-            startTime: data.startTime?.toDate() || new Date(),
-            endTime: data.endTime?.toDate(),
-            timeSpent: data.timeSpent || 0,
-          };
-          
-          attempts.push(attempt);
-          userIds.add(data.userId);
-          
-          if (attempt.completed) {
-            totalScore += attempt.score;
-            completedCount++;
-          }
-        });
+      const unsubscribe = onSnapshot(
+        attemptsQuery, 
+        (snapshot) => {
+          try {
+            const attempts: RealTimeExamAttempt[] = [];
+            const userIds = new Set();
+            let totalScore = 0;
+            let completedCount = 0;
+            
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const attempt: RealTimeExamAttempt = {
+                id: doc.id,
+                userId: data.userId,
+                userName: data.userName || 'Unknown',
+                userUniversity: data.userUniversity || 'Unknown',
+                examId: data.examId,
+                examCategory: data.examCategory,
+                score: data.score || 0,
+                percentage: data.percentage || 0,
+                completed: data.completed || false,
+                submitted: data.submitted || false,
+                startTime: data.startTime?.toDate() || new Date(),
+                endTime: data.endTime?.toDate(),
+                timeSpent: data.timeSpent || 0,
+              };
+              
+              attempts.push(attempt);
+              userIds.add(data.userId);
+              
+              if (attempt.completed) {
+                totalScore += attempt.score;
+                completedCount++;
+              }
+            });
 
-        const recentActivity: RealTimeActivity[] = attempts
-          .filter(attempt => attempt.completed)
-          .slice(0, 10)
-          .map(attempt => ({
-            id: attempt.id,
+            const recentActivity: RealTimeActivity[] = attempts
+              .filter(attempt => attempt.completed)
+              .slice(0, 10)
+              .map(attempt => ({
+                id: attempt.id,
             type: 'exam_completed' as const,
             userId: attempt.userId,
             userName: attempt.userName,
@@ -175,9 +186,18 @@ export function useRealTimeData() {
         console.error('Error processing global stats:', error);
         setError('Failed to load global statistics');
       }
+    }, (error) => {
+      console.error('Error listening to global stats:', error);
+      setError('Failed to connect to real-time data');
     });
 
+    unsubscribers.current.push(unsubscribe);
     return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up global stats listener:', error);
+      setError('Failed to initialize real-time data');
+      return null;
+    }
   }, []);
 
   // User-specific stats listener
@@ -265,8 +285,12 @@ export function useRealTimeData() {
         console.error('Error processing user stats:', error);
         setError('Failed to load user statistics');
       }
+    }, (error) => {
+      console.error('Error listening to user stats:', error);
+      setError('Failed to connect to user data');
     });
 
+    unsubscribers.current.push(unsubscribe);
     return unsubscribe;
   }, [user?.uid]);
 
