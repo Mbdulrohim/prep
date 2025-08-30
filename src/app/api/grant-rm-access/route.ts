@@ -1,8 +1,6 @@
 // API to manually grant RM access for users who paid but didn't get access
 import { NextRequest, NextResponse } from "next/server";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,18 +16,19 @@ export async function POST(request: NextRequest) {
 
     if (!userEmail) {
       return NextResponse.json(
-        { error: "userEmail is required" },
+        { error: "User email is required" },
         { status: 400 }
       );
     }
 
-    // Find user by email if userId not provided
+    // Determine the user ID
     let targetUserId = userId;
-    if (!targetUserId && userEmail) {
-      console.log("🔍 Finding user by email:", userEmail);
-      const usersRef = collection(db, "users");
-      const userQuery = query(usersRef, where("email", "==", userEmail));
-      const userDocs = await getDocs(userQuery);
+    
+    // If no userId provided, try to find user by email
+    if (!targetUserId) {
+      const usersRef = adminDb.collection("users");
+      const userQuery = usersRef.where("email", "==", userEmail);
+      const userDocs = await userQuery.get();
       
       if (userDocs.empty) {
         return NextResponse.json(
@@ -52,8 +51,8 @@ export async function POST(request: NextRequest) {
     console.log("🔧 Manually granting RM access for user:", targetUserId, userEmail);
 
     // Check if user already has RM access
-    const existingAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
-    if (existingAccess) {
+    const existingAccessDoc = await adminDb.collection("rmUserAccess").doc(targetUserId).get();
+    if (existingAccessDoc.exists && existingAccessDoc.data()?.hasAccess) {
       return NextResponse.json({
         success: true,
         message: "User already has RM access",
@@ -75,17 +74,16 @@ export async function POST(request: NextRequest) {
     // Try to find actual transaction data
     if (transactionId) {
       try {
-        const transactionRef = doc(db, "transactions", transactionId);
-        const transactionDoc = await getDoc(transactionRef);
+        const transactionDoc = await adminDb.collection("transactions").doc(transactionId).get();
         
-        if (transactionDoc.exists()) {
+        if (transactionDoc.exists) {
           const txData = transactionDoc.data();
           paymentInfo = {
-            amount: txData.amount || 2000,
-            currency: txData.currency || "NGN",
+            amount: txData?.amount || 2000,
+            currency: txData?.currency || "NGN",
             paymentMethod: "flutterwave",
             transactionId: transactionId,
-            paymentDate: txData.processedAt?.toDate() || new Date(),
+            paymentDate: txData?.processedAt?.toDate() || new Date(),
             paymentStatus: "completed",
           };
           console.log("📄 Found transaction data:", paymentInfo);
@@ -95,16 +93,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Grant RM access using the proper method
-    await rmUserAccessManager.grantRMAccessViaPayment(
-      targetUserId,
+    // Grant RM access directly using admin SDK
+    const accessData = {
+      id: targetUserId,
+      userId: targetUserId,
       userEmail,
-      paymentInfo
-    );
+      examCategory: "RM" as const,
+      hasAccess: true,
+      accessMethod: "admin_grant" as const,
+      accessGrantedAt: new Date(),
+      paymentInfo,
+      rmAttempts: {},
+      adminSettings: {
+        maxAttempts: 1,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await adminDb.collection("rmUserAccess").doc(targetUserId).set(accessData);
 
     // Verify the access was granted
-    const hasAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
-    const accessData = await rmUserAccessManager.getRMUserAccess(targetUserId);
+    const verificationDoc = await adminDb.collection("rmUserAccess").doc(targetUserId).get();
+    const hasAccess = verificationDoc.exists && verificationDoc.data()?.hasAccess;
 
     return NextResponse.json({
       success: true,
@@ -129,11 +140,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method to find users who might need manual fixes
+// GET endpoint to check RM access status for debugging
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const adminKey = searchParams.get('adminKey');
+    const url = new URL(request.url);
+    const adminKey = url.searchParams.get("adminKey");
     
     if (adminKey !== "fix_rm_access_2025") {
       return NextResponse.json(
@@ -142,33 +153,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("🔍 Looking for RM transactions without access...");
-
-    // Find RM transactions
-    const transactionsQuery = query(
-      collection(db, "transactions"),
-      where("examCategory", "==", "RM")
-    );
+    // Get all transactions for RM that might not have granted access
+    const transactionsQuery = adminDb.collection("transactions")
+      .where("examCategory", "==", "RM");
     
-    const transactionsSnapshot = await getDocs(transactionsQuery);
-    const usersNeedingFix = [];
-
-    for (const doc of transactionsSnapshot.docs) {
-      const txData = doc.data();
-      const userId = txData.userId;
+    const transactionsSnapshot = await transactionsQuery.get();
+    
+    const usersWithoutAccess = [];
+    
+    for (const transactionDoc of transactionsSnapshot.docs) {
+      const transaction = transactionDoc.data();
+      const userId = transaction.userId;
       
       if (userId) {
-        // Check if they have RM access
-        const hasAccess = await rmUserAccessManager.hasRMAccess(userId);
+        const rmAccessDoc = await adminDb.collection("rmUserAccess").doc(userId).get();
+        const hasAccess = rmAccessDoc.exists && rmAccessDoc.data()?.hasAccess;
         
         if (!hasAccess) {
-          usersNeedingFix.push({
+          usersWithoutAccess.push({
             userId,
-            userEmail: txData.customerEmail,
-            transactionId: doc.id,
-            amount: txData.amount,
-            processedAt: txData.processedAt?.toDate(),
-            status: txData.status,
+            userEmail: transaction.userEmail,
+            transactionId: transactionDoc.id,
+            amount: transaction.amount,
+            processedAt: transaction.processedAt?.toDate(),
+            status: transaction.status,
           });
         }
       }
@@ -176,16 +184,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      usersNeedingFix,
-      count: usersNeedingFix.length,
-      message: `Found ${usersNeedingFix.length} users who paid for RM but don't have access`,
+      usersWithoutAccess,
+      totalCount: usersWithoutAccess.length,
     });
 
   } catch (error) {
-    console.error("❌ Error finding users needing RM access fix:", error);
+    console.error("Error checking RM access status:", error);
     return NextResponse.json(
       {
-        error: "Failed to find users needing fix",
+        error: "Failed to check RM access status",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

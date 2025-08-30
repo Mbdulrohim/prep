@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,10 +15,10 @@ export async function POST(request: NextRequest) {
     // Clean the code
     const cleanCode = accessCode.replace(/\s+/g, "").toUpperCase();
 
-    // Get access code from Firestore
-    const accessCodeDoc = await getDoc(doc(db, "accessCodes", cleanCode));
+    // Get access code from Firestore using admin SDK
+    const accessCodeDoc = await adminDb.collection("accessCodes").doc(cleanCode).get();
 
-    if (!accessCodeDoc.exists()) {
+    if (!accessCodeDoc.exists) {
       return NextResponse.json({
         success: false,
         error: "Invalid access code",
@@ -27,6 +26,12 @@ export async function POST(request: NextRequest) {
     }
 
     const accessCodeData = accessCodeDoc.data();
+    if (!accessCodeData) {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid access code data",
+      });
+    }
 
     // Validate access code
     if (!accessCodeData.isActive) {
@@ -62,29 +67,41 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if user already has RM access
-      const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
-      const existingAccess = await rmUserAccessManager.getRMUserAccess(userId);
+      const existingAccessDoc = await adminDb.collection("rmUserAccess").doc(userId).get();
       
-      if (existingAccess?.hasAccess) {
+      if (existingAccessDoc.exists && existingAccessDoc.data()?.hasAccess) {
         return NextResponse.json({
           success: false,
           error: "You already have RM access",
         });
       }
 
-      // Grant RM access via access code
-      await rmUserAccessManager.grantRMAccessViaCode(
+      // Grant RM access via access code using admin SDK
+      const rmAccessData = {
+        id: userId,
         userId,
-        userEmail || "",
-        {
+        userEmail: userEmail || "",
+        examCategory: "RM" as const,
+        hasAccess: true,
+        accessMethod: "access_code" as const,
+        accessGrantedAt: new Date(),
+        accessCodeInfo: {
           code: cleanCode,
           redeemedAt: new Date(),
           codeType: (accessCodeData.maxUses || 1) > 1 ? "multi_use" : "single_use",
-        }
-      );
+        },
+        rmAttempts: {},
+        adminSettings: {
+          maxAttempts: 1,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await adminDb.collection("rmUserAccess").doc(userId).set(rmAccessData);
 
       // Update access code usage
-      await updateDoc(doc(db, "accessCodes", cleanCode), {
+      await adminDb.collection("accessCodes").doc(cleanCode).update({
         currentUses: (accessCodeData.currentUses || 0) + 1,
         lastUsedAt: new Date(),
         lastUsedBy: userId,
@@ -103,12 +120,12 @@ export async function POST(request: NextRequest) {
 
     // Handle regular RN access code redemption
     // Check if user already redeemed this code
-    const userAccessDoc = await getDoc(doc(db, "userAccess", userId));
-    const userAccessData = userAccessDoc.exists()
+    const userAccessDoc = await adminDb.collection("userAccess").doc(userId).get();
+    const userAccessData = userAccessDoc.exists
       ? userAccessDoc.data()
       : { redeemedCodes: [] };
 
-    if (userAccessData.redeemedCodes?.includes(cleanCode)) {
+    if (userAccessData?.redeemedCodes?.includes(cleanCode)) {
       return NextResponse.json({
         success: false,
         error: "You have already redeemed this access code",
@@ -116,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update access code usage
-    await updateDoc(doc(db, "accessCodes", cleanCode), {
+    await adminDb.collection("accessCodes").doc(cleanCode).update({
       currentUses: (accessCodeData.currentUses || 0) + 1,
       lastUsedAt: new Date(),
       lastUsedBy: userId,
@@ -125,9 +142,9 @@ export async function POST(request: NextRequest) {
     // Grant user access
     const userAccess = {
       userId,
-      userEmail: userAccessData.userEmail || userEmail || "",
-      userName: userAccessData.userName || userName || "",
-      userUniversity: userAccessData.userUniversity || university || "",
+      userEmail: userAccessData?.userEmail || userEmail || "",
+      userName: userAccessData?.userName || userName || "",
+      userUniversity: userAccessData?.userUniversity || university || "",
       examCategory: accessCodeData.examCategory,
       papers: accessCodeData.papers,
       expiryDate: expiryDate,
@@ -136,16 +153,16 @@ export async function POST(request: NextRequest) {
       hasAccess: true,
       isActive: true,
       isRestricted: false,
-      redeemedCodes: [...(userAccessData.redeemedCodes || []), cleanCode],
-      examAttempts: userAccessData.examAttempts || {},
-      attemptsMade: userAccessData.attemptsMade || {},
+      redeemedCodes: [...(userAccessData?.redeemedCodes || []), cleanCode],
+      examAttempts: userAccessData?.examAttempts || {},
+      attemptsMade: userAccessData?.attemptsMade || {},
       maxAttempts: 10,
       remainingAttempts: 10,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    await setDoc(doc(db, "userAccess", userId), userAccess);
+    await adminDb.collection("userAccess").doc(userId).set(userAccess);
 
     return NextResponse.json({
       success: true,
