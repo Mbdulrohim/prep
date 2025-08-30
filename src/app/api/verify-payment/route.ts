@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
         try {
           console.log("💰 Granting RM access via payment for user:", verifiedUserId);
 
-          const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
+          const { rmUserAccessAdminManager } = await import("@/lib/rmUserAccessAdmin");
 
           // Use the proper manager method instead of direct setDoc
-          await rmUserAccessManager.grantRMAccessViaPayment(
+          await rmUserAccessAdminManager.grantRMAccessViaPayment(
             verifiedUserId,
             customer.email,
             {

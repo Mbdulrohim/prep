@@ -1,6 +1,6 @@
 // API to reset and re-grant RM access for a specific user
 import { NextRequest, NextResponse } from "next/server";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
+import { rmUserAccessAdminManager } from "@/lib/rmUserAccessAdmin";
 import { db } from "@/lib/firebase";
 import { doc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Grant fresh RM access
-    await rmUserAccessManager.grantRMAccessViaPayment(
+    await rmUserAccessAdminManager.grantRMAccessViaPayment(
       targetUserId,
       userEmail,
       {
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
     );
 
     // Verify the access was granted
-    const hasAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
-    const accessData = await rmUserAccessManager.getRMUserAccess(targetUserId);
+    const hasAccess = await rmUserAccessAdminManager.hasRMAccess(targetUserId);
+    const accessData = await rmUserAccessAdminManager.getRMUserAccess(targetUserId);
 
     return NextResponse.json({
       success: true,

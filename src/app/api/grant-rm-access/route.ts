@@ -1,15 +1,7 @@
 // API to manually grant RM access for users who paid but didn't get access
 import { NextRequest, NextResponse } from "next/server";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
-import { db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
+import { rmUserAccessAdminManager } from "@/lib/rmUserAccessAdmin";
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,18 +24,16 @@ export async function POST(request: NextRequest) {
 
     // If no userId provided, try to find user by email
     if (!targetUserId) {
-      const usersRef = collection(db, "users");
-      const userQuery = query(usersRef, where("email", "==", userEmail));
-      const userSnapshot = await getDocs(userQuery);
+      const usersSnapshot = await adminDb.collection("users").where("email", "==", userEmail).get();
 
-      if (userSnapshot.empty) {
+      if (usersSnapshot.empty) {
         return NextResponse.json(
           { error: "User not found with this email" },
           { status: 404 }
         );
       }
 
-      targetUserId = userSnapshot.docs[0].id;
+      targetUserId = usersSnapshot.docs[0].id;
       console.log("✅ Found user ID:", targetUserId);
     }
 
@@ -61,7 +51,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Check if user already has RM access
-    const existingAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
+    const existingAccess = await rmUserAccessAdminManager.hasRMAccess(targetUserId);
     if (existingAccess) {
       return NextResponse.json({
         success: true,
@@ -84,11 +74,10 @@ export async function POST(request: NextRequest) {
     // Try to find actual transaction data
     if (transactionId) {
       try {
-        const transactionRef = doc(db, "transactions", transactionId);
-        const transactionDoc = await getDoc(transactionRef);
+        const transactionDoc = await adminDb.collection("transactions").doc(transactionId).get();
 
-        if (transactionDoc.exists()) {
-          const txData = transactionDoc.data();
+        if (transactionDoc.exists) {
+          const txData = transactionDoc.data()!;
           paymentInfo = {
             amount: txData.amount || 2000,
             currency: txData.currency || "NGN",
@@ -105,15 +94,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Grant RM access using the proper method
-    await rmUserAccessManager.grantRMAccessViaPayment(
+    await rmUserAccessAdminManager.grantRMAccessViaPayment(
       targetUserId,
       userEmail,
       paymentInfo
     );
 
     // Verify the access was granted
-    const hasAccess = await rmUserAccessManager.hasRMAccess(targetUserId);
-    const accessData = await rmUserAccessManager.getRMUserAccess(targetUserId);
+    const hasAccess = await rmUserAccessAdminManager.hasRMAccess(targetUserId);
+    const accessData = await rmUserAccessAdminManager.getRMUserAccess(targetUserId);
 
     return NextResponse.json({
       success: true,
@@ -148,12 +137,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all transactions for RM that might not have granted access
-    const transactionsQuery = query(
-      collection(db, "transactions"),
-      where("examCategory", "==", "RM")
-    );
-
-    const transactionsSnapshot = await getDocs(transactionsQuery);
+    const transactionsSnapshot = await adminDb.collection("transactions")
+      .where("examCategory", "==", "RM")
+      .get();
 
     const usersWithoutAccess = [];
 
@@ -162,7 +148,7 @@ export async function GET(request: NextRequest) {
       const userId = transaction.userId;
 
       if (userId) {
-        const hasAccess = await rmUserAccessManager.hasRMAccess(userId);
+        const hasAccess = await rmUserAccessAdminManager.hasRMAccess(userId);
 
         if (!hasAccess) {
           usersWithoutAccess.push({
