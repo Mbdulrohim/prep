@@ -82,7 +82,7 @@ export default function RMExamPage() {
         }
 
         if (examsResult.success) {
-          setRmExams(examsResult.exams || []);
+          setRmExams(examsResult.data?.exams || []);
         } else {
           setError("Failed to load RM exams.");
         }
@@ -90,7 +90,7 @@ export default function RMExamPage() {
         setRmUserAccess(access);
         setRmAttempts(attempts);
 
-        if (!examsResult.success || (examsResult.exams && examsResult.exams.length === 0)) {
+        if (!examsResult.success || (examsResult.data?.exams && examsResult.data.exams.length === 0)) {
           setError("No RM exams found at this time.");
         }
       } catch (err) {
@@ -238,11 +238,12 @@ export default function RMExamPage() {
               <div className="grid gap-6 md:gap-8">
                 {rmExams.map((exam) => {
                   const canAccess = hasRMAccess;
-                  const canStart = canAccess && exam.isActive && exam.isPublished;
+                  const hasQuestions = exam.totalQuestions > 0;
+                  const canStart = canAccess && exam.isActive && exam.isPublished && hasQuestions;
 
                   // Check if user has completed this exam
                   const examAttempt = rmAttempts.find(
-                    (attempt) => attempt.examId === exam.id && attempt.completed
+                    (attempt) => attempt.examId === exam.id && attempt.status === 'completed'
                   );
                   const hasCompletedExam = !!examAttempt;
 
@@ -327,6 +328,24 @@ export default function RMExamPage() {
                                   Start Exam
                                 </Button>
                               </Link>
+                            ) : canAccess && !hasQuestions ? (
+                              <Button
+                                variant="secondary"
+                                size="lg"
+                                disabled
+                                className="text-slate-900 opacity-50"
+                              >
+                                Coming Soon
+                              </Button>
+                            ) : canAccess && !exam.isPublished ? (
+                              <Button
+                                variant="secondary"
+                                size="lg"
+                                disabled
+                                className="text-slate-900 opacity-50"
+                              >
+                                Not Available
+                              </Button>
                             ) : canAccess ? (
                               <Button
                                 variant="secondary"

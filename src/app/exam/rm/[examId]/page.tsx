@@ -99,9 +99,16 @@ export default function RMExamPage() {
     try {
       console.log("🔍 Starting RM exam eligibility check for user:", user.uid);
 
-      // Load RM exam data
-      const rmExams = await fetchRMExams();
-      const currentExam = rmExams.find((exam) => exam.id === examId);
+      // Load RM exam data from API
+      const response = await fetch("/api/rm-exams");
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch RM exams");
+      }
+      
+      const rmExams = result.data.exams;
+      const currentExam = rmExams.find((exam: any) => exam.id === examId);
 
       if (!currentExam) {
         console.error("❌ RM exam not found:", examId);
@@ -111,7 +118,41 @@ export default function RMExamPage() {
       }
 
       console.log("✅ RM exam found:", currentExam);
-      setRmExamData(currentExam);
+      
+      // Map the API data to the expected format
+      const mappedExamData: RMExamData = {
+        id: currentExam.id,
+        category: "RM" as const,
+        title: currentExam.title,
+        description: currentExam.description,
+        questionsCount: currentExam.totalQuestions || 0,
+        durationMinutes: currentExam.duration || 150,
+        difficulty: "Intermediate" as const,
+        topics: currentExam.topics || [],
+        color: currentExam.paper === "paper1" ? "#3B82F6" : "#8B5CF6",
+        available: currentExam.isActive && currentExam.isPublished,
+        scheduling: {
+          isScheduled: !!currentExam.scheduledDate,
+          scheduledDate: currentExam.scheduledDate ? new Date(currentExam.scheduledDate) : undefined,
+          isActive: currentExam.isActive
+        },
+        pricing: {
+          amount: 2000,
+          currency: "NGN",
+          accessCodeEnabled: true
+        },
+        adminConfig: {
+          maxAttempts: 1,
+          paperCount: 2,
+          scheduleRequired: true,
+          autoGenerate: false
+        },
+        createdAt: new Date(currentExam.createdAt),
+        updatedAt: new Date(currentExam.updatedAt),
+        createdBy: "admin"
+      };
+      
+      setRmExamData(mappedExamData);
 
       // Check RM user access with detailed debugging
       console.log("🔍 Checking RM access for user:", user.uid);

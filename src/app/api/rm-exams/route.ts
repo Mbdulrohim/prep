@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
           title: exam.title,
           paper: exam.paper,
           description: exam.description,
+          topics: exam.topics,
           duration: exam.duration,
           totalQuestions: questionCount,
           passingScore: exam.passingScore,
@@ -42,6 +43,8 @@ export async function GET(request: NextRequest) {
           settings: exam.settings,
           isActive: exam.isActive,
           isPublished: exam.isPublished,
+          scheduledDate: exam.scheduledDate,
+          scheduledTime: exam.scheduledTime,
           createdAt: exam.createdAt,
           updatedAt: exam.updatedAt
         };

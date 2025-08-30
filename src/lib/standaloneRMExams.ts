@@ -21,11 +21,13 @@ export interface StandaloneRMExam {
   id: string;
   title: string;
   description?: string;
+  topics?: string[];
   paper: 'A' | 'B' | 'C' | 'D';
   questions: RMQuestion[];
   timeLimit: number; // exam duration in minutes (e.g., 150)
   totalQuestions: number;
   isActive: boolean;
+  isPublished: boolean;
   createdAt: Date;
   createdBy: string;
   // Payment and access control
@@ -37,6 +39,8 @@ export interface StandaloneRMExam {
   examWindowMinutes?: number;
   isScheduled: boolean;
   masterToggle: boolean;
+  scheduledDate?: string;
+  scheduledTime?: string;
   // RM specific properties
   examType: "rm-exam";
   difficulty: 'easy' | 'medium' | 'hard';

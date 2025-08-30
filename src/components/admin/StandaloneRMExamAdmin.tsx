@@ -250,6 +250,7 @@ export default function StandaloneRMExamAdmin({ user }: StandaloneRMExamAdminPro
         availableDate: examForm.availableDate ? new Date(examForm.availableDate) : undefined,
         examWindowMinutes: examForm.examWindowMinutes,
         isScheduled: examForm.isScheduled,
+        isPublished: true, // Add missing isPublished property
         masterToggle: examForm.masterToggle,
         // RM specific properties
         examType: 'rm-exam' as const,

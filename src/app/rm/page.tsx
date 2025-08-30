@@ -34,6 +34,7 @@ const RMExamPage: React.FC = () => {
   >({});
   const [userAccess, setUserAccess] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"RM1" | "RM2">("RM1");
+  const [countdown, setCountdown] = useState<number>(0); // For triggering re-renders
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -51,10 +52,60 @@ const RMExamPage: React.FC = () => {
     return () => unsubscribe();
   }, [router]);
 
+  // Update countdown every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(prev => prev + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchRMData = async (currentUser: User) => {
     try {
-      // Get all active RM exams
-      const exams = await standaloneRMExamManager.getActiveRMExams();
+      let exams: StandaloneRMExam[] = [];
+
+      // Get all active RM exams from the database API
+      const response = await fetch("/api/rm-exams");
+      const result = await response.json();
+
+      if (result.success && result.data.exams) {
+        // Convert database exams to StandaloneRMExam format
+        exams = result.data.exams.map((exam: any) => ({
+          id: exam.id,
+          title: exam.title,
+          description: exam.description,
+          topics: exam.topics || [],
+          paper:
+            exam.paper === "paper1"
+              ? "A"
+              : exam.paper === "paper2"
+              ? "B"
+              : exam.paper,
+          questions: [], // Will be loaded when exam starts
+          timeLimit: exam.duration,
+          totalQuestions: exam.totalQuestions || 250,
+          isActive: exam.isActive,
+          isPublished: exam.isPublished,
+          createdAt: new Date(exam.createdAt),
+          createdBy: "system",
+          requiresPayment: true,
+          price: 2000,
+          currency: "₦",
+          availableDate: new Date(),
+          examWindowMinutes: exam.duration,
+          isScheduled: !!(exam.scheduledDate),
+          masterToggle: exam.isActive,
+          scheduledDate: exam.scheduledDate,
+          examType: "rm-exam" as const,
+          difficulty: "medium" as const,
+          passingScore: exam.passingScore || 70,
+        }));
+      } else {
+        // Fallback to Firestore if API fails
+        exams = await standaloneRMExamManager.getActiveRMExams();
+      }
+
       setRmExams(exams);
 
       // Check user's overall RM access (not per-exam, but per-category)
@@ -176,12 +227,73 @@ const RMExamPage: React.FC = () => {
     );
   };
 
+  // Helper function to get countdown/ETA for scheduled exams
+  const getExamCountdown = (exam: StandaloneRMExam) => {
+    if (!exam.scheduledDate) {
+      return null;
+    }
+
+    // Set exam to be available for the entire day (from 00:00 to 23:59)
+    const scheduledDate = new Date(exam.scheduledDate);
+    const now = new Date();
+    
+    // Check if today is the scheduled date
+    const isScheduledDay = scheduledDate.toDateString() === now.toDateString();
+    const hasDatePassed = scheduledDate < now;
+
+    if (isScheduledDay) {
+      return { text: "Available Today!", color: "text-green-600", isLive: true };
+    }
+
+    if (hasDatePassed) {
+      return { text: "Available Now!", color: "text-green-600", isLive: true };
+    }
+
+    const timeDiff = scheduledDate.getTime() - now.getTime();
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+    let countdownText = "";
+    if (days > 0) {
+      countdownText = `Available in ${days} day${days > 1 ? 's' : ''}`;
+    } else {
+      countdownText = "Available Tomorrow!";
+    }
+
+    return { 
+      text: countdownText, 
+      color: "text-blue-600", 
+      isLive: false,
+      fullDate: scheduledDate.toLocaleDateString()
+    };
+  };
+
   const getExamStatus = (exam: StandaloneRMExam) => {
     const hasAccess = userAccess[exam.id];
     const attempts = userAttempts[exam.id] || [];
+    const countdown = getExamCountdown(exam);
+
+    // Check if exam is published and available
+    const isExamAvailable = exam.isActive && exam.isPublished;
+    
+    // For scheduled exams, only allow access on/after the scheduled date
+    const isDateAvailable = !exam.scheduledDate || countdown?.isLive;
+    
+    if (!isExamAvailable || !isDateAvailable) {
+      return { 
+        status: "unavailable", 
+        color: "gray", 
+        icon: Lock, 
+        countdown 
+      };
+    }
 
     if (!hasAccess && exam.requiresPayment) {
-      return { status: "payment_required", color: "orange", icon: CreditCard };
+      return { 
+        status: "payment_required", 
+        color: "orange", 
+        icon: CreditCard,
+        countdown 
+      };
     }
 
     if (attempts.length > 0) {
@@ -194,14 +306,29 @@ const RMExamPage: React.FC = () => {
         icon: CheckCircle,
         score: bestAttempt.percentage,
         attempts: attempts.length,
+        countdown,
       };
     }
 
     if (hasAccess) {
-      return { status: "available", color: "blue", icon: Play };
+      // Check if exam is scheduled and available based on date
+      if (countdown && !countdown.isLive) {
+        return { 
+          status: "scheduled", 
+          color: "blue", 
+          icon: Clock,
+          countdown 
+        };
+      }
+      return { 
+        status: "available", 
+        color: "blue", 
+        icon: Play,
+        countdown 
+      };
     }
 
-    return { status: "locked", color: "gray", icon: Lock };
+    return { status: "locked", color: "gray", icon: Lock, countdown };
   };
 
   // Filter exams by paper type - RM 1 is Papers A&B, RM 2 is Papers C&D
@@ -464,6 +591,49 @@ const RMExamPage: React.FC = () => {
                     </p>
                   )}
 
+                  {/* Topics */}
+                  {exam.topics && exam.topics.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        Topics Covered:
+                      </h4>
+                      <div className="flex flex-wrap gap-1">
+                        {exam.topics.map((topic, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exam Schedule/Countdown */}
+                  {examStatus.countdown && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                          <span className={`text-sm font-medium ${examStatus.countdown.color}`}>
+                            {examStatus.countdown.text}
+                          </span>
+                        </div>
+                        {examStatus.countdown.fullDate && (
+                          <div className="text-xs text-gray-600">
+                            Scheduled for {examStatus.countdown.fullDate}
+                          </div>
+                        )}
+                      </div>
+                      {examStatus.countdown.isLive && (
+                        <div className="mt-2 text-xs text-green-700 font-medium">
+                          🎯 Exam is now available!
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Exam Details */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
@@ -501,12 +671,18 @@ const RMExamPage: React.FC = () => {
 
                     <button
                       onClick={() => handleStartExam(exam)}
-                      disabled={examStatus.status === "locked"}
+                      disabled={
+                        examStatus.status === "locked" || 
+                        examStatus.status === "unavailable" ||
+                        (examStatus.status === "scheduled" && !examStatus.countdown?.isLive)
+                      }
                       className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
                         examStatus.status === "payment_required"
                           ? "bg-orange-600 hover:bg-orange-700 text-white"
-                          : examStatus.status === "available"
+                          : (examStatus.status === "available" || (examStatus.status === "scheduled" && examStatus.countdown?.isLive))
                           ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : examStatus.status === "scheduled"
+                          ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                           : examStatus.status === "completed"
                           ? "bg-green-600 hover:bg-green-700 text-white"
                           : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -515,9 +691,13 @@ const RMExamPage: React.FC = () => {
                       {examStatus.status === "payment_required" &&
                         "Purchase Access"}
                       {examStatus.status === "available" && "Start Exam"}
+                      {examStatus.status === "scheduled" && (
+                        examStatus.countdown?.isLive ? "Start Exam" : examStatus.countdown?.text || "Scheduled"
+                      )}
                       {examStatus.status === "completed" &&
                         "View Results / Retake"}
                       {examStatus.status === "locked" && "Locked"}
+                      {examStatus.status === "unavailable" && "Not Available"}
                     </button>
                   </div>
                 </div>

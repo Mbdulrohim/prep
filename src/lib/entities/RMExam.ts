@@ -15,6 +15,15 @@ export class RMExam {
   @Column('text', { nullable: true })
   description: string;
 
+  @Column('json', { nullable: true })
+  topics: string[];
+
+  @Column({ nullable: true })
+  scheduledDate: string;
+
+  @Column({ nullable: true })
+  scheduledTime: string;
+
   @Column({ default: 180 }) // 3 hours in minutes
   duration: number;
 

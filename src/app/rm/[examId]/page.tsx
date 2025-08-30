@@ -65,6 +65,23 @@ const RMExamPage: React.FC = () => {
         return;
       }
 
+      // Load questions from the TypeORM database using the API
+      try {
+        const questionsResponse = await fetch(`/api/rm-questions?examId=${examId}&limit=250`);
+        if (questionsResponse.ok) {
+          const questionsResult = await questionsResponse.json();
+          if (questionsResult.success && questionsResult.data?.length > 0) {
+            // Update exam data with real questions
+            examData.questions = questionsResult.data;
+            examData.totalQuestions = questionsResult.data.length;
+            console.log(`✅ Loaded ${questionsResult.data.length} questions for exam ${examId}`);
+          }
+        }
+      } catch (qError) {
+        console.error("Error loading questions:", qError);
+        // Continue with exam data even if questions fail to load
+      }
+
       setExam(examData);
 
       // Check user's RM access using the proper access manager

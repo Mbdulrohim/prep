@@ -9,6 +9,7 @@ import { Alert, useToast } from "@/components/ui/Alert";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
 import AccessCodeManager from "@/components/admin/AccessCodeManager";
 import RMQuestionUpload from "@/components/admin/RMQuestionUpload";
+import RMExamScheduler from "@/components/admin/RMExamScheduler";
 import { WeeklyAssessmentCreator } from "@/components/admin/WeeklyAssessmentCreator";
 import { AdvancedWeeklyAssessmentManager } from "@/components/admin/AdvancedWeeklyAssessmentManager";
 import StandaloneWeeklyAssessmentAdmin from "../../components/admin/StandaloneWeeklyAssessmentAdmin";
@@ -141,6 +142,7 @@ export default function AdminDashboard() {
     | "upload"
     | "questions"
     | "rm-questions"
+    | "rm-schedule"
     | "users"
     | "rankings"
     | "feedback"
@@ -208,7 +210,7 @@ export default function AdminDashboard() {
   const [rmAttempts, setRMAttempts] = useState<any[]>([]);
   const [rmLoading, setRMLoading] = useState(false);
   const [rmActiveSubTab, setRMActiveSubTab] = useState<
-    "overview" | "exams" | "questions" | "users" | "analytics"
+    "overview" | "exams" | "questions" | "schedule" | "users" | "analytics"
   >("overview");
 
   // Question Management Sub-tabs State
@@ -1584,6 +1586,7 @@ export default function AdminDashboard() {
     { id: "upload", label: "Upload Documents", icon: Upload },
     { id: "questions", label: "Manage Questions", icon: Database },
     { id: "rm-questions", label: "RM Questions", icon: FileText },
+    { id: "rm-schedule", label: "RM Schedule", icon: Clock },
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
     {
@@ -1591,8 +1594,8 @@ export default function AdminDashboard() {
       label: "Weekly Assessment",
       icon: Target,
     },
-    // { id: "standalone-rm-exams", label: "RM Exams", icon: Crown },
-    { id: "rm-management", label: "RM Management", icon: Crown },
+    { id: "standalone-rm-exams", label: "RM Exams", icon: Crown },
+    // { id: "rm-management", label: "RM Management", icon: Crown },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
     { id: "universities", label: "Universities", icon: Building2 },
@@ -2882,9 +2885,10 @@ export default function AdminDashboard() {
           )}
 
           {/* RM Questions Tab */}
-          {activeTab === "rm-questions" && (
-            <RMQuestionUpload />
-          )}
+          {activeTab === "rm-questions" && <RMQuestionUpload />}
+
+          {/* RM Schedule Tab */}
+          {activeTab === "rm-schedule" && <RMExamScheduler />}
 
           {/* Feedback Tab */}
           {activeTab === "feedback" && (
@@ -3244,6 +3248,11 @@ export default function AdminDashboard() {
                       label: "Question Management",
                       icon: Database,
                     },
+                    {
+                      id: "schedule",
+                      label: "Exam Schedule",
+                      icon: Calendar,
+                    },
                     { id: "users", label: "RM Users", icon: Users },
                     { id: "analytics", label: "Analytics", icon: TrendingUp },
                   ].map((subTab) => (
@@ -3409,16 +3418,12 @@ export default function AdminDashboard() {
 
               {/* Placeholder for other RM sub-tabs */}
               {rmActiveSubTab === "exams" && (
-                <div className="text-center py-8">
-                  <Crown className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    RM Exam Configuration
-                  </h3>
-                  <p className="text-gray-600">
-                    Coming in Step 2 - Configure RM exam settings, pricing, and
-                    scheduling
-                  </p>
-                </div>
+                <RMExamScheduler
+                  onUpdate={() => {
+                    // Refresh any data if needed
+                    console.log("RM exam updated");
+                  }}
+                />
               )}
 
               {rmActiveSubTab === "questions" && (
@@ -3431,6 +3436,15 @@ export default function AdminDashboard() {
                     Coming in Step 2 - Upload and manage RM-specific questions
                   </p>
                 </div>
+              )}
+
+              {rmActiveSubTab === "schedule" && (
+                <RMExamScheduler
+                  onUpdate={() => {
+                    // Refresh any data if needed
+                    console.log("RM exam updated from schedule tab");
+                  }}
+                />
               )}
 
               {rmActiveSubTab === "users" && (

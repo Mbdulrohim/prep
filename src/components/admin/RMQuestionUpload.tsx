@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Upload, FileText, Plus, Save, Trash2, Eye, Download } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Upload, Download, FileText, CheckCircle, AlertCircle, X, Trash2, Plus, Save } from 'lucide-react';
 
 interface RMQuestion {
   questionText: string;
@@ -35,8 +35,11 @@ export default function RMQuestionUpload() {
   const [selectedPaper, setSelectedPaper] = useState<'paper1' | 'paper2'>('paper1');
   const [uploadStats, setUploadStats] = useState<UploadStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deleteClicks, setDeleteClicks] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
     'Maternal Health',
@@ -174,40 +177,32 @@ export default function RMQuestionUpload() {
     }
   };
 
-  const clearDatabase = async () => {
-    if (!confirm('Are you sure you want to clear the entire RM questions database? This action cannot be undone.')) {
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage(null);
-
+    const deleteQuestions = async () => {
     try {
+      setIsDeleting(true);
       const response = await fetch('/api/admin/rm-questions', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           action: 'clear_all',
-          paper: selectedPaper
+          paper: selectedPaper 
         })
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        setMessage({ 
-          type: 'success', 
-          text: `Successfully cleared all questions from ${selectedPaper}` 
-        });
-        setUploadStats(null);
-        fetchUploadStats();
+      const data = await response.json();
+      if (data.success) {
+        setQuestions([]); // Clear local questions for this paper
+        setUploadStats(null); // Clear upload stats
+        setMessage({ type: 'success', text: `All questions deleted from ${selectedPaper}` });
       } else {
-        setMessage({ type: 'error', text: result.error || 'Failed to clear database' });
+        setMessage({ type: 'error', text: 'Failed to delete questions: ' + data.error });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Network error while clearing database' });
+      console.error('Error deleting questions:', error);
+      setMessage({ type: 'error', text: 'Error deleting questions' });
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
+      setDeleteClicks(0);
     }
   };
 
@@ -298,11 +293,16 @@ Categories available: Maternal Health, Neonatal Care, Family Planning, Labor and
             </select>
             
             <button
-              onClick={downloadTemplate}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              onClick={deleteQuestions}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                deleteClicks > 0 
+                  ? 'text-red-700 bg-red-100 border border-red-600 hover:bg-red-200' 
+                  : 'text-red-600 bg-red-50 border border-red-600 hover:bg-red-100'
+              }`}
+              disabled={isLoading}
             >
-              <Download className="h-4 w-4" />
-              <span>Template Guide</span>
+              <Trash2 className="h-4 w-4" />
+              <span>{deleteClicks > 0 ? 'Click Again to Delete' : 'Delete Questions'}</span>
             </button>
           </div>
         </div>
@@ -382,7 +382,7 @@ Categories available: Maternal Health, Neonatal Care, Family Planning, Labor and
               </div>
               <div className="flex space-x-4">
                 <button
-                  onClick={clearDatabase}
+                  onClick={deleteQuestions}
                   disabled={isLoading}
                   className="flex items-center space-x-2 px-4 py-2 text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 disabled:opacity-50"
                 >
