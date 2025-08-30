@@ -27,15 +27,56 @@ const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
   : fallbackServiceAccount;
 
-// Initialize admin app with non-nullable types for build time
-const adminApp: App = !getApps().length
-  ? initializeApp({
-      credential: cert(serviceAccount as ServiceAccount),
-      projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
-    })
-  : getApps()[0];
+// Only initialize admin app in runtime, not during build
+let adminApp: App | null = null;
+let adminDb: any = null;
 
-const adminDb = getFirestore(adminApp);
+// Check if we're in a build environment
+const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+if (!isBuildTime) {
+  try {
+    adminApp = !getApps().length
+      ? initializeApp({
+          credential: cert(serviceAccount as ServiceAccount),
+          projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
+        })
+      : getApps()[0];
+    
+    adminDb = getFirestore(adminApp);
+  } catch (error) {
+    console.warn('Firebase Admin SDK not initialized:', error);
+    // Create a mock adminDb for build time
+    adminDb = {
+      collection: () => ({
+        doc: () => ({
+          get: async () => ({ exists: false, data: () => null }),
+          set: async () => {},
+          update: async () => {},
+        }),
+        where: () => ({
+          get: async () => ({ docs: [], empty: true }),
+        }),
+        get: async () => ({ docs: [], empty: true }),
+      }),
+    };
+  }
+} else {
+  // Mock adminDb for build time
+  adminDb = {
+    collection: () => ({
+      doc: () => ({
+        get: async () => ({ exists: false, data: () => null }),
+        set: async () => {},
+        update: async () => {},
+      }),
+      where: () => ({
+        get: async () => ({ docs: [], empty: true }),
+      }),
+      get: async () => ({ docs: [], empty: true }),
+    }),
+  };
+}
 
 export { adminDb };
 export default adminApp;

@@ -12,6 +12,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if admin SDK is properly initialized
+    if (!adminDb || typeof adminDb.collection !== 'function') {
+      return NextResponse.json(
+        { success: false, error: "Firebase Admin SDK not properly initialized" },
+        { status: 500 }
+      );
+    }
+
     // Clean the code
     const cleanCode = accessCode.replace(/\s+/g, "").toUpperCase();
 

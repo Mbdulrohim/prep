@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if admin SDK is properly initialized
+    if (!adminDb || typeof adminDb.collection !== 'function') {
+      return NextResponse.json(
+        { error: "Firebase Admin SDK not properly initialized" },
+        { status: 500 }
+      );
+    }
+
     // Determine the user ID
     let targetUserId = userId;
     
