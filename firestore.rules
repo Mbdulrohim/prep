@@ -122,9 +122,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // RM User Access - allow server writes for payment processing, authenticated users can read their own
+    // RM User Access - allow server-side operations for payment processing
     match /rmUserAccess/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin() || request.auth == null; // Allow server-side reads too
       allow write: if isAdmin() || isAuthenticated() || request.auth == null; // Allow server-side operations
     }
 
