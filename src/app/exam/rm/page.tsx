@@ -4,7 +4,17 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, BookOpen, Clock, Award, Lock, CreditCard, CheckCircle, AlertTriangle, Eye } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  Award,
+  Lock,
+  CreditCard,
+  CheckCircle,
+  AlertTriangle,
+  Eye,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -31,11 +41,11 @@ export default function RMExamPage() {
           user?.uid ? rmUserAccessManager.getRMUserAccess(user.uid) : null,
           user?.uid ? rmExamAttemptManager.getUserRMExamAttempts(user.uid) : [],
         ]);
-        
+
         setRmExams(exams);
         setRmUserAccess(access);
         setRmAttempts(attempts);
-        
+
         if (exams.length === 0) {
           setError("No RM exams found at this time.");
         }
@@ -62,9 +72,9 @@ export default function RMExamPage() {
             <p className="text-slate-600 mb-6">
               Please sign in to access the RM exams.
             </p>
-            <Button 
+            <Button
               onClick={() => router.push("/")}
-              variant="primary" 
+              variant="primary"
               className="w-full"
             >
               Sign In
@@ -80,7 +90,7 @@ export default function RMExamPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-green-50 to-emerald-50">
       <Header />
-      
+
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -98,7 +108,7 @@ export default function RMExamPage() {
                 🩺 Registered Midwifery (RM) Exams
               </h1>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                Comprehensive midwifery exam preparation covering maternal care, 
+                Comprehensive midwifery exam preparation covering maternal care,
                 obstetrics, and specialized midwifery practice.
               </p>
             </div>
@@ -113,8 +123,9 @@ export default function RMExamPage() {
                       RM Access Required
                     </h3>
                     <p className="text-blue-700 mb-4">
-                      RM exams require separate access from RN exams. Purchase RM exam access 
-                      to unlock specialized midwifery questions and practice materials.
+                      RM exams require separate access from RN exams. Purchase
+                      RM exam access to unlock specialized midwifery questions
+                      and practice materials.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button
@@ -184,33 +195,35 @@ export default function RMExamPage() {
                 {rmExams.map((exam) => {
                   const canAccess = hasRMAccess;
                   const canStart = canAccess && exam.available;
-                  
+
                   // Check if user has completed this exam
                   const examAttempt = rmAttempts.find(
-                    attempt => attempt.examId === exam.id && attempt.completed
+                    (attempt) => attempt.examId === exam.id && attempt.completed
                   );
                   const hasCompletedExam = !!examAttempt;
-                  
+
                   return (
                     <div
                       key={exam.id}
                       className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 ${
-                        !canAccess ? 'opacity-75' : ''
+                        !canAccess ? "opacity-75" : ""
                       }`}
                     >
-                      <div className={`bg-gradient-to-r ${exam.color} p-6 text-white relative`}>
+                      <div
+                        className={`bg-gradient-to-r ${exam.color} p-6 text-white relative`}
+                      >
                         {!canAccess && (
                           <div className="absolute top-4 right-4">
                             <Lock className="h-6 w-6 text-white/70" />
                           </div>
                         )}
-                        
+
                         {hasCompletedExam && (
                           <div className="absolute top-4 right-4">
                             <CheckCircle className="h-6 w-6 text-white" />
                           </div>
                         )}
-                        
+
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="text-2xl font-bold mb-2">
@@ -230,13 +243,14 @@ export default function RMExamPage() {
                                 <span>{exam.durationMinutes} minutes</span>
                               </div>
                             </div>
-                            
+
                             {hasCompletedExam && (
                               <div className="mt-3 text-sm">
                                 <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full">
                                   <CheckCircle className="h-4 w-4 mr-1" />
-                                  Score: {examAttempt.percentage}% 
-                                  ({examAttempt.correctAnswers}/{examAttempt.assignedQuestions.length})
+                                  Score: {examAttempt.percentage}% (
+                                  {examAttempt.correctAnswers}/
+                                  {examAttempt.assignedQuestions.length})
                                 </div>
                               </div>
                             )}
@@ -244,7 +258,9 @@ export default function RMExamPage() {
 
                           <div className="text-right">
                             {hasCompletedExam ? (
-                              <Link href={`/exam/rm/${exam.id}/results?attemptId=${examAttempt.id}`}>
+                              <Link
+                                href={`/exam/rm/${exam.id}/results?attemptId=${examAttempt.id}`}
+                              >
                                 <Button
                                   variant="secondary"
                                   size="lg"

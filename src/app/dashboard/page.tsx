@@ -88,7 +88,7 @@ export default function DashboardPage() {
   const [examsLoading, setExamsLoading] = useState(true);
   const [userAttempts, setUserAttempts] = useState<ExamAttempt[]>([]);
   const [attemptsLoading, setAttemptsLoading] = useState(true);
-  
+
   // RM-specific state - separate from RN system
   const [rmExams, setRmExams] = useState<RMExamData[]>([]);
   const [rmExamsLoading, setRmExamsLoading] = useState(true);
@@ -96,12 +96,12 @@ export default function DashboardPage() {
   const [rmAttemptsLoading, setRmAttemptsLoading] = useState(true);
   const [rmUserAccess, setRmUserAccess] = useState<any>(null);
   const [rmAccessLoading, setRmAccessLoading] = useState(true);
-  
+
   // Standalone RM System state
   const [standaloneRMExams, setStandaloneRMExams] = useState<any[]>([]);
   const [standaloneRMLoading, setStandaloneRMLoading] = useState(true);
   const [standaloneRMAccess, setStandaloneRMAccess] = useState<any>(null);
-  
+
   const [examAvailability, setExamAvailability] = useState<{
     [key: string]: {
       isAvailable: boolean;
@@ -250,7 +250,7 @@ export default function DashboardPage() {
   // RM-specific data loading functions
   const loadRMData = async () => {
     if (!user?.uid) return;
-    
+
     await Promise.all([
       loadRMExams(),
       checkRMUserAccess(),
@@ -289,7 +289,9 @@ export default function DashboardPage() {
 
     try {
       setRmAttemptsLoading(true);
-      const attempts = await rmExamAttemptManager.getUserRMExamAttempts(user.uid);
+      const attempts = await rmExamAttemptManager.getUserRMExamAttempts(
+        user.uid
+      );
       setRmUserAttempts(attempts);
     } catch (error) {
       console.error("Failed to load RM user attempts:", error);
@@ -305,18 +307,19 @@ export default function DashboardPage() {
   // Standalone RM System data loading
   const loadStandaloneRMData = async () => {
     if (!user?.uid) return;
-    
+
     try {
       setStandaloneRMLoading(true);
-      
+
       // Get available standalone RM exams
       const exams = await standaloneRMExamManager.getActiveRMExams();
       setStandaloneRMExams(exams);
-      
+
       // Check user's exam history and access
-      const examHistory = await standaloneRMExamManager.getUserExamHistory(user.uid);
+      const examHistory = await standaloneRMExamManager.getUserExamHistory(
+        user.uid
+      );
       setStandaloneRMAccess({ examHistory, totalAttempts: examHistory.length });
-      
     } catch (error) {
       console.error("Failed to load standalone RM data:", error);
     } finally {
@@ -532,21 +535,23 @@ export default function DashboardPage() {
 
   // Check if user has access to any exams - Admin gets unlimited access
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
-  
+
   // For non-admin users, check if they have valid active access
   // Since revoked users have their access completely removed, we just check if userAccess exists and is active
   const hasValidAccess = userAccess && userAccess.isActive;
-    
+
   const hasExamAccess = isAdmin || hasValidAccess;
 
   console.log("🔍 Dashboard Access Check:", {
     isAdmin,
-    userAccess: userAccess ? {
-      isActive: userAccess.isActive,
-      examCategory: userAccess.examCategory,
-    } : null,
+    userAccess: userAccess
+      ? {
+          isActive: userAccess.isActive,
+          examCategory: userAccess.examCategory,
+        }
+      : null,
     hasValidAccess,
-    hasExamAccess
+    hasExamAccess,
   });
 
   return (
@@ -819,18 +824,26 @@ export default function DashboardPage() {
 
                       <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="text-center">
-                          <div className="text-2xl font-bold">{standaloneRMExams.length}</div>
+                          <div className="text-2xl font-bold">
+                            {standaloneRMExams.length}
+                          </div>
                           <div className="text-sm text-emerald-200">
                             Available Exams
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold">{standaloneRMAccess?.totalAttempts || 0}</div>
-                          <div className="text-sm text-emerald-200">Your Attempts</div>
+                          <div className="text-2xl font-bold">
+                            {standaloneRMAccess?.totalAttempts || 0}
+                          </div>
+                          <div className="text-sm text-emerald-200">
+                            Your Attempts
+                          </div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold">Premium</div>
-                          <div className="text-sm text-emerald-200">Quality</div>
+                          <div className="text-sm text-emerald-200">
+                            Quality
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1158,8 +1171,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-
-
               {/* RPHN Exam Schedule - Hidden until implementation */}
               <div className="lg:col-span-3">
                 {/* Temporarily hidden - RPHN exams under development */}
@@ -1174,11 +1185,13 @@ export default function DashboardPage() {
                         RPHN Exams in Development
                       </h4>
                       <p className="text-sm text-blue-700">
-                        <strong>RPHN (Registered Public Health Nurse)</strong> certification
-                        exams are currently being developed with full CBT support.
+                        <strong>RPHN (Registered Public Health Nurse)</strong>{" "}
+                        certification exams are currently being developed with
+                        full CBT support.
                       </p>
                       <p className="text-xs text-blue-600 mt-2">
-                        📋 Will follow the same 250-question, 150-minute format as RN/RM exams
+                        📋 Will follow the same 250-question, 150-minute format
+                        as RN/RM exams
                       </p>
                     </div>
                   </div>

@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
 export async function POST(request: NextRequest) {
   try {
-    const { accessCode, userId, examCategory, userEmail, userName, university } = await request.json();
+    const {
+      accessCode,
+      userId,
+      examCategory,
+      userEmail,
+      userName,
+      university,
+    } = await request.json();
 
     if (!accessCode || !userId) {
       return NextResponse.json(
@@ -12,21 +20,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if admin SDK is properly initialized
-    if (!adminDb || typeof adminDb.collection !== 'function') {
-      return NextResponse.json(
-        { success: false, error: "Firebase Admin SDK not properly initialized" },
-        { status: 500 }
-      );
-    }
-
     // Clean the code
     const cleanCode = accessCode.replace(/\s+/g, "").toUpperCase();
 
-    // Get access code from Firestore using admin SDK
-    const accessCodeDoc = await adminDb.collection("accessCodes").doc(cleanCode).get();
+    console.log(
+      `🔑 Attempting to redeem access code: ${cleanCode} for user: ${userId}`
+    );
 
-    if (!accessCodeDoc.exists) {
+    // Get access code from Firestore using client SDK
+    const accessCodeRef = doc(db, "accessCodes", cleanCode);
+    const accessCodeDoc = await getDoc(accessCodeRef);
+
+    if (!accessCodeDoc.exists()) {
       return NextResponse.json({
         success: false,
         error: "Invalid access code",
@@ -34,15 +39,9 @@ export async function POST(request: NextRequest) {
     }
 
     const accessCodeData = accessCodeDoc.data();
-    if (!accessCodeData) {
-      return NextResponse.json({
-        success: false,
-        error: "Invalid access code data",
-      });
-    }
 
     // Validate access code
-    if (!accessCodeData.isActive) {
+    if (!accessCodeData?.isActive) {
       return NextResponse.json({
         success: false,
         error: "This access code has been deactivated",
@@ -50,8 +49,8 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-    const expiryDate = accessCodeData.expiresAt?.toDate ? accessCodeData.expiresAt.toDate() : accessCodeData.expiresAt;
-    if (!expiryDate || now > expiryDate) {
+    const expiryDate = accessCodeData.expiresAt;
+    if (expiryDate && now > expiryDate.toDate()) {
       return NextResponse.json({
         success: false,
         error: "This access code has expired",
@@ -61,135 +60,120 @@ export async function POST(request: NextRequest) {
     if ((accessCodeData.currentUses || 0) >= (accessCodeData.maxUses || 1)) {
       return NextResponse.json({
         success: false,
-        error: "This access code has been fully used",
+        error: "This access code has reached its usage limit",
       });
     }
 
-    // Check if requesting RM access and code is for RM
-    if (examCategory === "RM") {
-      if (accessCodeData.examCategory !== "RM") {
-        return NextResponse.json({
-          success: false,
-          error: "This access code is not valid for RM exams",
-        });
-      }
+    // Get user data
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const userData = userDoc.data();
+    const finalUserEmail = userEmail || userData?.email;
+
+    // Handle RM-specific access codes
+    if (accessCodeData?.examCategory === "RM") {
+      console.log(`🏥 Processing RM access code for user: ${userId}`);
 
       // Check if user already has RM access
-      const existingAccessDoc = await adminDb.collection("rmUserAccess").doc(userId).get();
-      
-      if (existingAccessDoc.exists && existingAccessDoc.data()?.hasAccess) {
+      const rmAccessRef = doc(db, "rmUserAccess", userId);
+      const rmAccessDoc = await getDoc(rmAccessRef);
+
+      if (rmAccessDoc.exists() && rmAccessDoc.data()?.hasAccess) {
         return NextResponse.json({
-          success: false,
-          error: "You already have RM access",
+          success: true,
+          message: "User already has RM access",
+          accessType: "RM",
+          alreadyHadAccess: true,
         });
       }
 
-      // Grant RM access via access code using admin SDK
+      // Grant RM access
       const rmAccessData = {
         id: userId,
         userId,
-        userEmail: userEmail || "",
-        examCategory: "RM" as const,
+        userEmail: finalUserEmail,
+        examCategory: "RM",
         hasAccess: true,
-        accessMethod: "access_code" as const,
+        accessMethod: "accessCode",
         accessGrantedAt: new Date(),
         accessCodeInfo: {
           code: cleanCode,
           redeemedAt: new Date(),
-          codeType: (accessCodeData.maxUses || 1) > 1 ? "multi_use" : "single_use",
+          codeType: accessCodeData.codeType || "standard",
         },
         rmAttempts: {},
         adminSettings: {
-          maxAttempts: 1,
+          maxAttempts: accessCodeData.maxAttempts || 1,
         },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      await adminDb.collection("rmUserAccess").doc(userId).set(rmAccessData);
+      await setDoc(rmAccessRef, rmAccessData);
+      console.log(`✅ RM access granted to user: ${userId}`);
+    } else {
+      // Handle regular RN access codes
+      console.log(`🩺 Processing RN access code for user: ${userId}`);
 
-      // Update access code usage
-      await adminDb.collection("accessCodes").doc(cleanCode).update({
-        currentUses: (accessCodeData.currentUses || 0) + 1,
-        lastUsedAt: new Date(),
-        lastUsedBy: userId,
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: "RM access granted successfully!",
-        accessDetails: {
-          examCategory: "RM",
-          papers: ["Paper 1", "Paper 2"],
-          expiryDate: expiryDate,
+      const accessData = {
+        userId,
+        userEmail: finalUserEmail,
+        examCategory: accessCodeData.examCategory || "RN",
+        hasAccess: true,
+        accessMethod: "accessCode",
+        accessGrantedAt: new Date(),
+        accessCodeInfo: {
+          code: cleanCode,
+          redeemedAt: new Date(),
+          codeType: accessCodeData.codeType || "standard",
         },
-      });
-    }
+        maxAttempts: accessCodeData.maxAttempts || 3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-    // Handle regular RN access code redemption
-    // Check if user already redeemed this code
-    const userAccessDoc = await adminDb.collection("userAccess").doc(userId).get();
-    const userAccessData = userAccessDoc.exists
-      ? userAccessDoc.data()
-      : { redeemedCodes: [] };
-
-    if (userAccessData?.redeemedCodes?.includes(cleanCode)) {
-      return NextResponse.json({
-        success: false,
-        error: "You have already redeemed this access code",
-      });
+      await setDoc(doc(db, "userAccess", userId), accessData);
+      console.log(`✅ RN access granted to user: ${userId}`);
     }
 
     // Update access code usage
-    await adminDb.collection("accessCodes").doc(cleanCode).update({
+    await updateDoc(accessCodeRef, {
       currentUses: (accessCodeData.currentUses || 0) + 1,
       lastUsedAt: new Date(),
-      lastUsedBy: userId,
     });
 
-    // Grant user access
-    const userAccess = {
+    // Add user to code usage tracking
+    await setDoc(doc(db, "accessCodes", cleanCode, "users", userId), {
       userId,
-      userEmail: userAccessData?.userEmail || userEmail || "",
-      userName: userAccessData?.userName || userName || "",
-      userUniversity: userAccessData?.userUniversity || university || "",
-      examCategory: accessCodeData.examCategory,
-      papers: accessCodeData.papers,
-      expiryDate: expiryDate,
-      accessGrantedAt: new Date(),
-      accessCode: cleanCode,
-      hasAccess: true,
-      isActive: true,
-      isRestricted: false,
-      redeemedCodes: [...(userAccessData?.redeemedCodes || []), cleanCode],
-      examAttempts: userAccessData?.examAttempts || {},
-      attemptsMade: userAccessData?.attemptsMade || {},
-      maxAttempts: 10,
-      remainingAttempts: 10,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      userEmail: finalUserEmail,
+      userName: userName || userData?.displayName || "Unknown",
+      university: university || userData?.university || "Unknown",
+      usedAt: new Date(),
+    });
 
-    await adminDb.collection("userAccess").doc(userId).set(userAccess);
+    console.log(
+      `✅ Access code ${cleanCode} successfully redeemed by user ${userId}`
+    );
 
     return NextResponse.json({
       success: true,
-      message: `Access granted for ${
-        accessCodeData.examCategory
-      } ${(accessCodeData.papers || []).join(" & ")}`,
-      accessDetails: {
-        examCategory: accessCodeData.examCategory,
-        papers: accessCodeData.papers,
-        expiryDate: expiryDate,
-      },
+      message: "Access granted successfully!",
+      accessType: accessCodeData?.examCategory || "RN",
+      userId,
+      redeemedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error redeeming access code:", error);
+    console.error("❌ Error redeeming access code:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to redeem access code",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

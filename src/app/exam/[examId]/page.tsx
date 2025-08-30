@@ -259,7 +259,8 @@ export default function ExamPage() {
                 <span className="text-sm text-gray-600">Percentage:</span>
                 <span className="font-medium">
                   {Math.round(
-                    (examAttempt.score / examAttempt.assignedQuestions.length) * 100
+                    (examAttempt.score / examAttempt.assignedQuestions.length) *
+                      100
                   )}
                   %
                 </span>
@@ -315,7 +316,9 @@ export default function ExamPage() {
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-lg text-slate-700">Loading exam questions...</p>
+              <p className="text-lg text-slate-700">
+                Loading exam questions...
+              </p>
             </div>
           </div>
         </>

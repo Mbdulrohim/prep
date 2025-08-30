@@ -6,7 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
-import { AlertCircle, BookOpen, CheckCircle, Clock, Users, ArrowLeft } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Users,
+  ArrowLeft,
+} from "lucide-react";
 
 // RM-specific imports
 import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
@@ -16,7 +23,10 @@ import { questionBankManager } from "@/lib/questionBank";
 
 // Reusable components (will adapt for RM)
 import { RMExamFlow } from "@/components/exam/RMExamFlow";
-import { RMExamConfirmation, StudentDetails } from "@/components/exam/RMExamConfirmation";
+import {
+  RMExamConfirmation,
+  StudentDetails,
+} from "@/components/exam/RMExamConfirmation";
 
 export default function RMExamPage() {
   const { user, userProfile } = useAuth();
@@ -31,7 +41,9 @@ export default function RMExamPage() {
     university: "",
   });
   const [canStartExam, setCanStartExam] = useState<boolean | null>(null);
-  const [rmExamAttempt, setRmExamAttempt] = useState<RMExamAttempt | null>(null);
+  const [rmExamAttempt, setRmExamAttempt] = useState<RMExamAttempt | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [rmQuestions, setRmQuestions] = useState<any[]>([]);
@@ -39,11 +51,23 @@ export default function RMExamPage() {
 
   // Check RM exam eligibility
   useEffect(() => {
-    console.log("🧪 RM Exam eligibility effect triggered. user:", !!user, "userProfile:", !!userProfile, "examId:", examId);
-    console.log("👤 User details:", user ? { uid: user.uid, email: user.email } : "Not available");
-    
+    console.log(
+      "🧪 RM Exam eligibility effect triggered. user:",
+      !!user,
+      "userProfile:",
+      !!userProfile,
+      "examId:",
+      examId
+    );
+    console.log(
+      "👤 User details:",
+      user ? { uid: user.uid, email: user.email } : "Not available"
+    );
+
     if (user && userProfile) {
-      console.log("✅ User and profile available, checking RM exam eligibility");
+      console.log(
+        "✅ User and profile available, checking RM exam eligibility"
+      );
       checkRMExamEligibility();
     } else {
       console.log("⏳ Waiting for user or profile to be available");
@@ -63,31 +87,36 @@ export default function RMExamPage() {
       return;
     }
 
-    console.log("🔍 Starting RM exam eligibility check for user:", user.uid, "examId:", examId);
+    console.log(
+      "🔍 Starting RM exam eligibility check for user:",
+      user.uid,
+      "examId:",
+      examId
+    );
     setLoading(true);
     setError("");
 
     try {
       console.log("🔍 Starting RM exam eligibility check for user:", user.uid);
-      
+
       // Load RM exam data
       const rmExams = await fetchRMExams();
-      const currentExam = rmExams.find(exam => exam.id === examId);
-      
+      const currentExam = rmExams.find((exam) => exam.id === examId);
+
       if (!currentExam) {
         console.error("❌ RM exam not found:", examId);
         setError("RM exam not found");
         setLoading(false);
         return;
       }
-      
+
       console.log("✅ RM exam found:", currentExam);
       setRmExamData(currentExam);
 
       // Check RM user access with detailed debugging
       console.log("🔍 Checking RM access for user:", user.uid);
       const rmAccess = await rmUserAccessManager.getRMUserAccess(user.uid);
-      
+
       console.log("📊 RM Access check result:", {
         userId: user.uid,
         userEmail: user.email,
@@ -97,21 +126,28 @@ export default function RMExamPage() {
         accessGrantedAt: rmAccess?.accessGrantedAt,
         paymentInfo: rmAccess?.paymentInfo,
         examId: examId,
-        currentExamAvailable: currentExam.available
+        currentExamAvailable: currentExam.available,
       });
-      
+
       if (!rmAccess) {
         console.error("❌ No RM access record found for user:", user.uid);
         setCanStartExam(false);
-        setError("You don't have access to RM exams. Please purchase RM access.");
+        setError(
+          "You don't have access to RM exams. Please purchase RM access."
+        );
         setLoading(false);
         return;
       }
-      
+
       if (!rmAccess.hasAccess) {
-        console.error("❌ RM access record exists but hasAccess is false:", rmAccess);
+        console.error(
+          "❌ RM access record exists but hasAccess is false:",
+          rmAccess
+        );
         setCanStartExam(false);
-        setError("You don't have access to RM exams. Please purchase RM access.");
+        setError(
+          "You don't have access to RM exams. Please purchase RM access."
+        );
         setLoading(false);
         return;
       }
@@ -123,7 +159,7 @@ export default function RMExamPage() {
         console.warn("⏰ RM exam not available yet:", {
           examId: examId,
           scheduling: currentExam.scheduling,
-          available: currentExam.available
+          available: currentExam.available,
         });
         setCanStartExam(false);
         setError("This RM exam has not been scheduled by admin yet.");
@@ -132,18 +168,25 @@ export default function RMExamPage() {
       }
 
       // Check for existing RM exam attempts first
-      const existingAttempts = await rmExamAttemptManager.getUserRMExamAttempts(user.uid);
-      const existingAttempt = existingAttempts.find(attempt => 
-        attempt.examId === examId && attempt.completed
+      const existingAttempts = await rmExamAttemptManager.getUserRMExamAttempts(
+        user.uid
+      );
+      const existingAttempt = existingAttempts.find(
+        (attempt) => attempt.examId === examId && attempt.completed
       );
 
       // Check if user can start this specific RM exam
-      const canStart = await rmUserAccessManager.canStartRMExam(user.uid, examId);
-      
+      const canStart = await rmUserAccessManager.canStartRMExam(
+        user.uid,
+        examId
+      );
+
       if (!canStart.canStart) {
         // If user has existing attempts and reason is "Maximum attempts reached", show results instead of blocking
         if (existingAttempt && canStart.reason?.includes("Maximum attempts")) {
-          console.log("🎯 User has max attempts but has completed exam, showing results...");
+          console.log(
+            "🎯 User has max attempts but has completed exam, showing results..."
+          );
           setRmExamAttempt(existingAttempt);
           setCanStartExam(false); // Will trigger the "exam completed" view with results
         } else {
@@ -179,10 +222,10 @@ export default function RMExamPage() {
 
       // Load RM questions for this exam
       // Extract paper name from exam ID (rm-paper-1 -> paper-1, rm-paper-2 -> paper-2)
-      const paper = rmExamData.id.replace('rm-', '') as "paper-1" | "paper-2"; // Remove 'rm-' prefix to get just 'paper-1' or 'paper-2'
+      const paper = rmExamData.id.replace("rm-", "") as "paper-1" | "paper-2"; // Remove 'rm-' prefix to get just 'paper-1' or 'paper-2'
       console.log("🔍 Using paper name for question bank:", paper);
       console.log("🔍 Full exam ID:", rmExamData.id);
-      
+
       // Use the standard question bank manager for RM questions
       const questions = await questionBankManager.assignQuestionsToUser(
         user.uid,
@@ -192,14 +235,15 @@ export default function RMExamPage() {
       );
 
       if (questions.length === 0) {
-        setError("No RM questions available for this exam. Please contact admin.");
+        setError(
+          "No RM questions available for this exam. Please contact admin."
+        );
         setQuestionsLoading(false);
         return;
       }
 
       setRmQuestions(questions);
       setQuestionsLoading(false);
-
     } catch (error) {
       console.error("Error starting RM exam:", error);
       setError("Failed to start RM exam. Please try again.");
@@ -228,15 +272,19 @@ export default function RMExamPage() {
       console.log("Results received:", results);
 
       // Prepare user answers array
-      const userAnswers: (number | null)[] = new Array(rmQuestions.length).fill(null);
-      
+      const userAnswers: (number | null)[] = new Array(rmQuestions.length).fill(
+        null
+      );
+
       // Convert answers object to array
-      Object.entries(results.answers).forEach(([questionIndex, answerIndex]) => {
-        const qIndex = parseInt(questionIndex);
-        if (!isNaN(qIndex) && qIndex < rmQuestions.length) {
-          userAnswers[qIndex] = answerIndex as number;
+      Object.entries(results.answers).forEach(
+        ([questionIndex, answerIndex]) => {
+          const qIndex = parseInt(questionIndex);
+          if (!isNaN(qIndex) && qIndex < rmQuestions.length) {
+            userAnswers[qIndex] = answerIndex as number;
+          }
         }
-      });
+      );
 
       console.log("Converted user answers:", userAnswers);
 
@@ -248,14 +296,16 @@ export default function RMExamPage() {
         userProfile.university || studentDetails.university || "",
         examId,
         rmExamData.title,
-        rmExamData.id.replace('rm-', ''), // Convert "rm-paper-1" to "paper-1"
+        rmExamData.id.replace("rm-", ""), // Convert "rm-paper-1" to "paper-1"
         rmQuestions,
         rmExamData.durationMinutes
       );
 
       if (!startResult.success || !startResult.attemptId) {
         console.error("Failed to create RM exam attempt:", startResult.error);
-        throw new Error(startResult.error || "Failed to create RM exam attempt");
+        throw new Error(
+          startResult.error || "Failed to create RM exam attempt"
+        );
       }
 
       console.log("✅ RM exam attempt created:", startResult.attemptId);
@@ -270,7 +320,9 @@ export default function RMExamPage() {
 
       if (!submitResult.success) {
         console.error("Failed to submit RM exam attempt:", submitResult.error);
-        throw new Error(submitResult.error || "Failed to submit RM exam attempt");
+        throw new Error(
+          submitResult.error || "Failed to submit RM exam attempt"
+        );
       }
 
       console.log("✅ RM exam attempt submitted successfully");
@@ -278,7 +330,6 @@ export default function RMExamPage() {
 
       // Navigate to results page
       router.push(`/exam/rm/${examId}/results?immediate=true`);
-
     } catch (error) {
       console.error("❌ Error completing RM exam:", error);
       // Still navigate to results page so user isn't stuck
@@ -332,7 +383,7 @@ export default function RMExamPage() {
               Cannot Access RM Exam
             </h2>
             <p className="text-gray-600 mb-6">{error}</p>
-            
+
             {error.includes("don't have access") && (
               <div className="space-y-3">
                 <Button
@@ -350,13 +401,10 @@ export default function RMExamPage() {
                 </Button>
               </div>
             )}
-            
+
             {error.includes("not been scheduled") && (
               <div className="space-y-3">
-                <Button
-                  onClick={handleBackToRMExams}
-                  className="w-full"
-                >
+                <Button onClick={handleBackToRMExams} className="w-full">
                   Back to RM Exams
                 </Button>
                 <Button
@@ -391,7 +439,8 @@ export default function RMExamPage() {
               You have already completed this RM exam.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Score: {rmExamAttempt.percentage}% ({rmExamAttempt.correctAnswers}/{rmExamAttempt.assignedQuestions.length})
+              Score: {rmExamAttempt.percentage}% ({rmExamAttempt.correctAnswers}
+              /{rmExamAttempt.assignedQuestions.length})
             </p>
 
             <div className="flex flex-col space-y-3">
@@ -437,7 +486,7 @@ export default function RMExamPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Button
           variant="ghost"
@@ -451,19 +500,29 @@ export default function RMExamPage() {
         {rmExamData && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             {/* RM Exam Header */}
-            <div className={`bg-gradient-to-r ${rmExamData.color} p-8 text-white`}>
+            <div
+              className={`bg-gradient-to-r ${rmExamData.color} p-8 text-white`}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{rmExamData.title}</h1>
-                  <p className="text-green-100 mb-4">{rmExamData.description}</p>
-                  
+                  <h1 className="text-3xl font-bold mb-2">
+                    {rmExamData.title}
+                  </h1>
+                  <p className="text-green-100 mb-4">
+                    {rmExamData.description}
+                  </p>
+
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{rmExamData.questionsCount}</div>
+                      <div className="text-2xl font-bold">
+                        {rmExamData.questionsCount}
+                      </div>
                       <div className="text-sm text-green-200">Questions</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{rmExamData.durationMinutes}</div>
+                      <div className="text-2xl font-bold">
+                        {rmExamData.durationMinutes}
+                      </div>
                       <div className="text-sm text-green-200">Minutes</div>
                     </div>
                     <div className="text-center">
@@ -482,9 +541,14 @@ export default function RMExamPage() {
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
                 {rmExamData.topics.map((topic, index) => (
-                  <div key={index} className="flex items-center p-3 bg-green-50 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center p-3 bg-green-50 rounded-lg"
+                  >
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                    <span className="text-sm font-medium text-gray-700">{topic}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {topic}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -509,7 +573,8 @@ export default function RMExamPage() {
                   )}
                 </Button>
                 <p className="text-sm text-gray-500 mt-4">
-                  Make sure you have a stable internet connection and {rmExamData.durationMinutes} minutes available.
+                  Make sure you have a stable internet connection and{" "}
+                  {rmExamData.durationMinutes} minutes available.
                 </p>
               </div>
             </div>

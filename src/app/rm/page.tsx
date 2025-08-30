@@ -5,19 +5,23 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../../lib/firebase";
-import { standaloneRMExamManager, StandaloneRMExam, StandaloneRMAttempt } from "../../lib/standaloneRMExams";
-import { 
-  Calendar, 
-  Clock, 
-  Trophy, 
-  AlertCircle, 
-  Play, 
-  CreditCard, 
+import {
+  standaloneRMExamManager,
+  StandaloneRMExam,
+  StandaloneRMAttempt,
+} from "../../lib/standaloneRMExams";
+import {
+  Calendar,
+  Clock,
+  Trophy,
+  AlertCircle,
+  Play,
+  CreditCard,
   CheckCircle,
   BookOpen,
   Target,
   Crown,
-  Lock
+  Lock,
 } from "lucide-react";
 
 const RMExamPage: React.FC = () => {
@@ -25,20 +29,22 @@ const RMExamPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [rmExams, setRmExams] = useState<StandaloneRMExam[]>([]);
-  const [userAttempts, setUserAttempts] = useState<Record<string, StandaloneRMAttempt[]>>({});
+  const [userAttempts, setUserAttempts] = useState<
+    Record<string, StandaloneRMAttempt[]>
+  >({});
   const [userAccess, setUserAccess] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<'RM1' | 'RM2'>('RM1');
+  const [activeTab, setActiveTab] = useState<"RM1" | "RM2">("RM1");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
         await fetchRMData(currentUser);
       } else {
         router.push("/auth/login");
       }
-      
+
       setLoading(false);
     });
 
@@ -53,8 +59,10 @@ const RMExamPage: React.FC = () => {
 
       // Check user's overall RM access (not per-exam, but per-category)
       const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
-      const hasRMAccess = await rmUserAccessManager.hasRMAccess(currentUser.uid);
-      
+      const hasRMAccess = await rmUserAccessManager.hasRMAccess(
+        currentUser.uid
+      );
+
       // Set access for all exams based on overall RM access
       const accessMap: Record<string, boolean> = {};
       exams.forEach((exam) => {
@@ -63,9 +71,11 @@ const RMExamPage: React.FC = () => {
       setUserAccess(accessMap);
 
       // Get user's exam history
-      const userHistory = await standaloneRMExamManager.getUserExamHistory(currentUser.uid);
+      const userHistory = await standaloneRMExamManager.getUserExamHistory(
+        currentUser.uid
+      );
       const historyByExam: Record<string, StandaloneRMAttempt[]> = {};
-      userHistory.forEach(attempt => {
+      userHistory.forEach((attempt) => {
         if (!historyByExam[attempt.examId]) {
           historyByExam[attempt.examId] = [];
         }
@@ -80,12 +90,12 @@ const RMExamPage: React.FC = () => {
   // Refresh access function for use after payments
   const refreshRMAccess = async () => {
     if (!user) return;
-    
+
     try {
       console.log("🔄 Refreshing RM access for user:", user.uid);
       const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
       const hasRMAccess = await rmUserAccessManager.hasRMAccess(user.uid);
-      
+
       // Update access for all exams
       const accessMap: Record<string, boolean> = {};
       rmExams.forEach((exam) => {
@@ -101,16 +111,16 @@ const RMExamPage: React.FC = () => {
   // Add effect to listen for storage events (payment success from other tabs)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'rm_payment_success' && e.newValue) {
+      if (e.key === "rm_payment_success" && e.newValue) {
         console.log("🎉 RM payment success detected, refreshing access...");
         refreshRMAccess();
         // Clear the storage event
-        localStorage.removeItem('rm_payment_success');
+        localStorage.removeItem("rm_payment_success");
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [user, rmExams]);
 
   const handleStartExam = async (exam: StandaloneRMExam) => {
@@ -125,18 +135,26 @@ const RMExamPage: React.FC = () => {
 
     // Check if user has completed this exam (to show results instead of blocking)
     const attempts = userAttempts[exam.id] || [];
-    const completedAttempt = attempts.find(attempt => attempt.completed);
-    
+    const completedAttempt = attempts.find((attempt) => attempt.completed);
+
     if (completedAttempt) {
       // Check if they can start another attempt or if they've reached max attempts
       try {
         const { rmUserAccessManager } = await import("@/lib/rmUserAccess");
-        const canStart = await rmUserAccessManager.canStartRMExam(user.uid, exam.id);
-        
-        if (!canStart.canStart && canStart.reason?.includes("Maximum attempts")) {
+        const canStart = await rmUserAccessManager.canStartRMExam(
+          user.uid,
+          exam.id
+        );
+
+        if (
+          !canStart.canStart &&
+          canStart.reason?.includes("Maximum attempts")
+        ) {
           // User has reached max attempts, show results instead of blocking
           console.log("🎯 User has max attempts, redirecting to results...");
-          router.push(`/exam/rm/${exam.id}/results?attemptId=${completedAttempt.id}`);
+          router.push(
+            `/exam/rm/${exam.id}/results?attemptId=${completedAttempt.id}`
+          );
           return;
         }
       } catch (error) {
@@ -151,41 +169,49 @@ const RMExamPage: React.FC = () => {
 
   const formatDate = (date: Date | undefined) => {
     if (!date) return "Available now";
-    return date.toLocaleDateString() + " at " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString() +
+      " at " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
   const getExamStatus = (exam: StandaloneRMExam) => {
     const hasAccess = userAccess[exam.id];
     const attempts = userAttempts[exam.id] || [];
-    
+
     if (!hasAccess && exam.requiresPayment) {
-      return { status: 'payment_required', color: 'orange', icon: CreditCard };
+      return { status: "payment_required", color: "orange", icon: CreditCard };
     }
-    
+
     if (attempts.length > 0) {
-      const bestAttempt = attempts.reduce((best, current) => 
+      const bestAttempt = attempts.reduce((best, current) =>
         current.percentage > best.percentage ? current : best
       );
-      return { 
-        status: 'completed', 
-        color: 'green', 
+      return {
+        status: "completed",
+        color: "green",
         icon: CheckCircle,
         score: bestAttempt.percentage,
-        attempts: attempts.length
+        attempts: attempts.length,
       };
     }
-    
+
     if (hasAccess) {
-      return { status: 'available', color: 'blue', icon: Play };
+      return { status: "available", color: "blue", icon: Play };
     }
-    
-    return { status: 'locked', color: 'gray', icon: Lock };
+
+    return { status: "locked", color: "gray", icon: Lock };
   };
 
   // Filter exams by paper type - RM 1 is Papers A&B, RM 2 is Papers C&D
-  const rm1Exams = rmExams.filter(exam => exam.paper === 'A' || exam.paper === 'B');
-  const rm2Exams = rmExams.filter(exam => exam.paper === 'C' || exam.paper === 'D');
-  const currentExams = activeTab === 'RM1' ? rm1Exams : rm2Exams;
+  const rm1Exams = rmExams.filter(
+    (exam) => exam.paper === "A" || exam.paper === "B"
+  );
+  const rm2Exams = rmExams.filter(
+    (exam) => exam.paper === "C" || exam.paper === "D"
+  );
+  const currentExams = activeTab === "RM1" ? rm1Exams : rm2Exams;
 
   // Check if user has any access at all
   const hasAnyAccess = Object.values(userAccess).some(Boolean);
@@ -211,7 +237,7 @@ const RMExamPage: React.FC = () => {
           >
             ← Back to Dashboard
           </button>
-          
+
           {/* Hero Section */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 text-white mb-8">
             <div className="flex items-center justify-between">
@@ -251,7 +277,8 @@ const RMExamPage: React.FC = () => {
                     RM Access Required
                   </h3>
                   <p className="text-orange-700 mb-4">
-                    You need to purchase RM access to take these exams. Get access to both RM 1 and RM 2 papers.
+                    You need to purchase RM access to take these exams. Get
+                    access to both RM 1 and RM 2 papers.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
@@ -276,21 +303,21 @@ const RMExamPage: React.FC = () => {
           {/* Tabs for RM 1 and RM 2 */}
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
             <button
-              onClick={() => setActiveTab('RM1')}
+              onClick={() => setActiveTab("RM1")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'RM1'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                activeTab === "RM1"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               RM 1 (Papers A & B)
             </button>
             <button
-              onClick={() => setActiveTab('RM2')}
+              onClick={() => setActiveTab("RM2")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'RM2'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                activeTab === "RM2"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               RM 2 (Papers C & D)
@@ -305,12 +332,16 @@ const RMExamPage: React.FC = () => {
                   <BookOpen className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Available Papers</p>
-                  <p className="text-2xl font-bold text-gray-900">{currentExams.length}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Available Papers
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {currentExams.length}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -319,43 +350,54 @@ const RMExamPage: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {currentExams.filter(exam => {
-                      const attempts = userAttempts[exam.id] || [];
-                      return attempts.length > 0;
-                    }).length}
+                    {
+                      currentExams.filter((exam) => {
+                        const attempts = userAttempts[exam.id] || [];
+                        return attempts.length > 0;
+                      }).length
+                    }
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <Trophy className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Best Score</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Best Score
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {(() => {
-                      const currentAttempts = currentExams.flatMap(exam => userAttempts[exam.id] || []);
-                      return currentAttempts.length > 0 
-                        ? Math.max(...currentAttempts.map(a => a.percentage)).toFixed(1) + '%'
-                        : '0%';
+                      const currentAttempts = currentExams.flatMap(
+                        (exam) => userAttempts[exam.id] || []
+                      );
+                      return currentAttempts.length > 0
+                        ? Math.max(
+                            ...currentAttempts.map((a) => a.percentage)
+                          ).toFixed(1) + "%"
+                        : "0%";
                     })()}
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="p-2 bg-orange-100 rounded-lg">
                   <Lock className="h-6 w-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Access Level</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Access Level
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {currentExams.filter(exam => userAccess[exam.id]).length}/{currentExams.length}
+                    {currentExams.filter((exam) => userAccess[exam.id]).length}/
+                    {currentExams.length}
                   </p>
                 </div>
               </div>
@@ -368,41 +410,58 @@ const RMExamPage: React.FC = () => {
           {currentExams.map((exam) => {
             const examStatus = getExamStatus(exam);
             const StatusIcon = examStatus.icon;
-            
+
             return (
-              <div key={exam.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={exam.id}
+                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              >
                 <div className="p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">{exam.title}</h3>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {exam.title}
+                      </h3>
                       <div className="flex items-center mt-2">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Paper {exam.paper}
                         </span>
                         <span className="ml-2 text-sm text-gray-500">
-                          {activeTab === 'RM1' ? 'RM 1' : 'RM 2'}
+                          {activeTab === "RM1" ? "RM 1" : "RM 2"}
                         </span>
                       </div>
                     </div>
-                    <div className={`p-2 rounded-lg ${
-                      examStatus.color === 'green' ? 'bg-green-100' :
-                      examStatus.color === 'blue' ? 'bg-blue-100' :
-                      examStatus.color === 'orange' ? 'bg-orange-100' :
-                      'bg-gray-100'
-                    }`}>
-                      <StatusIcon className={`h-5 w-5 ${
-                        examStatus.color === 'green' ? 'text-green-600' :
-                        examStatus.color === 'blue' ? 'text-blue-600' :
-                        examStatus.color === 'orange' ? 'text-orange-600' :
-                        'text-gray-600'
-                      }`} />
+                    <div
+                      className={`p-2 rounded-lg ${
+                        examStatus.color === "green"
+                          ? "bg-green-100"
+                          : examStatus.color === "blue"
+                          ? "bg-blue-100"
+                          : examStatus.color === "orange"
+                          ? "bg-orange-100"
+                          : "bg-gray-100"
+                      }`}
+                    >
+                      <StatusIcon
+                        className={`h-5 w-5 ${
+                          examStatus.color === "green"
+                            ? "text-green-600"
+                            : examStatus.color === "blue"
+                            ? "text-blue-600"
+                            : examStatus.color === "orange"
+                            ? "text-orange-600"
+                            : "text-gray-600"
+                        }`}
+                      />
                     </div>
                   </div>
 
                   {/* Description */}
                   {exam.description && (
-                    <p className="text-gray-600 text-sm mb-4">{exam.description}</p>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {exam.description}
+                    </p>
                   )}
 
                   {/* Exam Details */}
@@ -418,14 +477,16 @@ const RMExamPage: React.FC = () => {
                     {exam.requiresPayment && (
                       <div className="flex items-center text-sm text-gray-600">
                         <CreditCard className="h-4 w-4 mr-2" />
-                        <span>{exam.currency} {exam.price}</span>
+                        <span>
+                          {exam.currency} {exam.price}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   {/* Status and Action */}
                   <div className="border-t pt-4">
-                    {examStatus.status === 'completed' && (
+                    {examStatus.status === "completed" && (
                       <div className="mb-3">
                         <div className="flex justify-between text-sm text-gray-600 mb-1">
                           <span>Best Score</span>
@@ -437,24 +498,26 @@ const RMExamPage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     <button
                       onClick={() => handleStartExam(exam)}
-                      disabled={examStatus.status === 'locked'}
+                      disabled={examStatus.status === "locked"}
                       className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                        examStatus.status === 'payment_required'
-                          ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                          : examStatus.status === 'available'
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                          : examStatus.status === 'completed'
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        examStatus.status === "payment_required"
+                          ? "bg-orange-600 hover:bg-orange-700 text-white"
+                          : examStatus.status === "available"
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : examStatus.status === "completed"
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
                       }`}
                     >
-                      {examStatus.status === 'payment_required' && 'Purchase Access'}
-                      {examStatus.status === 'available' && 'Start Exam'}
-                      {examStatus.status === 'completed' && 'View Results / Retake'}
-                      {examStatus.status === 'locked' && 'Locked'}
+                      {examStatus.status === "payment_required" &&
+                        "Purchase Access"}
+                      {examStatus.status === "available" && "Start Exam"}
+                      {examStatus.status === "completed" &&
+                        "View Results / Retake"}
+                      {examStatus.status === "locked" && "Locked"}
                     </button>
                   </div>
                 </div>
@@ -471,17 +534,18 @@ const RMExamPage: React.FC = () => {
               No {activeTab} Exams Available
             </h3>
             <p className="text-gray-600">
-              {activeTab === 'RM1' 
-                ? 'Check back later for RM 1 exam papers (A & B).' 
-                : 'Check back later for RM 2 exam papers (C & D).'
-              }
+              {activeTab === "RM1"
+                ? "Check back later for RM 1 exam papers (A & B)."
+                : "Check back later for RM 2 exam papers (C & D)."}
             </p>
           </div>
         )}
 
         {/* Quick Actions */}
         <div className="mt-12 bg-white rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Actions
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => router.push("/rm/leaderboard")}
@@ -493,7 +557,7 @@ const RMExamPage: React.FC = () => {
                 <p className="text-sm text-gray-600">See top performers</p>
               </div>
             </button>
-            
+
             <button
               onClick={() => router.push("/rm/history")}
               className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -504,7 +568,7 @@ const RMExamPage: React.FC = () => {
                 <p className="text-sm text-gray-600">Review past attempts</p>
               </div>
             </button>
-            
+
             <button
               onClick={() => router.push("/rm/study-guide")}
               className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

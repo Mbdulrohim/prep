@@ -130,7 +130,7 @@ export function SimpleExamConfirmation({
                 <FileText className="h-5 w-5 mr-2" />
                 {examDetails.title}
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                   <span className="text-sm text-gray-600">Questions:</span>
@@ -157,7 +157,9 @@ export function SimpleExamConfirmation({
 
               {examDetails.topics && examDetails.topics.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Topics Covered:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Topics Covered:
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {examDetails.topics.slice(0, 6).map((topic, index) => (
                       <span
@@ -184,11 +186,13 @@ export function SimpleExamConfirmation({
               <User className="h-5 w-5 mr-2" />
               Your Details
             </h3>
-            
+
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                 <span className="text-sm text-gray-600">Name:</span>
-                <span className="font-medium text-gray-900">{getUserDisplayName()}</span>
+                <span className="font-medium text-gray-900">
+                  {getUserDisplayName()}
+                </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                 <span className="text-sm text-gray-600">University:</span>
@@ -214,8 +218,12 @@ export function SimpleExamConfirmation({
                   I agree to the exam terms and conditions and confirm that:
                 </span>
                 <ul className="mt-2 ml-4 space-y-1 text-gray-600 list-disc">
-                  <li>I will not use any unauthorized materials during the exam</li>
-                  <li>I understand that this exam is timed and cannot be paused</li>
+                  <li>
+                    I will not use any unauthorized materials during the exam
+                  </li>
+                  <li>
+                    I understand that this exam is timed and cannot be paused
+                  </li>
                   <li>I confirm that the information above is correct</li>
                   <li>I am ready to begin the exam now</li>
                 </ul>
@@ -234,11 +242,7 @@ export function SimpleExamConfirmation({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             {onCancel && (
-              <Button
-                onClick={onCancel}
-                variant="outline"
-                className="flex-1"
-              >
+              <Button onClick={onCancel} variant="outline" className="flex-1">
                 Cancel
               </Button>
             )}
