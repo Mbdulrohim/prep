@@ -36,11 +36,12 @@ export class DocumentParser {
     examCategory: string
   ): Promise<ParseResult> {
     try {
-      // Convert file to ArrayBuffer
+      // Convert file to ArrayBuffer then to Buffer
       const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
       // Extract text from DOCX
-      const result = await mammoth.extractRawText({ arrayBuffer });
+      const result = await mammoth.extractRawText({ buffer });
       const text = result.value;
 
       // Parse questions from the extracted text

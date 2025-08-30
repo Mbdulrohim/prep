@@ -5,7 +5,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Lock, CheckCircle, AlertCircle, Crown, Loader } from "lucide-react";
 
-export function RMCodeRedemption() {
+interface RMCodeRedemptionProps {
+  onSuccess?: () => void;
+}
+
+export function RMCodeRedemption({ onSuccess }: RMCodeRedemptionProps) {
   const { user, userProfile } = useAuth();
   const [accessCode, setAccessCode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -52,10 +56,12 @@ export function RMCodeRedemption() {
       setSuccess("RM access code redeemed successfully! You now have access to all RM exams.");
       setAccessCode("");
       
-      // Refresh page after 2 seconds to show updated access
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // Call the success callback to refresh the parent component immediately
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+        }, 500); // Small delay to ensure the success message is visible
+      }
 
     } catch (error) {
       console.error("Code redemption error:", error);

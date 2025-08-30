@@ -51,6 +51,32 @@ export async function POST(request: NextRequest) {
           message: accessResult.hasAccess ? 'User has access' : 'User does not have access'
         });
 
+      case 'grant_payment_access':
+        const { userId: paymentUserId, userEmail: paymentUserEmail, examCategory: paymentExamCategory, paymentData } = data;
+        if (!paymentUserId || !paymentUserEmail || !paymentExamCategory || !paymentData) {
+          return NextResponse.json(
+            { success: false, error: 'userId, userEmail, examCategory, and paymentData are required' },
+            { status: 400 }
+          );
+        }
+        
+        const paymentResult = await rmAccessService.grantAccessViaPayment(
+          paymentData
+        );
+        
+        if (paymentResult.success) {
+          return NextResponse.json({
+            success: true,
+            message: paymentResult.message,
+            userAccessId: paymentResult.userAccessId
+          });
+        } else {
+          return NextResponse.json(
+            { success: false, error: paymentResult.message },
+            { status: 500 }
+          );
+        }
+
       // Payment processing moved to dedicated webhook endpoints
 
       case 'generate_bulk_codes':
@@ -121,8 +147,8 @@ export async function GET(request: NextRequest) {
           success: true, 
           stats: {
             totalCodes: codes.length,
-            activeCodes: codes.filter(c => c.isActive).length,
-            usedCodes: codes.filter(c => c.usedCount > 0).length
+            activeCodes: codes.filter(c => !c.isUsed).length,
+            usedCodes: codes.filter(c => c.isUsed).length
           }
         });
 

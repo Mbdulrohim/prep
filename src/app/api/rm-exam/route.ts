@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
           success: true,
           assignment,
           accessInfo: {
-            accessType: accessCheck.accessType,
             expiresAt: accessCheck.expiresAt
           },
           message: 'Exam started successfully'
@@ -230,8 +229,8 @@ export async function GET(request: NextRequest) {
 
         const accessCodeStats = {
           totalCodes: accessCodes.length,
-          activeCodes: accessCodes.filter(c => c.isActive).length,
-          usedCodes: accessCodes.filter(c => c.usedCount > 0).length
+          activeCodes: accessCodes.filter(c => !c.isUsed).length,
+          usedCodes: accessCodes.filter(c => c.isUsed).length
         };
 
         return NextResponse.json({

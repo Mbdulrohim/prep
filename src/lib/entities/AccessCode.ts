@@ -1,37 +1,40 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from './User';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
 @Entity('access_codes')
+@Index(['code'], { unique: true })
 export class AccessCode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, length: 20 })
   code: string;
 
-  @Column()
-  examCategory: string; // 'RN', 'RM', 'Weekly Assessment'
+  @Column({ type: 'enum', enum: ['rm', 'weekly_assessment'], default: 'rm' })
+  type: string;
 
-  @Column()
-  codeType: string; // 'single_use', 'multi_use'
+  @Column({ default: false })
+  isUsed: boolean;
 
-  @Column({ nullable: true })
-  maxUses: number;
+  @Column({ type: 'uuid', nullable: true })
+  usedBy: string;
 
-  @Column({ default: 0 })
-  usedCount: number;
+  @Column({ type: 'timestamp', nullable: true })
+  usedAt: Date;
 
-  @Column({ nullable: true })
-  expiresAt: Date;
+  @Column({ type: 'json', nullable: true })
+  examAccess: {
+    paper1: boolean;
+    paper2: boolean;
+    attempts: number;
+    expiryDate?: string;
+  };
 
-  @Column({ default: true })
-  isActive: boolean;
-
-  @Column({ nullable: true })
-  createdByUserId: string;
-
-  @Column({ nullable: true })
-  description: string;
+  @Column({ type: 'json', nullable: true })
+  metadata: {
+    batchId?: string;
+    generatedBy?: string;
+    description?: string;
+  };
 
   @CreateDateColumn()
   createdAt: Date;
@@ -39,8 +42,8 @@ export class AccessCode {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Relations
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'createdByUserId' })
-  createdBy: User;
+  // Helper methods
+  canBeUsed(): boolean {
+    return !this.isUsed;
+  }
 }

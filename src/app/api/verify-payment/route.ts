@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { flutterwaveService } from "@/lib/flutterwave";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { grantRMAccessViaPaymentDirect } from "@/lib/rmUserAccessDirect";
+import { rmAccessService } from "@/lib/services/rmAccessService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,22 +62,22 @@ export async function POST(request: NextRequest) {
         try {
           // Prepare payment info for RM access
           const rmPaymentInfo = {
+            userId: verifiedUserId,
+            examCategory: "RM",
             amount: verification.data.amount,
             currency: verification.data.currency,
-            paymentMethod: "flutterwave" as const,
+            paymentMethod: "flutterwave",
             transactionId: transactionId,
-            paymentDate: new Date(),
-            paymentStatus: "completed" as const,
+            status: "completed" as const,
           };
 
-          // Grant RM access using direct client SDK (bypasses quota)
-          const rmAccessResult = await grantRMAccessViaPaymentDirect(
-            customer.email,
+          // Grant RM access using PostgreSQL service
+          const rmAccessResult = await rmAccessService.grantAccessViaPayment(
             rmPaymentInfo
           );
 
           if (rmAccessResult.success) {
-            console.log("✅ RM access granted successfully via Admin SDK");
+            console.log("✅ RM access granted successfully via PostgreSQL");
             
             // Save transaction record
             await setDoc(doc(db, "transactions", txRef), {

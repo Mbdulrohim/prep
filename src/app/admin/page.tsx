@@ -7,7 +7,8 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Alert, useToast } from "@/components/ui/Alert";
 import { DocumentUpload } from "@/components/admin/DocumentUpload";
-import { AccessCodeManager } from "@/components/admin/AccessCodeManager";
+import AccessCodeManager from "@/components/admin/AccessCodeManager";
+import RMQuestionUpload from "@/components/admin/RMQuestionUpload";
 import { WeeklyAssessmentCreator } from "@/components/admin/WeeklyAssessmentCreator";
 import { AdvancedWeeklyAssessmentManager } from "@/components/admin/AdvancedWeeklyAssessmentManager";
 import StandaloneWeeklyAssessmentAdmin from "../../components/admin/StandaloneWeeklyAssessmentAdmin";
@@ -139,6 +140,7 @@ export default function AdminDashboard() {
     | "exam-schedule"
     | "upload"
     | "questions"
+    | "rm-questions"
     | "users"
     | "rankings"
     | "feedback"
@@ -1581,6 +1583,7 @@ export default function AdminDashboard() {
     { id: "exam-schedule", label: "Exam Scheduling", icon: Calendar },
     { id: "upload", label: "Upload Documents", icon: Upload },
     { id: "questions", label: "Manage Questions", icon: Database },
+    { id: "rm-questions", label: "RM Questions", icon: FileText },
     { id: "users", label: "User Management", icon: Users },
     { id: "access-codes", label: "Access Codes", icon: Key },
     {
@@ -2702,10 +2705,14 @@ export default function AdminDashboard() {
                     <div className="flex space-x-3">
                       <Button
                         className={`${
-                          showDeleteRMConfirm 
-                            ? "bg-red-700 hover:bg-red-800" 
+                          showDeleteRMConfirm
+                            ? "bg-red-700 hover:bg-red-800"
                             : "bg-red-600 hover:bg-red-700"
-                        } ${deletingRMQuestions ? "opacity-50 cursor-not-allowed" : ""}`}
+                        } ${
+                          deletingRMQuestions
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                         onClick={deleteAllRMQuestions}
                         disabled={deletingRMQuestions}
                       >
@@ -2872,6 +2879,11 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* RM Questions Tab */}
+          {activeTab === "rm-questions" && (
+            <RMQuestionUpload />
           )}
 
           {/* Feedback Tab */}
@@ -3766,7 +3778,7 @@ export default function AdminDashboard() {
           {/* Access Codes Tab */}
           {activeTab === "access-codes" && (
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <AccessCodeManager createdBy={user?.email || "admin"} />
+              <AccessCodeManager />
             </div>
           )}
 

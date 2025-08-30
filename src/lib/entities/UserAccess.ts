@@ -1,34 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { AccessCode } from './AccessCode';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
 @Entity('user_access')
+@Index(['userId', 'accessType'])
 export class UserAccess {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  userId: string; // Firebase UID
+  @Column({ type: 'uuid' })
+  userId: string;
 
-  @Column()
-  userEmail: string;
+  @Column({ type: 'enum', enum: ['rm', 'weekly_assessment'], default: 'rm' })
+  accessType: string;
 
-  @Column()
-  examCategory: string; // 'RM', 'RN', 'Weekly Assessment'
+  @Column({ type: 'json' })
+  examAccess: {
+    paper1: boolean;
+    paper2: boolean;
+    attempts: number;
+    expiryDate?: string;
+  };
 
-  @Column()
-  accessType: string; // 'code', 'payment', 'admin'
+  @Column({ default: true })
+  isActive: boolean;
 
-  @Column({ default: 'active' })
-  status: string; // 'active', 'expired', 'suspended'
+  @Column({ type: 'uuid', nullable: true })
+  grantedByCode: string; // Reference to access code used
 
-  @Column({ nullable: true })
-  expiresAt: Date;
-
-  @Column({ nullable: true })
-  accessCodeId: string;
-
-  @Column({ nullable: true })
-  paymentId: string;
+  @Column({ type: 'json', nullable: true })
+  metadata: {
+    grantedBy?: string;
+    reason?: string;
+    notes?: string;
+  };
 
   @CreateDateColumn()
   createdAt: Date;
@@ -36,8 +39,23 @@ export class UserAccess {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Relations
-  @ManyToOne(() => AccessCode, { nullable: true })
-  @JoinColumn({ name: 'accessCodeId' })
-  accessCode: AccessCode;
+  // Helper methods
+  hasAccess(paper?: 'paper1' | 'paper2'): boolean {
+    if (!this.isActive) return false;
+    
+    if (this.examAccess.expiryDate) {
+      const expiry = new Date(this.examAccess.expiryDate);
+      if (expiry < new Date()) return false;
+    }
+
+    if (paper) {
+      return this.examAccess[paper];
+    }
+
+    return this.examAccess.paper1 || this.examAccess.paper2;
+  }
+
+  hasAttemptsLeft(): boolean {
+    return this.examAccess.attempts > 0;
+  }
 }

@@ -23,9 +23,59 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
-import { rmUserAccessManager } from "@/lib/rmUserAccess";
-import { rmExamAttemptManager, RMExamAttempt } from "@/lib/rmExamAttempts";
+
+// Types for PostgreSQL data
+interface RMExamData {
+  id: string;
+  title: string;
+  paper: string;
+  description?: string;
+  duration: number;
+  totalQuestions: number;
+  passingScore: number;
+  instructions?: any;
+  settings?: any;
+  isActive: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  // Computed/UI properties
+  color?: string;
+  available?: boolean;
+  scheduling?: {
+    isScheduled: boolean;
+    scheduledDate?: Date;
+  };
+}
+
+interface RMExamAttempt {
+  id: string;
+  examId: string;
+  userId: string;
+  userEmail: string;
+  attemptNumber: number;
+  status: string;
+  answers: any;
+  score: number;
+  percentage: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  timeSpent: number;
+  isCompleted: boolean;
+  isSubmitted: boolean;
+  isPassed: boolean;
+  startedAt: string;
+  submittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  exam?: {
+    id: string;
+    title: string;
+    paper: string;
+    duration: number;
+    passingScore: number;
+  };
+}
 
 export default function RMDashboardPage() {
   const { user, userProfile } = useAuth();
@@ -51,15 +101,48 @@ export default function RMDashboardPage() {
 
     try {
       setLoading(true);
-      const [exams, access, attempts] = await Promise.all([
-        fetchRMExams(),
-        rmUserAccessManager.getRMUserAccess(user.uid),
-        rmExamAttemptManager.getUserRMExamAttempts(user.uid),
-      ]);
+      
+      // Fetch RM exams from PostgreSQL
+      const examsResponse = await fetch('/api/rm-exams');
+      const examsResult = await examsResponse.json();
+      
+      // Fetch user attempts from PostgreSQL
+      const attemptsResponse = await fetch(`/api/rm-attempts?userId=${user.uid}`);
+      const attemptsResult = await attemptsResponse.json();
 
-      setRmExams(exams);
+      // Check RM access using PostgreSQL service
+      const accessResponse = await fetch('/api/rm-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'check_access',
+          userId: user.uid,
+          examCategory: 'RM'
+        })
+      });
+
+      const accessResult = await accessResponse.json();
+      const access = accessResult.success && accessResult.hasAccess ? {
+        hasAccess: true,
+        accessType: accessResult.accessType,
+        expiresAt: accessResult.expiresAt ? new Date(accessResult.expiresAt) : null,
+        userId: user.uid,
+        examCategory: 'RM'
+      } : null;
+
+      setRmExams(examsResult.success ? examsResult.data.exams.map((exam: RMExamData) => ({
+        ...exam,
+        color: "#4F46E5",
+        available: exam.isActive && exam.isPublished,
+        scheduling: {
+          isScheduled: false,
+          scheduledDate: undefined
+        }
+      })) : []);
+      setRmUserAttempts(attemptsResult.success ? attemptsResult.data.attempts : []);
       setRmUserAccess(access);
-      setRmUserAttempts(attempts);
     } catch (error) {
       console.error("Error loading RM data:", error);
       setError("Failed to load RM exam data");
@@ -73,7 +156,29 @@ export default function RMDashboardPage() {
 
     try {
       setAccessLoading(true);
-      const access = await rmUserAccessManager.getRMUserAccess(user.uid);
+      
+      // Check RM access using PostgreSQL service
+      const accessResponse = await fetch('/api/rm-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'check_access',
+          userId: user.uid,
+          examCategory: 'RM'
+        })
+      });
+
+      const accessResult = await accessResponse.json();
+      const access = accessResult.success && accessResult.hasAccess ? {
+        hasAccess: true,
+        accessType: accessResult.accessType,
+        expiresAt: accessResult.expiresAt ? new Date(accessResult.expiresAt) : null,
+        userId: user.uid,
+        examCategory: 'RM'
+      } : null;
+
       setRmUserAccess(access);
     } catch (error) {
       console.error("Error refreshing RM access:", error);
@@ -109,7 +214,7 @@ export default function RMDashboardPage() {
   }
 
   const hasRMAccess = rmUserAccess?.hasAccess;
-  const completedAttempts = rmUserAttempts.filter((a) => a.completed).length;
+  const completedAttempts = rmUserAttempts.filter((a) => a.isCompleted).length;
   const averageScore =
     rmUserAttempts.length > 0
       ? Math.round(
@@ -286,7 +391,7 @@ export default function RMDashboardPage() {
                       <div className="flex-1 border-t border-gray-300"></div>
                     </div>
 
-                    <RMCodeRedemption />
+                    <RMCodeRedemption onSuccess={refreshRMAccess} />
                   </div>
                 </div>
               </div>
@@ -425,7 +530,7 @@ export default function RMDashboardPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div
                       className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        exam.color
+                        exam.color || "#4F46E5"
                           .replace("from-", "bg-")
                           .replace("to-", "")
                           .split(" ")[0]
@@ -482,12 +587,12 @@ export default function RMDashboardPage() {
                   <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                     <div>
                       <span className="text-gray-500">Questions:</span>
-                      <div className="font-semibold">{exam.questionsCount}</div>
+                      <div className="font-semibold">{exam.totalQuestions}</div>
                     </div>
                     <div>
                       <span className="text-gray-500">Duration:</span>
                       <div className="font-semibold">
-                        {exam.durationMinutes} mins
+                        {exam.duration} mins
                       </div>
                     </div>
                   </div>
@@ -520,13 +625,13 @@ export default function RMDashboardPage() {
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                     >
                       <div>
-                        <div className="font-medium">{attempt.examTitle}</div>
+                        <div className="font-medium">{attempt.exam?.title || `Exam ${attempt.examId}`}</div>
                         <div className="text-sm text-gray-600">
-                          {attempt.completed ? (
+                          {attempt.isCompleted ? (
                             <>
                               Score: {attempt.percentage}% •{" "}
                               {attempt.correctAnswers}/
-                              {attempt.assignedQuestions.length}
+                              {attempt.totalQuestions}
                             </>
                           ) : (
                             "In Progress"
@@ -534,8 +639,8 @@ export default function RMDashboardPage() {
                         </div>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {attempt.endTime
-                          ? new Date(attempt.endTime).toLocaleDateString()
+                        {attempt.submittedAt
+                          ? new Date(attempt.submittedAt).toLocaleDateString()
                           : "Ongoing"}
                       </div>
                     </div>

@@ -4,8 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import EnhancedRMAdminDashboard from "@/components/admin/EnhancedRMAdminDashboard";
-import { Loader2, Shield, AlertTriangle } from "lucide-react";
+import AccessCodeManager from "@/components/admin/AccessCodeManager";
+import { Loader2, Shield, AlertTriangle, Key, BarChart3, BookOpen, CreditCard, Settings } from "lucide-react";
 
 export default function RMAdminDashboardPage() {
   const { user, userProfile } = useAuth();
@@ -101,5 +101,30 @@ export default function RMAdminDashboardPage() {
     );
   }
 
-  return <EnhancedRMAdminDashboard />;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">RM Admin Control System</h1>
+                <p className="text-sm text-gray-600">Complete management for Registered Midwife examinations</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                PostgreSQL Connected
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <AccessCodeManager />
+      </div>
+    </div>
+  );
 }
