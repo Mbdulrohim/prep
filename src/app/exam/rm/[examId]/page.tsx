@@ -457,7 +457,7 @@ export default function RMExamPage() {
                   <h1 className="text-3xl font-bold mb-2">{rmExamData.title}</h1>
                   <p className="text-green-100 mb-4">{rmExamData.description}</p>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold">{rmExamData.questionsCount}</div>
                       <div className="text-sm text-green-200">Questions</div>
@@ -465,10 +465,6 @@ export default function RMExamPage() {
                     <div className="text-center">
                       <div className="text-2xl font-bold">{rmExamData.durationMinutes}</div>
                       <div className="text-sm text-green-200">Minutes</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{rmExamData.difficulty}</div>
-                      <div className="text-sm text-green-200">Level</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold">RM</div>

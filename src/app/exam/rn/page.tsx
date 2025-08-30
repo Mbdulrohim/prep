@@ -140,10 +140,6 @@ export default function RNExamPage() {
                               <Clock className="h-4 w-4 mr-1" />
                               <span>{exam.durationMinutes} minutes</span>
                             </div>
-                            <div className="flex items-center">
-                              <Award className="h-4 w-4 mr-1" />
-                              <span>{exam.difficulty}</span>
-                            </div>
                           </div>
                         </div>
 

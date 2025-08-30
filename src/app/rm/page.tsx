@@ -28,6 +28,7 @@ const RMExamPage: React.FC = () => {
   const [rmExams, setRmExams] = useState<StandaloneRMExam[]>([]);
   const [userAttempts, setUserAttempts] = useState<Record<string, StandaloneRMAttempt[]>>({});
   const [userAccess, setUserAccess] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'RM1' | 'RM2'>('RM1');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -182,6 +183,14 @@ const RMExamPage: React.FC = () => {
     return { status: 'locked', color: 'gray', icon: Lock };
   };
 
+  // Filter exams by paper type - RM 1 is Papers A&B, RM 2 is Papers C&D
+  const rm1Exams = rmExams.filter(exam => exam.paper === 'A' || exam.paper === 'B');
+  const rm2Exams = rmExams.filter(exam => exam.paper === 'C' || exam.paper === 'D');
+  const currentExams = activeTab === 'RM1' ? rm1Exams : rm2Exams;
+
+  // Check if user has any access at all
+  const hasAnyAccess = Object.values(userAccess).some(Boolean);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -233,6 +242,62 @@ const RMExamPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Access Control Warning */}
+          {!hasAnyAccess && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-8">
+              <div className="flex items-start">
+                <Lock className="h-6 w-6 text-orange-600 mr-3 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-orange-900 mb-2">
+                    RM Access Required
+                  </h3>
+                  <p className="text-orange-700 mb-4">
+                    You need to purchase RM access to take these exams. Get access to both RM 1 and RM 2 papers.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => router.push("/dashboard/rm")}
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2 inline" />
+                      Purchase RM Access (₦2,000)
+                    </button>
+                    <button
+                      onClick={() => router.push("/dashboard/rm")}
+                      className="border border-orange-600 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Redeem Access Code
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tabs for RM 1 and RM 2 */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
+            <button
+              onClick={() => setActiveTab('RM1')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'RM1'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              RM 1 (Papers A & B)
+            </button>
+            <button
+              onClick={() => setActiveTab('RM2')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'RM2'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              RM 2 (Papers C & D)
+            </button>
+          </div>
+
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg p-6 shadow-sm">
@@ -242,7 +307,7 @@ const RMExamPage: React.FC = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Available Papers</p>
-                  <p className="text-2xl font-bold text-gray-900">{rmExams.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{currentExams.length}</p>
                 </div>
               </div>
             </div>
@@ -255,7 +320,10 @@ const RMExamPage: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {Object.values(userAttempts).flat().length}
+                    {currentExams.filter(exam => {
+                      const attempts = userAttempts[exam.id] || [];
+                      return attempts.length > 0;
+                    }).length}
                   </p>
                 </div>
               </div>
@@ -269,10 +337,12 @@ const RMExamPage: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Best Score</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {Object.values(userAttempts).flat().length > 0 
-                      ? Math.max(...Object.values(userAttempts).flat().map(a => a.percentage)).toFixed(1) + '%'
-                      : '0%'
-                    }
+                    {(() => {
+                      const currentAttempts = currentExams.flatMap(exam => userAttempts[exam.id] || []);
+                      return currentAttempts.length > 0 
+                        ? Math.max(...currentAttempts.map(a => a.percentage)).toFixed(1) + '%'
+                        : '0%';
+                    })()}
                   </p>
                 </div>
               </div>
@@ -281,12 +351,12 @@ const RMExamPage: React.FC = () => {
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="p-2 bg-orange-100 rounded-lg">
-                  <Users className="h-6 w-6 text-orange-600" />
+                  <Lock className="h-6 w-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Access Level</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {Object.values(userAccess).filter(Boolean).length}/{rmExams.length}
+                    {currentExams.filter(exam => userAccess[exam.id]).length}/{currentExams.length}
                   </p>
                 </div>
               </div>
@@ -296,7 +366,7 @@ const RMExamPage: React.FC = () => {
 
         {/* RM Exams Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rmExams.map((exam) => {
+          {currentExams.map((exam) => {
             const examStatus = getExamStatus(exam);
             const StatusIcon = examStatus.icon;
             
@@ -312,7 +382,7 @@ const RMExamPage: React.FC = () => {
                           Paper {exam.paper}
                         </span>
                         <span className="ml-2 text-sm text-gray-500">
-                          {exam.difficulty}
+                          {activeTab === 'RM1' ? 'RM 1' : 'RM 2'}
                         </span>
                       </div>
                     </div>
@@ -395,11 +465,18 @@ const RMExamPage: React.FC = () => {
         </div>
 
         {/* Empty State */}
-        {rmExams.length === 0 && (
+        {currentExams.length === 0 && (
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No RM Exams Available</h3>
-            <p className="text-gray-600">Check back later for available RM exam papers.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No {activeTab} Exams Available
+            </h3>
+            <p className="text-gray-600">
+              {activeTab === 'RM1' 
+                ? 'Check back later for RM 1 exam papers (A & B).' 
+                : 'Check back later for RM 2 exam papers (C & D).'
+              }
+            </p>
           </div>
         )}
 

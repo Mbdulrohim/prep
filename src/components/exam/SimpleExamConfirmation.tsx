@@ -10,7 +10,6 @@ import {
   User,
   Building2,
   BookOpen,
-  Target,
 } from "lucide-react";
 
 export interface StudentDetails {
@@ -146,15 +145,6 @@ export function SimpleExamConfirmation({
                     {formatDuration(examDetails.durationMinutes)}
                   </span>
                 </div>
-                {examDetails.difficulty && (
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                    <span className="text-sm text-gray-600">Difficulty:</span>
-                    <span className="font-semibold text-gray-900 flex items-center">
-                      <Target className="h-4 w-4 mr-1" />
-                      {examDetails.difficulty}
-                    </span>
-                  </div>
-                )}
                 {examDetails.category && (
                   <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                     <span className="text-sm text-gray-600">Category:</span>

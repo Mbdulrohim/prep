@@ -4,18 +4,20 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, BookOpen, Clock, Award, Lock, CreditCard, CheckCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Award, Lock, CreditCard, CheckCircle, AlertTriangle, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchRMExams, RMExamData } from "@/lib/rmExamData";
 import { rmUserAccessManager } from "@/lib/rmUserAccess";
+import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
 
 export default function RMExamPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [rmExams, setRmExams] = useState<RMExamData[]>([]);
   const [rmUserAccess, setRmUserAccess] = useState<any>(null);
+  const [rmAttempts, setRmAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,13 +26,15 @@ export default function RMExamPage() {
       setLoading(true);
       setError(null);
       try {
-        const [exams, access] = await Promise.all([
+        const [exams, access, attempts] = await Promise.all([
           fetchRMExams(),
           user?.uid ? rmUserAccessManager.getRMUserAccess(user.uid) : null,
+          user?.uid ? rmExamAttemptManager.getUserRMExamAttempts(user.uid) : [],
         ]);
         
         setRmExams(exams);
         setRmUserAccess(access);
+        setRmAttempts(attempts);
         
         if (exams.length === 0) {
           setError("No RM exams found at this time.");
@@ -181,6 +185,12 @@ export default function RMExamPage() {
                   const canAccess = hasRMAccess;
                   const canStart = canAccess && exam.available;
                   
+                  // Check if user has completed this exam
+                  const examAttempt = rmAttempts.find(
+                    attempt => attempt.examId === exam.id && attempt.completed
+                  );
+                  const hasCompletedExam = !!examAttempt;
+                  
                   return (
                     <div
                       key={exam.id}
@@ -192,6 +202,12 @@ export default function RMExamPage() {
                         {!canAccess && (
                           <div className="absolute top-4 right-4">
                             <Lock className="h-6 w-6 text-white/70" />
+                          </div>
+                        )}
+                        
+                        {hasCompletedExam && (
+                          <div className="absolute top-4 right-4">
+                            <CheckCircle className="h-6 w-6 text-white" />
                           </div>
                         )}
                         
@@ -213,15 +229,32 @@ export default function RMExamPage() {
                                 <Clock className="h-4 w-4 mr-1" />
                                 <span>{exam.durationMinutes} minutes</span>
                               </div>
-                              <div className="flex items-center">
-                                <Award className="h-4 w-4 mr-1" />
-                                <span>{exam.difficulty}</span>
-                              </div>
                             </div>
+                            
+                            {hasCompletedExam && (
+                              <div className="mt-3 text-sm">
+                                <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full">
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Score: {examAttempt.percentage}% 
+                                  ({examAttempt.correctAnswers}/{examAttempt.assignedQuestions.length})
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <div className="text-right">
-                            {canStart ? (
+                            {hasCompletedExam ? (
+                              <Link href={`/exam/rm/${exam.id}/results?attemptId=${examAttempt.id}`}>
+                                <Button
+                                  variant="secondary"
+                                  size="lg"
+                                  className="text-slate-900"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Results
+                                </Button>
+                              </Link>
+                            ) : canStart ? (
                               <Link href={`/exam/rm/${exam.id}`}>
                                 <Button
                                   variant="secondary"

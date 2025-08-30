@@ -12,7 +12,6 @@ import {
   Clock, 
   Users, 
   BookOpen, 
-  Target, 
   Play,
   CheckCircle,
   AlertTriangle,
@@ -203,14 +202,6 @@ export default function EnhancedRMExamEntry({ examId, onStartExam }: EnhancedRME
                   <span className="text-gray-700">Duration</span>
                 </div>
                 <span className="font-medium text-gray-900">{exam.durationMinutes} minutes</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Target className="w-5 h-5 text-orange-600" />
-                  <span className="text-gray-700">Difficulty</span>
-                </div>
-                <span className="font-medium text-gray-900">{exam.difficulty}</span>
               </div>
 
               <div className="flex items-center justify-between">

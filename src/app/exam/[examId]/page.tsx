@@ -172,12 +172,6 @@ export default function ExamPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Difficulty:</span>
-                      <span className="font-medium">
-                        {examDetails.difficulty}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
                       <span>Category:</span>
                       <span className="font-medium">
                         {examDetails.category}

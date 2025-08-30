@@ -320,17 +320,6 @@ export function RMExamFlow({
                 <span className="text-sm font-medium text-gray-500">
                   Question {currentQuestionIndex + 1} of {rmQuestions.length}
                 </span>
-                {currentQuestion.difficulty && (
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    currentQuestion.difficulty === 'Beginner'
-                      ? 'bg-green-100 text-green-700'
-                      : currentQuestion.difficulty === 'Intermediate'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {currentQuestion.difficulty}
-                  </span>
-                )}
               </div>
               <button
                 onClick={() => toggleQuestionFlag(currentQuestionIndex)}

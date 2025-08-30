@@ -313,7 +313,7 @@ const RMExamPage: React.FC = () => {
             </div>
 
             {/* Active Attempt Info */}
-            {activeAttempt && !activeAttempt.isCompleted && (
+            {activeAttempt && !activeAttempt.completed && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
