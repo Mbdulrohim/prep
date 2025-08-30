@@ -36,7 +36,7 @@ service cloud.firestore {
     // User access control - allow authenticated writes for payment
     match /userAccess/{accessId} {
       allow read: if isOwner(accessId) || isAdmin();
-      allow write: if isAdmin() || isAuthenticated();
+      allow write: if isAdmin() || isAuthenticated() || request.auth == null; // Allow server-side payment processing
     }
 
     // Exam attempts - users can manage their own attempts, admins can read all
@@ -69,13 +69,6 @@ service cloud.firestore {
     // Access codes - only admins can manage
     match /accessCodes/{codeId} {
       allow read, write: if isAdmin();
-    }
-
-    // Transactions - allow authenticated users to read their own, create during payment
-    match /transactions/{transactionId} {
-      allow read: if isAuthenticated() || isAdmin();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
     }
 
     // Payment sessions - users can manage their own, admins can read all
@@ -132,7 +125,14 @@ service cloud.firestore {
     // RM User Access - allow server writes for payment processing, authenticated users can read their own
     match /rmUserAccess/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow write: if isAdmin() || isAuthenticated() || (request.auth == null && resource == null); // Allow server-side creation
+      allow write: if isAdmin() || isAuthenticated() || request.auth == null; // Allow server-side operations
+    }
+
+    // Transactions - allow authenticated users to read their own, create during payment
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update: if isAuthenticated() || request.auth == null; // Allow server-side payment processing
+      allow delete: if isAdmin();
     }
 
     // RM Exam Attempts - users can manage their own attempts, admins can read all
