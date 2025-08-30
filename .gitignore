@@ -56,10 +56,63 @@ firebase-debug.log
 *FIXES*.md
 *REMOVAL*.md
 *_TEST*.md
+*DEBUG*.md
+*TEST*.md
+debug*.md
+test*.md
+Debug*.md
+Test*.md
 
 # Test files with credentials
 test-*.js
 test-*.ts
+
+# API debug and test routes
+src/app/api/debug-*/
+src/app/api/test-*/
+src/app/api/*debug*/
+src/app/api/*test*/
+
+# Debug and test files/folders
+*debug*
+*test*
+*Test*
+*DEBUG*
+*TEST*
+debug-*
+test-*
+Debug-*
+Test-*
+DEBUG-*
+TEST-*
+*/debug/*
+*/test/*
+*/Debug/*
+*/Test/*
+*/DEBUG/*
+*/TEST/*
+**/*debug*
+**/*test*
+**/*Debug*
+**/*Test*
+**/*DEBUG*
+**/*TEST*
+
+# Specific debug/test patterns
+debug.js
+debug.ts
+test.js
+test.ts
+debug.json
+test.json
+debug.log
+test.log
+*-debug.*
+*-test.*
+*_debug.*
+*_test.*
+*.debug.*
+*.test.*
 
 # Backup files
 *.backup
