@@ -19,7 +19,12 @@ import { useRealTimeAdminData } from "@/hooks/useRealTimeData";
 import { db } from "@/lib/firebase";
 import { feedbackManager, type Feedback } from "@/lib/feedback";
 import { universityRankingManager } from "@/lib/universityRankings";
-import { fetchRMExams, createRMExam, updateRMExam, type RMExamData } from "@/lib/rmExamData";
+import {
+  fetchRMExams,
+  createRMExam,
+  updateRMExam,
+  type RMExamData,
+} from "@/lib/rmExamData";
 import { rmUserAccessManager } from "@/lib/rmUserAccess";
 import { rmExamAttemptManager } from "@/lib/rmExamAttempts";
 import { questionBankManager } from "@/lib/questionBank";
@@ -445,9 +450,12 @@ export default function AdminDashboard() {
       // Load RM questions stats (using standard question bank manager)
       const rmQuestionStats = questionBankManager.getQuestionBankStats();
       const rmQuestionsCount = Object.entries(rmQuestionStats)
-        .filter(([bankId]) => bankId.startsWith('rm-'))
-        .reduce((total: number, [, bank]: [string, any]) => 
-          total + (bank.totalQuestions || 0), 0);
+        .filter(([bankId]) => bankId.startsWith("rm-"))
+        .reduce(
+          (total: number, [, bank]: [string, any]) =>
+            total + (bank.totalQuestions || 0),
+          0
+        );
 
       // Load RM users with access
       const rmUsersData = await rmUserAccessManager.getAllRMUsers();
@@ -464,7 +472,9 @@ export default function AdminDashboard() {
       const totalRMUsers = rmUsersData.length;
       const totalRMAttempts = rmStats.totalAttempts;
       const averageRMScore = rmStats.averageScore;
-      const activeRMUsers = rmUsersData.filter((user: any) => user.hasAccess).length;
+      const activeRMUsers = rmUsersData.filter(
+        (user: any) => user.hasAccess
+      ).length;
 
       setRMStats({
         totalRMExams,
@@ -484,34 +494,46 @@ export default function AdminDashboard() {
   const loadExamSchedules = async () => {
     try {
       const { examScheduleManager } = await import("@/lib/examSchedule");
-      
+
       // Initialize default schedules if they don't exist
       await examScheduleManager.initializeDefaultSchedules();
-      
+
       // Load all current schedules
       const allSchedules = await examScheduleManager.getAllSchedules();
       console.log("Loaded exam schedules:", allSchedules);
-      
+
       // Convert to the format expected by the admin UI
-      const scheduleState: { [examId: string]: { startDate: string; endDate: string; isScheduled: boolean } } = {};
-      
-      allSchedules.forEach(schedule => {
+      const scheduleState: {
+        [examId: string]: {
+          startDate: string;
+          endDate: string;
+          isScheduled: boolean;
+        };
+      } = {};
+
+      allSchedules.forEach((schedule) => {
         // Convert schedule ID format (RM_paper1) to exam ID format (rm-paper-1)
         const examType = schedule.examType.toLowerCase();
         const paper = schedule.paper === "paper1" ? "paper-1" : "paper-2";
         const examId = `${examType}-${paper}`;
-        
+
         scheduleState[examId] = {
-          startDate: schedule.scheduledDate ? schedule.scheduledDate.toISOString().slice(0, 16) : '',
-          endDate: schedule.scheduledDate ? 
-            new Date(schedule.scheduledDate.getTime() + (schedule.duration * 60 * 1000)).toISOString().slice(0, 16) : '',
-          isScheduled: schedule.isActive && !!schedule.scheduledDate
+          startDate: schedule.scheduledDate
+            ? schedule.scheduledDate.toISOString().slice(0, 16)
+            : "",
+          endDate: schedule.scheduledDate
+            ? new Date(
+                schedule.scheduledDate.getTime() + schedule.duration * 60 * 1000
+              )
+                .toISOString()
+                .slice(0, 16)
+            : "",
+          isScheduled: schedule.isActive && !!schedule.scheduledDate,
         };
       });
-      
+
       setExamSchedules(scheduleState);
       console.log("Exam schedules loaded successfully:", scheduleState);
-      
     } catch (error) {
       console.error("Error loading exam schedules:", error);
     }
@@ -778,7 +800,9 @@ export default function AdminDashboard() {
               : userData
           )
         );
-        alert("Access revoked successfully - user now appears as having no access");
+        alert(
+          "Access revoked successfully - user now appears as having no access"
+        );
 
         // Refresh the users list to show updated status
         console.log("🔄 Refreshing users list...");
@@ -1107,9 +1131,9 @@ export default function AdminDashboard() {
   const loadRMAccessUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/debug-rm-access');
+      const response = await fetch("/api/debug-rm-access");
       const data = await response.json();
-      
+
       if (data.success) {
         setRMAccessUsers(data.users || []);
       } else {
@@ -1120,7 +1144,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error loading RM access users:', error);
+      console.error("Error loading RM access users:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1143,15 +1167,15 @@ export default function AdminDashboard() {
 
     try {
       setLoading(true);
-      const response = await fetch('/api/grant-rm-access', {
-        method: 'POST',
+      const response = await fetch("/api/grant-rm-access", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userEmail: quickGrantEmail.trim(),
-          grantedBy: user?.email || 'admin',
-          adminKey: 'fix_rm_access_2025',
+          grantedBy: user?.email || "admin",
+          adminKey: "fix_rm_access_2025",
         }),
       });
 
@@ -1163,7 +1187,7 @@ export default function AdminDashboard() {
           title: "Success",
           message: `RM access granted to ${quickGrantEmail}`,
         });
-        setQuickGrantEmail('');
+        setQuickGrantEmail("");
         await loadRMAccessUsers(); // Refresh the list
       } else {
         showToast({
@@ -1173,7 +1197,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error granting RM access:', error);
+      console.error("Error granting RM access:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1187,15 +1211,17 @@ export default function AdminDashboard() {
   const handleFindNeedingAccess = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/debug-rm-access?needsAccess=true');
+      const response = await fetch("/api/debug-rm-access?needsAccess=true");
       const data = await response.json();
-      
+
       if (data.success) {
         setRMAccessUsers(data.users || []);
         showToast({
           type: "success",
           title: "Search Complete",
-          message: `Found ${data.users?.length || 0} users who may need RM access`,
+          message: `Found ${
+            data.users?.length || 0
+          } users who may need RM access`,
         });
       } else {
         showToast({
@@ -1205,7 +1231,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error finding users needing access:', error);
+      console.error("Error finding users needing access:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1219,15 +1245,15 @@ export default function AdminDashboard() {
   const handleGrantUserAccess = async (userEmail: string) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/grant-rm-access', {
-        method: 'POST',
+      const response = await fetch("/api/grant-rm-access", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userEmail,
-          grantedBy: user?.email || 'admin',
-          adminKey: 'fix_rm_access_2025',
+          grantedBy: user?.email || "admin",
+          adminKey: "fix_rm_access_2025",
         }),
       });
 
@@ -1248,7 +1274,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error granting RM access:', error);
+      console.error("Error granting RM access:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1262,16 +1288,20 @@ export default function AdminDashboard() {
   const handleCheckUserAccess = async (userEmail: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/debug-rm-access?email=${encodeURIComponent(userEmail)}`);
+      const response = await fetch(
+        `/api/debug-rm-access?email=${encodeURIComponent(userEmail)}`
+      );
       const data = await response.json();
-      
+
       if (data.success) {
         const userInfo = data.users?.[0];
         if (userInfo) {
           showToast({
             type: "success",
             title: "User Access Status",
-            message: `${userEmail}: ${userInfo.hasAccess ? 'Has RM Access' : 'No RM Access'} - ${userInfo.paymentCount || 0} payments`,
+            message: `${userEmail}: ${
+              userInfo.hasAccess ? "Has RM Access" : "No RM Access"
+            } - ${userInfo.paymentCount || 0} payments`,
           });
         } else {
           showToast({
@@ -1288,7 +1318,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error checking user access:', error);
+      console.error("Error checking user access:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1300,21 +1330,25 @@ export default function AdminDashboard() {
   };
 
   const handleResetUserAccess = async (userEmail: string) => {
-    if (!confirm(`Are you sure you want to reset RM access for ${userEmail}? This will remove all their RM access records.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to reset RM access for ${userEmail}? This will remove all their RM access records.`
+      )
+    ) {
       return;
     }
 
     try {
       setLoading(true);
-      const response = await fetch('/api/reset-rm-access', {
-        method: 'POST',
+      const response = await fetch("/api/reset-rm-access", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userEmail,
-          resetBy: user?.email || 'admin',
-          adminKey: 'fix_rm_access_2025',
+          resetBy: user?.email || "admin",
+          adminKey: "fix_rm_access_2025",
         }),
       });
 
@@ -1335,7 +1369,7 @@ export default function AdminDashboard() {
         });
       }
     } catch (error) {
-      console.error('Error resetting RM access:', error);
+      console.error("Error resetting RM access:", error);
       showToast({
         type: "error",
         title: "Error",
@@ -1393,7 +1427,7 @@ export default function AdminDashboard() {
       label: "Weekly Assessment",
       icon: Target,
     },
-    { id: "standalone-rm-exams", label: "RM Exams", icon: Crown },
+    // { id: "standalone-rm-exams", label: "RM Exams", icon: Crown },
     { id: "rm-management", label: "RM Management", icon: Crown },
     { id: "rankings", label: "University Rankings", icon: Award },
     { id: "feedback", label: "Feedback & Support", icon: MessageCircle },
@@ -1729,9 +1763,13 @@ export default function AdminDashboard() {
                       </h3>
                       <span className="text-xs px-2 py-1 rounded">
                         {examSchedules["rm-paper-1"]?.isScheduled ? (
-                          <span className="bg-green-100 text-green-600">Scheduled</span>
+                          <span className="bg-green-100 text-green-600">
+                            Scheduled
+                          </span>
                         ) : (
-                          <span className="bg-red-100 text-red-600">Not Scheduled</span>
+                          <span className="bg-red-100 text-red-600">
+                            Not Scheduled
+                          </span>
                         )}
                       </span>
                     </div>
@@ -1784,9 +1822,13 @@ export default function AdminDashboard() {
                       </h3>
                       <span className="text-xs px-2 py-1 rounded">
                         {examSchedules["rm-paper-2"]?.isScheduled ? (
-                          <span className="bg-green-100 text-green-600">Scheduled</span>
+                          <span className="bg-green-100 text-green-600">
+                            Scheduled
+                          </span>
                         ) : (
-                          <span className="bg-red-100 text-red-600">Not Scheduled</span>
+                          <span className="bg-red-100 text-red-600">
+                            Not Scheduled
+                          </span>
                         )}
                       </span>
                     </div>
@@ -2759,7 +2801,8 @@ export default function AdminDashboard() {
                     RM (Registered Midwifery) Management
                   </h2>
                   <p className="text-gray-600">
-                    Comprehensive management of RM exams, questions, users, and analytics
+                    Comprehensive management of RM exams, questions, users, and
+                    analytics
                   </p>
                 </div>
               </div>
@@ -2769,8 +2812,16 @@ export default function AdminDashboard() {
                 <nav className="-mb-px flex space-x-8">
                   {[
                     { id: "overview", label: "Overview", icon: BarChart3 },
-                    { id: "exams", label: "Exam Configuration", icon: Settings },
-                    { id: "questions", label: "Question Management", icon: Database },
+                    {
+                      id: "exams",
+                      label: "Exam Configuration",
+                      icon: Settings,
+                    },
+                    {
+                      id: "questions",
+                      label: "Question Management",
+                      icon: Database,
+                    },
                     { id: "users", label: "RM Users", icon: Users },
                     { id: "analytics", label: "Analytics", icon: TrendingUp },
                   ].map((subTab) => (
@@ -2793,8 +2844,10 @@ export default function AdminDashboard() {
               {/* RM Overview */}
               {rmActiveSubTab === "overview" && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">RM System Overview</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    RM System Overview
+                  </h3>
+
                   {rmLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -2807,8 +2860,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <Crown className="h-8 w-8 text-green-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-green-600">Total RM Exams</p>
-                              <p className="text-2xl font-bold text-green-700">{rmStats.totalRMExams}</p>
+                              <p className="text-sm font-medium text-green-600">
+                                Total RM Exams
+                              </p>
+                              <p className="text-2xl font-bold text-green-700">
+                                {rmStats.totalRMExams}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2817,8 +2874,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <Database className="h-8 w-8 text-blue-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-blue-600">RM Questions</p>
-                              <p className="text-2xl font-bold text-blue-700">{rmStats.totalRMQuestions}</p>
+                              <p className="text-sm font-medium text-blue-600">
+                                RM Questions
+                              </p>
+                              <p className="text-2xl font-bold text-blue-700">
+                                {rmStats.totalRMQuestions}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2827,8 +2888,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <Users className="h-8 w-8 text-purple-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-purple-600">RM Users</p>
-                              <p className="text-2xl font-bold text-purple-700">{rmStats.totalRMUsers}</p>
+                              <p className="text-sm font-medium text-purple-600">
+                                RM Users
+                              </p>
+                              <p className="text-2xl font-bold text-purple-700">
+                                {rmStats.totalRMUsers}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2837,8 +2902,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <FileText className="h-8 w-8 text-orange-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-orange-600">RM Attempts</p>
-                              <p className="text-2xl font-bold text-orange-700">{rmStats.totalRMAttempts}</p>
+                              <p className="text-sm font-medium text-orange-600">
+                                RM Attempts
+                              </p>
+                              <p className="text-2xl font-bold text-orange-700">
+                                {rmStats.totalRMAttempts}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2847,8 +2916,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <Target className="h-8 w-8 text-indigo-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-indigo-600">Average Score</p>
-                              <p className="text-2xl font-bold text-indigo-700">{rmStats.averageRMScore.toFixed(1)}%</p>
+                              <p className="text-sm font-medium text-indigo-600">
+                                Average Score
+                              </p>
+                              <p className="text-2xl font-bold text-indigo-700">
+                                {rmStats.averageRMScore.toFixed(1)}%
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2857,8 +2930,12 @@ export default function AdminDashboard() {
                           <div className="flex items-center">
                             <UserCheck className="h-8 w-8 text-teal-600" />
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-teal-600">Active RM Users</p>
-                              <p className="text-2xl font-bold text-teal-700">{rmStats.activeRMUsers}</p>
+                              <p className="text-sm font-medium text-teal-600">
+                                Active RM Users
+                              </p>
+                              <p className="text-2xl font-bold text-teal-700">
+                                {rmStats.activeRMUsers}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2866,7 +2943,9 @@ export default function AdminDashboard() {
 
                       {/* RM Quick Actions */}
                       <div className="border rounded-lg p-4">
-                        <h4 className="text-md font-semibold text-gray-900 mb-4">Quick Actions</h4>
+                        <h4 className="text-md font-semibold text-gray-900 mb-4">
+                          Quick Actions
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                           <button
                             onClick={() => setRMActiveSubTab("exams")}
@@ -2875,7 +2954,7 @@ export default function AdminDashboard() {
                             <Settings className="h-4 w-4" />
                             <span>Configure Exams</span>
                           </button>
-                          
+
                           <button
                             onClick={() => setRMActiveSubTab("questions")}
                             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -2883,7 +2962,7 @@ export default function AdminDashboard() {
                             <Upload className="h-4 w-4" />
                             <span>Manage Questions</span>
                           </button>
-                          
+
                           <button
                             onClick={() => setRMActiveSubTab("users")}
                             className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -2891,7 +2970,7 @@ export default function AdminDashboard() {
                             <Users className="h-4 w-4" />
                             <span>Manage Users</span>
                           </button>
-                          
+
                           <button
                             onClick={() => setRMActiveSubTab("analytics")}
                             className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
@@ -2910,16 +2989,25 @@ export default function AdminDashboard() {
               {rmActiveSubTab === "exams" && (
                 <div className="text-center py-8">
                   <Crown className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Exam Configuration</h3>
-                  <p className="text-gray-600">Coming in Step 2 - Configure RM exam settings, pricing, and scheduling</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    RM Exam Configuration
+                  </h3>
+                  <p className="text-gray-600">
+                    Coming in Step 2 - Configure RM exam settings, pricing, and
+                    scheduling
+                  </p>
                 </div>
               )}
 
               {rmActiveSubTab === "questions" && (
                 <div className="text-center py-8">
                   <Database className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Question Management</h3>
-                  <p className="text-gray-600">Coming in Step 2 - Upload and manage RM-specific questions</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    RM Question Management
+                  </h3>
+                  <p className="text-gray-600">
+                    Coming in Step 2 - Upload and manage RM-specific questions
+                  </p>
                 </div>
               )}
 
@@ -2931,7 +3019,9 @@ export default function AdminDashboard() {
                         <Users className="h-5 w-5 text-purple-600" />
                         RM User Access Management
                       </h3>
-                      <p className="text-gray-600">Grant and manage RM access for users who paid</p>
+                      <p className="text-gray-600">
+                        Grant and manage RM access for users who paid
+                      </p>
                     </div>
                     <button
                       onClick={loadRMAccessUsers}
@@ -2947,8 +3037,12 @@ export default function AdminDashboard() {
                     <div className="bg-green-50 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-600">Users with RM Access</p>
-                          <p className="text-2xl font-bold text-green-700">{rmAccessUsers.filter(u => u.hasRMAccess).length}</p>
+                          <p className="text-sm font-medium text-green-600">
+                            Users with RM Access
+                          </p>
+                          <p className="text-2xl font-bold text-green-700">
+                            {rmAccessUsers.filter((u) => u.hasRMAccess).length}
+                          </p>
                         </div>
                         <CheckCircle className="h-8 w-8 text-green-600" />
                       </div>
@@ -2957,8 +3051,16 @@ export default function AdminDashboard() {
                     <div className="bg-red-50 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-red-600">Users Needing Access</p>
-                          <p className="text-2xl font-bold text-red-700">{rmAccessUsers.filter(u => u.hasPaidRM && !u.hasRMAccess).length}</p>
+                          <p className="text-sm font-medium text-red-600">
+                            Users Needing Access
+                          </p>
+                          <p className="text-2xl font-bold text-red-700">
+                            {
+                              rmAccessUsers.filter(
+                                (u) => u.hasPaidRM && !u.hasRMAccess
+                              ).length
+                            }
+                          </p>
                         </div>
                         <AlertCircle className="h-8 w-8 text-red-600" />
                       </div>
@@ -2967,8 +3069,12 @@ export default function AdminDashboard() {
                     <div className="bg-blue-50 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-blue-600">Total RM Payments</p>
-                          <p className="text-2xl font-bold text-blue-700">{rmAccessUsers.filter(u => u.hasPaidRM).length}</p>
+                          <p className="text-sm font-medium text-blue-600">
+                            Total RM Payments
+                          </p>
+                          <p className="text-2xl font-bold text-blue-700">
+                            {rmAccessUsers.filter((u) => u.hasPaidRM).length}
+                          </p>
                         </div>
                         <CreditCard className="h-8 w-8 text-blue-600" />
                       </div>
@@ -2977,10 +3083,14 @@ export default function AdminDashboard() {
 
                   {/* Quick Grant Access */}
                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 mb-6">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Quick Grant RM Access</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      Quick Grant RM Access
+                    </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">User Email</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          User Email
+                        </label>
                         <input
                           type="email"
                           value={quickGrantEmail}
@@ -2990,7 +3100,9 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Transaction ID (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Transaction ID (Optional)
+                        </label>
                         <input
                           type="text"
                           value={quickGrantTxId}
@@ -3031,18 +3143,30 @@ export default function AdminDashboard() {
                   {/* RM Users Table */}
                   <div className="bg-white border border-gray-200 rounded-lg">
                     <div className="px-6 py-4 border-b border-gray-200">
-                      <h4 className="text-lg font-semibold text-gray-900">RM Access Status</h4>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        RM Access Status
+                      </h4>
                     </div>
-                    
+
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RM Access</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              User
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              RM Access
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Payment Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Transaction
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -3050,36 +3174,48 @@ export default function AdminDashboard() {
                             <tr key={user.userId} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{user.userEmail}</p>
-                                  <p className="text-xs text-gray-500">{user.userId}</p>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {user.userEmail}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {user.userId}
+                                  </p>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  user.hasRMAccess 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {user.hasRMAccess ? 'Has Access' : 'No Access'}
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    user.hasRMAccess
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {user.hasRMAccess
+                                    ? "Has Access"
+                                    : "No Access"}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  user.hasPaidRM 
-                                    ? 'bg-blue-100 text-blue-800' 
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {user.hasPaidRM ? 'Paid' : 'Not Paid'}
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    user.hasPaidRM
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {user.hasPaidRM ? "Paid" : "Not Paid"}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {user.transactionId || 'N/A'}
+                                {user.transactionId || "N/A"}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div className="flex gap-2">
                                   {!user.hasRMAccess && (
                                     <button
-                                      onClick={() => handleGrantUserAccess(user.userEmail)}
+                                      onClick={() =>
+                                        handleGrantUserAccess(user.userEmail)
+                                      }
                                       disabled={grantingAccess}
                                       className="text-green-600 hover:text-green-900 disabled:opacity-50"
                                     >
@@ -3087,14 +3223,18 @@ export default function AdminDashboard() {
                                     </button>
                                   )}
                                   <button
-                                    onClick={() => handleCheckUserAccess(user.userEmail)}
+                                    onClick={() =>
+                                      handleCheckUserAccess(user.userEmail)
+                                    }
                                     className="text-blue-600 hover:text-blue-900"
                                   >
                                     Check Status
                                   </button>
                                   {user.hasRMAccess && (
                                     <button
-                                      onClick={() => handleResetUserAccess(user.userEmail)}
+                                      onClick={() =>
+                                        handleResetUserAccess(user.userEmail)
+                                      }
                                       className="text-red-600 hover:text-red-900"
                                     >
                                       Reset
@@ -3106,11 +3246,14 @@ export default function AdminDashboard() {
                           ))}
                         </tbody>
                       </table>
-                      
+
                       {rmAccessUsers.length === 0 && (
                         <div className="text-center py-8">
                           <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-500">No RM users found. Click "Find Users Needing Access" to scan for users.</p>
+                          <p className="text-gray-500">
+                            No RM users found. Click "Find Users Needing Access"
+                            to scan for users.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -3121,8 +3264,13 @@ export default function AdminDashboard() {
               {rmActiveSubTab === "analytics" && (
                 <div className="text-center py-8">
                   <TrendingUp className="h-16 w-16 text-orange-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RM Analytics</h3>
-                  <p className="text-gray-600">Coming in Step 4 - Detailed RM performance analytics and reporting</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    RM Analytics
+                  </h3>
+                  <p className="text-gray-600">
+                    Coming in Step 4 - Detailed RM performance analytics and
+                    reporting
+                  </p>
                 </div>
               )}
             </div>
