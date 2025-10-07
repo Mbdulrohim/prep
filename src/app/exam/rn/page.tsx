@@ -4,16 +4,18 @@
 import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, BookOpen, Clock, Award } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Award, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchAllExams, ExamData } from "@/lib/examData"; // Import fetchAllExams
+import { examAttemptManager } from "@/lib/examAttempts";
 
 export default function RNExamPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [rnExams, setRnExams] = useState<ExamData[]>([]);
+  const [completedExams, setCompletedExams] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +28,18 @@ export default function RNExamPage() {
         // Filter for exams specifically under the 'RN' category
         const filteredExams = allExams.filter((exam) => exam.category === "RN");
         setRnExams(filteredExams);
+        
+        // Load completed exams for this user
+        if (user?.uid) {
+          const attempts = await examAttemptManager.getUserExamAttempts(user.uid);
+          const completed = new Set(
+            attempts
+              .filter((attempt) => attempt.completed && attempt.examCategory === "RN")
+              .map((attempt) => attempt.examId)
+          );
+          setCompletedExams(completed);
+        }
+        
         if (filteredExams.length === 0) {
           setError("No Registered Nursing exams found at this time.");
         }
@@ -38,7 +52,7 @@ export default function RNExamPage() {
     };
 
     loadRnExams();
-  }, []);
+  }, [user]);
 
   if (!user) {
     return (
@@ -86,6 +100,10 @@ export default function RNExamPage() {
                 designed to test different aspects of nursing knowledge and
                 practice.
               </p>
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+                <span className="text-lg">ℹ️</span>
+                <span className="font-medium">Each exam can only be taken once. Choose wisely!</span>
+              </div>
             </div>
 
             {loading ? (
@@ -114,71 +132,82 @@ export default function RNExamPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:gap-8">
-                {rnExams.map((exam) => (
-                  <div
-                    key={exam.id}
-                    className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300"
-                  >
+                {rnExams.map((exam) => {
+                  const isCompleted = completedExams.has(exam.id);
+                  
+                  return (
                     <div
-                      className={`bg-gradient-to-r ${exam.color} p-6 text-white`}
+                      key={exam.id}
+                      className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 relative"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-2xl font-bold mb-2">
-                            {exam.title}
-                          </h3>
-                          <p className="text-blue-100 mb-4">
-                            {exam.description}
-                          </p>
+                      {isCompleted && (
+                        <div className="absolute top-4 right-4 z-10 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+                          <CheckCircle className="h-3 w-3" />
+                          Completed
+                        </div>
+                      )}
+                      
+                      <div
+                        className={`bg-gradient-to-r ${exam.color} p-6 text-white`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-2xl font-bold mb-2">
+                              {exam.title}
+                            </h3>
+                            <p className="text-blue-100 mb-4">
+                              {exam.description}
+                            </p>
 
-                          <div className="flex items-center gap-6 text-sm">
-                            <div className="flex items-center">
-                              <BookOpen className="h-4 w-4 mr-1" />
-                              <span>{exam.questionsCount} questions</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1" />
-                              <span>{exam.durationMinutes} minutes</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Award className="h-4 w-4 mr-1" />
-                              <span>{exam.difficulty}</span>
+                            <div className="flex items-center gap-6 text-sm">
+                              <div className="flex items-center">
+                                <BookOpen className="h-4 w-4 mr-1" />
+                                <span>{exam.questionsCount} questions</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1" />
+                                <span>{exam.durationMinutes} minutes</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Award className="h-4 w-4 mr-1" />
+                                <span>{exam.difficulty}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="text-right">
-                          <Link href={`/exam/${exam.id}`}>
-                            <Button
-                              variant="secondary"
-                              size="lg"
-                              className="text-slate-900"
-                              disabled={!exam.available} // Disable if not available
+                          <div className="text-right">
+                            <Link href={`/exam/${exam.id}`}>
+                              <Button
+                                variant="secondary"
+                                size="lg"
+                                className="text-slate-900"
+                                disabled={!exam.available} // Disable if not available
+                              >
+                                {isCompleted ? "View Results" : exam.available ? "Start Exam" : "Coming Soon"}
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <h4 className="font-semibold text-slate-800 mb-3">
+                          Topics Covered:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {exam.topics.map((topic, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
                             >
-                              {exam.available ? "Start Exam" : "Coming Soon"}
-                            </Button>
-                          </Link>
+                              {topic}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
-
-                    <div className="p-6">
-                      <h4 className="font-semibold text-slate-800 mb-3">
-                        Topics Covered:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {exam.topics.map((topic, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                          >
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

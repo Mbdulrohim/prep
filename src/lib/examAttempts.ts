@@ -203,9 +203,10 @@ class ExamAttemptManager {
           const existingAttempt = existingAttemptDoc.data() as ExamAttempt;
 
           if (existingAttempt.completed) {
+            // ONE ATTEMPT ONLY: Return existing attempt for redirect to results
             return {
               canStart: false,
-              reason: "Exam already completed. You can review your answers.",
+              reason: "REDIRECT_TO_RESULTS", // Special flag for redirect
               existingAttempt,
             };
           }

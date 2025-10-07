@@ -54,20 +54,19 @@ export default function ExamPage() {
       setCanStartExam(eligibilityResult.canStart);
 
       if (!eligibilityResult.canStart) {
-        // Check if user has a completed attempt to review
-        const attempts = await examAttemptManager.getUserExamAttempts(user.uid);
-        const completedAttempt = attempts.find(
-          (attempt) => attempt.examId === examId && attempt.completed
-        );
-
-        if (completedAttempt) {
-          setExamAttempt(completedAttempt);
-        } else {
-          setError(
-            eligibilityResult.reason ||
-              "No exam access found. Please purchase exam access or redeem an access code."
-          );
+        // ONE ATTEMPT ONLY: Check if this is a completed exam that should redirect to results
+        if (eligibilityResult.reason === "REDIRECT_TO_RESULTS" && eligibilityResult.existingAttempt) {
+          // Automatically redirect to results page
+          console.log("🎯 Exam already completed, redirecting to results...");
+          router.push(`/exam/${examId}/results?attemptId=${eligibilityResult.existingAttempt.id}`);
+          return;
         }
+
+        // For other blocking reasons (no access, expired, etc.)
+        setError(
+          eligibilityResult.reason ||
+            "No exam access found. Please purchase exam access or redeem an access code."
+        );
       } else {
         setShowConfirmationModal(true);
       }
@@ -292,7 +291,7 @@ export default function ExamPage() {
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-4">
-              You can review your answers but cannot retake this exam.
+              ℹ️ Each exam can only be taken once. You can review your answers anytime.
             </p>
           </div>
         </div>
