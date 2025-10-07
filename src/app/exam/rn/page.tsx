@@ -28,18 +28,22 @@ export default function RNExamPage() {
         // Filter for exams specifically under the 'RN' category
         const filteredExams = allExams.filter((exam) => exam.category === "RN");
         setRnExams(filteredExams);
-        
+
         // Load completed exams for this user
         if (user?.uid) {
-          const attempts = await examAttemptManager.getUserExamAttempts(user.uid);
+          const attempts = await examAttemptManager.getUserExamAttempts(
+            user.uid
+          );
           const completed = new Set(
             attempts
-              .filter((attempt) => attempt.completed && attempt.examCategory === "RN")
+              .filter(
+                (attempt) => attempt.completed && attempt.examCategory === "RN"
+              )
               .map((attempt) => attempt.examId)
           );
           setCompletedExams(completed);
         }
-        
+
         if (filteredExams.length === 0) {
           setError("No Registered Nursing exams found at this time.");
         }
@@ -102,7 +106,9 @@ export default function RNExamPage() {
               </p>
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
                 <span className="text-lg">ℹ️</span>
-                <span className="font-medium">Each exam can only be taken once. Choose wisely!</span>
+                <span className="font-medium">
+                  Each exam can only be taken once. Choose wisely!
+                </span>
               </div>
             </div>
 
@@ -134,7 +140,7 @@ export default function RNExamPage() {
               <div className="grid gap-6 md:gap-8">
                 {rnExams.map((exam) => {
                   const isCompleted = completedExams.has(exam.id);
-                  
+
                   return (
                     <div
                       key={exam.id}
@@ -146,7 +152,7 @@ export default function RNExamPage() {
                           Completed
                         </div>
                       )}
-                      
+
                       <div
                         className={`bg-gradient-to-r ${exam.color} p-6 text-white`}
                       >
@@ -176,16 +182,46 @@ export default function RNExamPage() {
                           </div>
 
                           <div className="text-right">
-                            <Link href={`/exam/${exam.id}`}>
+                            {isCompleted ? (
                               <Button
                                 variant="secondary"
                                 size="lg"
                                 className="text-slate-900"
-                                disabled={!exam.available} // Disable if not available
+                                onClick={async () => {
+                                  // Get the attempt for this exam
+                                  const attempts =
+                                    await examAttemptManager.getUserExamAttempts(
+                                      user.uid
+                                    );
+                                  const attempt = attempts.find(
+                                    (a) =>
+                                      a.examId === exam.id &&
+                                      a.completed &&
+                                      a.examCategory === "RN"
+                                  );
+                                  if (attempt) {
+                                    router.push(
+                                      `/exam/${exam.id}/results?attemptId=${attempt.id}`
+                                    );
+                                  }
+                                }}
                               >
-                                {isCompleted ? "View Results" : exam.available ? "Start Exam" : "Coming Soon"}
+                                View Results
                               </Button>
-                            </Link>
+                            ) : (
+                              <Link href={`/exam/${exam.id}`}>
+                                <Button
+                                  variant="secondary"
+                                  size="lg"
+                                  className="text-slate-900"
+                                  disabled={!exam.available} // Disable if not available
+                                >
+                                  {exam.available
+                                    ? "Start Exam"
+                                    : "Coming Soon"}
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </div>

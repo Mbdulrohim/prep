@@ -82,7 +82,7 @@ export interface UserAccess {
   lastLoginAt?: Date;
   isRestricted: boolean;
   restrictionReason?: string;
-  
+
   // Security & access control fields
   revokedAt?: Date;
   revokedReason?: string;
@@ -90,7 +90,7 @@ export interface UserAccess {
   suspensionEndDate?: Date;
   suspensionReason?: string;
   restoredAt?: Date;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -150,7 +150,7 @@ class ExamAttemptManager {
 
       console.log("🔍 Checking access for user:", userId, "userAccess:", {
         isActive: userAccess.isActive,
-        examCategory: userAccess.examCategory
+        examCategory: userAccess.examCategory,
       });
 
       // Check if access is active
@@ -516,8 +516,10 @@ class ExamAttemptManager {
    */
   async createExamAttempt(attemptData: Partial<ExamAttempt>): Promise<string> {
     try {
-      const attemptId = `attempt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+      const attemptId = `attempt_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
       const attempt: ExamAttempt = {
         id: attemptId,
         userId: attemptData.userId!,
@@ -547,8 +549,8 @@ class ExamAttemptManager {
       };
 
       await setDoc(doc(db, "examAttempts", attemptId), attempt);
-      console.log('Created exam attempt:', attemptId);
-      
+      console.log("Created exam attempt:", attemptId);
+
       return attemptId;
     } catch (error) {
       console.error("Error creating exam attempt:", error);
@@ -559,12 +561,15 @@ class ExamAttemptManager {
   /**
    * Update exam progress during the exam
    */
-  async updateExamProgress(attemptId: string, progressData: {
-    userAnswers?: (number | null)[];
-    flaggedQuestions?: number[];
-    timeSpent?: number;
-    updatedAt?: Date;
-  }): Promise<boolean> {
+  async updateExamProgress(
+    attemptId: string,
+    progressData: {
+      userAnswers?: (number | null)[];
+      flaggedQuestions?: number[];
+      timeSpent?: number;
+      updatedAt?: Date;
+    }
+  ): Promise<boolean> {
     try {
       const updateData: any = {
         ...progressData,
@@ -573,7 +578,9 @@ class ExamAttemptManager {
 
       // Calculate unanswered count
       if (progressData.userAnswers) {
-        updateData.unanswered = progressData.userAnswers.filter(answer => answer === null).length;
+        updateData.unanswered = progressData.userAnswers.filter(
+          (answer) => answer === null
+        ).length;
       }
 
       await updateDoc(doc(db, "examAttempts", attemptId), updateData);
@@ -587,31 +594,34 @@ class ExamAttemptManager {
   /**
    * Complete and finalize exam attempt
    */
-  async completeExamAttempt(attemptId: string, finalData: {
-    score: number;
-    percentage: number;
-    correctAnswers: number;
-    wrongAnswers: number;
-    unanswered: number;
-    timeSpent: number;
-    answers: (number | null)[];
-    flaggedQuestions: number[];
-    endTime: Date;
-    completed: boolean;
-    submitted: boolean;
-    isAutoSubmit?: boolean;
-  }): Promise<boolean> {
+  async completeExamAttempt(
+    attemptId: string,
+    finalData: {
+      score: number;
+      percentage: number;
+      correctAnswers: number;
+      wrongAnswers: number;
+      unanswered: number;
+      timeSpent: number;
+      answers: (number | null)[];
+      flaggedQuestions: number[];
+      endTime: Date;
+      completed: boolean;
+      submitted: boolean;
+      isAutoSubmit?: boolean;
+    }
+  ): Promise<boolean> {
     try {
       // Get the attempt data first
       const attemptRef = doc(db, "examAttempts", attemptId);
       const attemptDoc = await getDoc(attemptRef);
-      
+
       if (!attemptDoc.exists()) {
         throw new Error("Attempt not found");
       }
-      
+
       const attemptData = attemptDoc.data();
-      
+
       const updateData = {
         ...finalData,
         userAnswers: finalData.answers,
@@ -619,13 +629,13 @@ class ExamAttemptManager {
         endTime: serverTimestamp(),
         updatedAt: serverTimestamp(),
         missedQuestions: finalData.answers
-          .map((answer, index) => answer === null ? index : null)
-          .filter(index => index !== null),
+          .map((answer, index) => (answer === null ? index : null))
+          .filter((index) => index !== null),
       };
 
       // Update the exam attempt
       await updateDoc(attemptRef, updateData);
-      
+
       // Also create an exam result for leaderboard compatibility
       const examResultData = {
         userId: attemptData.userId,
@@ -647,13 +657,16 @@ class ExamAttemptManager {
         completedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
       };
-      
+
       // Create exam result document for leaderboard
       const examResultRef = doc(collection(db, "examResults"));
       await setDoc(examResultRef, examResultData);
-      
-      console.log('Completed exam attempt and created result for leaderboard:', attemptId);
-      
+
+      console.log(
+        "Completed exam attempt and created result for leaderboard:",
+        attemptId
+      );
+
       return true;
     } catch (error) {
       console.error("Error completing exam attempt:", error);

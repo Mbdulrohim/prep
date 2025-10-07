@@ -55,10 +55,17 @@ export default function ExamPage() {
 
       if (!eligibilityResult.canStart) {
         // ONE ATTEMPT ONLY: Check if this is a completed exam that should redirect to results
-        if (eligibilityResult.reason === "REDIRECT_TO_RESULTS" && eligibilityResult.existingAttempt) {
-          // Automatically redirect to results page
+        if (
+          eligibilityResult.reason === "REDIRECT_TO_RESULTS" &&
+          eligibilityResult.existingAttempt
+        ) {
+          // Automatically redirect to results page - don't show any modal or set loading to false
           console.log("🎯 Exam already completed, redirecting to results...");
-          router.push(`/exam/${examId}/results?attemptId=${eligibilityResult.existingAttempt.id}`);
+          router.push(
+            `/exam/${examId}/results?attemptId=${eligibilityResult.existingAttempt.id}`
+          );
+          // Keep loading true to prevent any UI from showing during redirect
+          setLoading(true);
           return;
         }
 
@@ -68,6 +75,17 @@ export default function ExamPage() {
             "No exam access found. Please purchase exam access or redeem an access code."
         );
       } else {
+        // Double-check that there's no existing completed attempt before showing modal
+        if (eligibilityResult.existingAttempt?.completed) {
+          console.log(
+            "🎯 Detected completed attempt, redirecting to results..."
+          );
+          router.push(
+            `/exam/${examId}/results?attemptId=${eligibilityResult.existingAttempt.id}`
+          );
+          setLoading(true);
+          return;
+        }
         setShowConfirmationModal(true);
       }
     } catch (error) {
@@ -90,6 +108,31 @@ export default function ExamPage() {
     if (!user?.uid || !canStartExam || !userProfile) return;
 
     try {
+      // Re-check eligibility before starting to prevent race conditions
+      const eligibilityRecheck = await examAttemptManager.canUserStartExam(
+        user.uid,
+        examId
+      );
+
+      if (!eligibilityRecheck.canStart) {
+        if (
+          eligibilityRecheck.reason === "REDIRECT_TO_RESULTS" &&
+          eligibilityRecheck.existingAttempt
+        ) {
+          // Exam was completed, redirect to results
+          router.push(
+            `/exam/${examId}/results?attemptId=${eligibilityRecheck.existingAttempt.id}`
+          );
+          return;
+        }
+        setError(
+          eligibilityRecheck.reason ||
+            "Unable to start exam. Please contact support."
+        );
+        setShowConfirmationModal(false);
+        return;
+      }
+
       setStudentDetails(details);
       setShowConfirmationModal(false);
 
@@ -264,7 +307,8 @@ export default function ExamPage() {
                 <span className="text-sm text-gray-600">Percentage:</span>
                 <span className="font-medium">
                   {Math.round(
-                    (examAttempt.score / examAttempt.assignedQuestions.length) * 100
+                    (examAttempt.score / examAttempt.assignedQuestions.length) *
+                      100
                   )}
                   %
                 </span>
@@ -291,7 +335,8 @@ export default function ExamPage() {
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-4">
-              ℹ️ Each exam can only be taken once. You can review your answers anytime.
+              ℹ️ Each exam can only be taken once. You can review your answers
+              anytime.
             </p>
           </div>
         </div>
@@ -320,7 +365,9 @@ export default function ExamPage() {
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-lg text-slate-700">Loading exam questions...</p>
+              <p className="text-lg text-slate-700">
+                Loading exam questions...
+              </p>
             </div>
           </div>
         </>

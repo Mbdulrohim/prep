@@ -430,21 +430,23 @@ export default function DashboardPage() {
 
   // Check if user has access to any exams - Admin gets unlimited access
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
-  
+
   // For non-admin users, check if they have valid active access
   // Since revoked users have their access completely removed, we just check if userAccess exists and is active
   const hasValidAccess = userAccess && userAccess.isActive;
-    
+
   const hasExamAccess = isAdmin || hasValidAccess;
 
   console.log("🔍 Dashboard Access Check:", {
     isAdmin,
-    userAccess: userAccess ? {
-      isActive: userAccess.isActive,
-      examCategory: userAccess.examCategory,
-    } : null,
+    userAccess: userAccess
+      ? {
+          isActive: userAccess.isActive,
+          examCategory: userAccess.examCategory,
+        }
+      : null,
     hasValidAccess,
-    hasExamAccess
+    hasExamAccess,
   });
 
   return (
@@ -827,140 +829,218 @@ export default function DashboardPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* RN Paper 1 */}
-                        <div
-                          className={`p-4 rounded-lg border border-gray-200 relative ${
-                            examAvailability["rn-paper-1"]?.isAvailable
-                              ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
-                              : "bg-gray-50 opacity-60"
-                          }`}
-                        >
-                          {!examAvailability["rn-paper-1"]?.isAvailable && (
-                            <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-600 font-medium">
-                                {examAvailability["rn-paper-1"]?.reason ||
-                                  "Schedule Required"}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div
-                                className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
-                                  examAvailability["rn-paper-1"]?.isAvailable
-                                    ? "bg-blue-100"
-                                    : "bg-gray-200"
-                                }`}
-                              >
-                                <FileText
-                                  className={`h-5 w-5 ${
-                                    examAvailability["rn-paper-1"]?.isAvailable
-                                      ? "text-blue-600"
-                                      : "text-gray-400"
-                                  }`}
-                                />
+                        {(() => {
+                          const isCompleted = userAttempts.some(
+                            (attempt) =>
+                              attempt.examId === "rn-paper-1" &&
+                              attempt.completed
+                          );
+                          const completedAttempt = userAttempts.find(
+                            (attempt) =>
+                              attempt.examId === "rn-paper-1" &&
+                              attempt.completed
+                          );
+
+                          return (
+                            <div
+                              className={`p-4 rounded-lg border border-gray-200 relative ${
+                                examAvailability["rn-paper-1"]?.isAvailable
+                                  ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                                  : "bg-gray-50 opacity-60"
+                              }`}
+                            >
+                              {!examAvailability["rn-paper-1"]?.isAvailable && (
+                                <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center z-10">
+                                  <span className="text-gray-600 font-medium">
+                                    {examAvailability["rn-paper-1"]?.reason ||
+                                      "Schedule Required"}
+                                  </span>
+                                </div>
+                              )}
+                              {isCompleted && (
+                                <div className="absolute top-2 right-2 z-20 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Completed
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div
+                                    className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                      examAvailability["rn-paper-1"]
+                                        ?.isAvailable
+                                        ? "bg-blue-100"
+                                        : "bg-gray-200"
+                                    }`}
+                                  >
+                                    <FileText
+                                      className={`h-5 w-5 ${
+                                        examAvailability["rn-paper-1"]
+                                          ?.isAvailable
+                                          ? "text-blue-600"
+                                          : "text-gray-400"
+                                      }`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <h4
+                                      className={`font-medium ${
+                                        examAvailability["rn-paper-1"]
+                                          ?.isAvailable
+                                          ? "text-gray-900"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
+                                      RN Paper 1
+                                    </h4>
+                                    <p
+                                      className={`text-sm ${
+                                        examAvailability["rn-paper-1"]
+                                          ?.isAvailable
+                                          ? "text-gray-700"
+                                          : "text-gray-500"
+                                      }`}
+                                    >
+                                      250 questions • 150 mins
+                                    </p>
+                                    <p className="text-xs text-blue-600 mt-1">
+                                      CBT Format - Comprehensive
+                                    </p>
+                                  </div>
+                                </div>
+                                {examAvailability["rn-paper-1"]?.isAvailable &&
+                                  (isCompleted ? (
+                                    <Button
+                                      onClick={() =>
+                                        router.push(
+                                          `/exam/rn-paper-1/results?attemptId=${completedAttempt?.id}`
+                                        )
+                                      }
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      View Results
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      onClick={() =>
+                                        router.push("/exam/rn-paper-1")
+                                      }
+                                      className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                      Start Exam
+                                    </Button>
+                                  ))}
                               </div>
-                              <div>
-                                <h4
-                                  className={`font-medium ${
-                                    examAvailability["rn-paper-1"]?.isAvailable
-                                      ? "text-gray-900"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  RN Paper 1
-                                </h4>
-                                <p
-                                  className={`text-sm ${
-                                    examAvailability["rn-paper-1"]?.isAvailable
-                                      ? "text-gray-700"
-                                      : "text-gray-500"
-                                  }`}
-                                >
-                                  250 questions • 150 mins
-                                </p>
-                                <p className="text-xs text-blue-600 mt-1">
-                                  CBT Format - Comprehensive
-                                </p>
-                              </div>
                             </div>
-                            {examAvailability["rn-paper-1"]?.isAvailable && (
-                              <Button
-                                onClick={() => router.push("/exam/rn-paper-1")}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                Start Exam
-                              </Button>
-                            )}
-                          </div>
-                        </div>
+                          );
+                        })()}
 
                         {/* RN Paper 2 */}
-                        <div
-                          className={`p-4 rounded-lg border border-gray-200 relative ${
-                            examAvailability["rn-paper-2"]?.isAvailable
-                              ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
-                              : "bg-gray-50 opacity-60"
-                          }`}
-                        >
-                          {!examAvailability["rn-paper-2"]?.isAvailable && (
-                            <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-600 font-medium">
-                                {examAvailability["rn-paper-2"]?.reason ||
-                                  "Schedule Required"}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div
-                                className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
-                                  examAvailability["rn-paper-2"]?.isAvailable
-                                    ? "bg-blue-100"
-                                    : "bg-gray-200"
-                                }`}
-                              >
-                                <FileText
-                                  className={`h-5 w-5 ${
-                                    examAvailability["rn-paper-2"]?.isAvailable
-                                      ? "text-blue-600"
-                                      : "text-gray-400"
-                                  }`}
-                                />
+                        {(() => {
+                          const isCompleted = userAttempts.some(
+                            (attempt) =>
+                              attempt.examId === "rn-paper-2" &&
+                              attempt.completed
+                          );
+                          const completedAttempt = userAttempts.find(
+                            (attempt) =>
+                              attempt.examId === "rn-paper-2" &&
+                              attempt.completed
+                          );
+
+                          return (
+                            <div
+                              className={`p-4 rounded-lg border border-gray-200 relative ${
+                                examAvailability["rn-paper-2"]?.isAvailable
+                                  ? "bg-white hover:shadow-md transition-shadow cursor-pointer"
+                                  : "bg-gray-50 opacity-60"
+                              }`}
+                            >
+                              {!examAvailability["rn-paper-2"]?.isAvailable && (
+                                <div className="absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center z-10">
+                                  <span className="text-gray-600 font-medium">
+                                    {examAvailability["rn-paper-2"]?.reason ||
+                                      "Schedule Required"}
+                                  </span>
+                                </div>
+                              )}
+                              {isCompleted && (
+                                <div className="absolute top-2 right-2 z-20 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Completed
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div
+                                    className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                                      examAvailability["rn-paper-2"]
+                                        ?.isAvailable
+                                        ? "bg-blue-100"
+                                        : "bg-gray-200"
+                                    }`}
+                                  >
+                                    <FileText
+                                      className={`h-5 w-5 ${
+                                        examAvailability["rn-paper-2"]
+                                          ?.isAvailable
+                                          ? "text-blue-600"
+                                          : "text-gray-400"
+                                      }`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <h4
+                                      className={`font-medium ${
+                                        examAvailability["rn-paper-2"]
+                                          ?.isAvailable
+                                          ? "text-gray-900"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
+                                      RN Paper 2
+                                    </h4>
+                                    <p
+                                      className={`text-sm ${
+                                        examAvailability["rn-paper-2"]
+                                          ?.isAvailable
+                                          ? "text-gray-700"
+                                          : "text-gray-500"
+                                      }`}
+                                    >
+                                      250 questions • 150 mins
+                                    </p>
+                                    <p className="text-xs text-blue-600 mt-1">
+                                      CBT Format - Advanced
+                                    </p>
+                                  </div>
+                                </div>
+                                {examAvailability["rn-paper-2"]?.isAvailable &&
+                                  (isCompleted ? (
+                                    <Button
+                                      onClick={() =>
+                                        router.push(
+                                          `/exam/rn-paper-2/results?attemptId=${completedAttempt?.id}`
+                                        )
+                                      }
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      View Results
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      onClick={() =>
+                                        router.push("/exam/rn-paper-2")
+                                      }
+                                      className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                      Start Exam
+                                    </Button>
+                                  ))}
                               </div>
-                              <div>
-                                <h4
-                                  className={`font-medium ${
-                                    examAvailability["rn-paper-2"]?.isAvailable
-                                      ? "text-gray-900"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  RN Paper 2
-                                </h4>
-                                <p
-                                  className={`text-sm ${
-                                    examAvailability["rn-paper-2"]?.isAvailable
-                                      ? "text-gray-700"
-                                      : "text-gray-500"
-                                  }`}
-                                >
-                                  250 questions • 150 mins
-                                </p>
-                                <p className="text-xs text-blue-600 mt-1">
-                                  CBT Format - Advanced
-                                </p>
-                              </div>
                             </div>
-                            {examAvailability["rn-paper-2"]?.isAvailable && (
-                              <Button
-                                onClick={() => router.push("/exam/rn-paper-2")}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                Start Exam
-                              </Button>
-                            )}
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </div>
 
                       <div className="text-center py-4">

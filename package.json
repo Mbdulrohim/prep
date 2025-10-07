@@ -25,7 +25,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:attempt-policy": "node test-simple.js",
+    "test:manual": "echo 'See MANUAL_TESTING_GUIDE.md for manual testing instructions'",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
